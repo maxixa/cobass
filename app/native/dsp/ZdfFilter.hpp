@@ -22,14 +22,16 @@ public:
 
     void setParameters(ZdfFilterMode mode, float cutoffHz, float resonance, float drive = 1.0f) noexcept {
         mode_ = mode;
-        cutoffHz_ = std::clamp(cutoffHz, 20.0f, sampleRate_ * 0.48f);
+        const float maxCutoff = sampleRate_ * 0.45f;
+        cutoffHz_ = std::clamp(cutoffHz, 20.0f, maxCutoff);
         resonance_ = std::clamp(resonance, 0.1f, 16.0f);
         drive_ = std::clamp(drive, 0.5f, 5.0f);
         updateCoefficients();
     }
 
     void setCutoff(float cutoffHz) noexcept {
-        cutoffHz_ = std::clamp(cutoffHz, 20.0f, sampleRate_ * 0.48f);
+        const float maxCutoff = sampleRate_ * 0.45f;
+        cutoffHz_ = std::clamp(cutoffHz, 20.0f, maxCutoff);
         updateCoefficients();
     }
 
@@ -48,47 +50,56 @@ public:
     }
 
     inline float process(float in) noexcept {
+        // Recovery guard: reset state if NaN or Inf ever occurs
+        if (std::isnan(s1_) || std::isinf(s1_) || std::isnan(s4_) || std::isinf(s4_)) {
+            reset();
+        }
+
         // Non-linear input saturation
         const float drivenIn = std::tanh(in * drive_);
 
         if (mode_ == ZdfFilterMode::Ladder24) {
-            // 4-Pole ZDF Moog Ladder resolved via trapezoidal integrators
-            const float k = resonance_ * 0.95f;
-            const float u = (drivenIn - k * s4_) / (1.0f + k * G4_);
+            // 4-Pole ZDF Moog Ladder with saturating transistor feedback loop
+            // Resonance (0.1 .. 16.0) smoothly maps to k in [0.0, 3.96] (screaming acid self-oscillation)
+            const float k = std::clamp((resonance_ / (resonance_ + 1.2f)) * 4.25f, 0.0f, 3.96f);
 
-            const float v1 = (u - s1_) * g_ / (1.0f + g_);
+            // Saturated feedback prevents exponential state overflow
+            const float satFeedback = std::tanh(s4_);
+            const float u = (drivenIn - k * satFeedback) / (1.0f + k * G4_);
+
+            const float v1 = (u - s1_) * g1_;
             const float y1 = v1 + s1_;
-            s1_ = y1 + v1;
+            s1_ = std::clamp(y1 + v1, -20.0f, 20.0f);
 
-            const float v2 = (y1 - s2_) * g_ / (1.0f + g_);
+            const float v2 = (y1 - s2_) * g1_;
             const float y2 = v2 + s2_;
-            s2_ = y2 + v2;
+            s2_ = std::clamp(y2 + v2, -20.0f, 20.0f);
 
-            const float v3 = (y2 - s3_) * g_ / (1.0f + g_);
+            const float v3 = (y2 - s3_) * g1_;
             const float y3 = v3 + s3_;
-            s3_ = y3 + v3;
+            s3_ = std::clamp(y3 + v3, -20.0f, 20.0f);
 
-            const float v4 = (y3 - s4_) * g_ / (1.0f + g_);
+            const float v4 = (y3 - s4_) * g1_;
             const float y4 = v4 + s4_;
-            s4_ = y4 + v4;
+            s4_ = std::clamp(y4 + v4, -20.0f, 20.0f);
 
-            // Output non-linear soft limiter
+            // Output stage analog warmth
             return std::tanh(y4);
         } else {
             // 2-Pole ZDF State Variable Filter (SVF) with zero-delay feedback
             const float hp = (drivenIn - (2.0f * R_ + g_) * s1_ - s2_) / h_;
             const float bp = g_ * hp + s1_;
-            s1_ = g_ * hp + bp;
+            s1_ = std::clamp(g_ * hp + bp, -20.0f, 20.0f);
 
             const float lp = g_ * bp + s2_;
-            s2_ = g_ * bp + lp;
+            s2_ = std::clamp(g_ * bp + lp, -20.0f, 20.0f);
 
             switch (mode_) {
-                case ZdfFilterMode::Lowpass12:  return lp;
-                case ZdfFilterMode::Bandpass12: return bp;
-                case ZdfFilterMode::Highpass12: return hp;
-                case ZdfFilterMode::Notch12:    return hp + lp;
-                default: return lp;
+                case ZdfFilterMode::Lowpass12:  return std::tanh(lp);
+                case ZdfFilterMode::Bandpass12: return std::tanh(bp);
+                case ZdfFilterMode::Highpass12: return std::tanh(hp);
+                case ZdfFilterMode::Notch12:    return std::tanh(hp + lp);
+                default: return std::tanh(lp);
             }
         }
     }
@@ -102,12 +113,12 @@ private:
         if (sampleRate_ <= 0.0f) return;
         const float w = 3.14159265358979323846f * cutoffHz_ / sampleRate_;
         g_ = std::tan(w);
-        R_ = 1.0f / (2.0f * std::max(0.5f, resonance_));
+        R_ = 1.0f / (2.0f * std::clamp(resonance_, 0.2f, 20.0f));
         h_ = 1.0f + 2.0f * R_ * g_ + g_ * g_;
 
         // Moog Ladder precomputations
-        const float g1 = g_ / (1.0f + g_);
-        G4_ = g1 * g1 * g1 * g1;
+        g1_ = g_ / (1.0f + g_);
+        G4_ = g1_ * g1_ * g1_ * g1_;
     }
 
     float sampleRate_ = 48000.0f;
@@ -117,6 +128,7 @@ private:
     float drive_ = 1.0f;
 
     float g_ = 0.1f;
+    float g1_ = 0.09f;
     float R_ = 0.5f;
     float h_ = 1.0f;
     float G4_ = 0.0f;

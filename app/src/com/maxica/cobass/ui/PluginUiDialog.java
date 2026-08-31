@@ -10,29 +10,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import com.maxica.cobass.R;
 import com.maxica.cobass.audio.AudioEngineNative;
 import com.maxica.cobass.model.PluginDescriptorItem;
 import com.maxica.cobass.model.PluginParamItem;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PluginUiDialog extends Dialog {
+public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPresetActionListener {
 
     private final int trackId;
-    private final int slotIndex; // -1 for Instrument Synth, 0..7 for Insert FX
+    private final int slotIndex;
     private final PluginDescriptorItem descriptor;
     private final Runnable onDismissCallback;
 
@@ -77,7 +70,6 @@ public class PluginUiDialog extends Dialog {
         txtTitle.setText(descriptor.getName());
         txtVendor.setText("v" + descriptor.getVersion() + " • " + descriptor.getVendor());
 
-        // Install Live 60FPS Interactive Visualizer HUD
         if (visualizerContainer != null) {
             visualizerContainer.removeAllViews();
             visualizerView = new SynthVisualizerView(getContext());
@@ -85,7 +77,6 @@ public class PluginUiDialog extends Dialog {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
 
-        // Capture Initial State A
         if (AudioEngineNative.isLoaded()) {
             stateA = AudioEngineNative.nativeGetPluginStateJson(trackId, slotIndex);
             stateB = stateA;
@@ -121,11 +112,10 @@ public class PluginUiDialog extends Dialog {
             refreshAllKnobValues();
         });
 
-        btnPresets.setOnClickListener(v -> showPresetsDialog());
-        btnSavePatch.setOnClickListener(v -> showSavePatchDialog());
+        btnPresets.setOnClickListener(v -> new PluginPresetDialog(getContext(), descriptor, this).show());
+        btnSavePatch.setOnClickListener(v -> PluginPresetDialog.showSaveDialog(getContext(), descriptor, this));
         btnClose.setOnClickListener(v -> dismiss());
 
-        // Build Responsive Parameter Matrix
         buildParameterMatrix(paramContainer);
     }
 
@@ -173,131 +163,33 @@ public class PluginUiDialog extends Dialog {
     }
 
     private View createParamControlView(PluginParamItem param) {
+        float initialVal = param.getDefaultValue();
+        if (AudioEngineNative.isLoaded()) {
+            initialVal = AudioEngineNative.nativeGetPluginParameter(trackId, slotIndex, param.getId());
+        }
+
         if (param.getType() == PluginParamItem.Type.FLOAT) {
-            RotaryKnobView knob = new RotaryKnobView(getContext());
-            knob.setParamItem(param);
-
-            if (AudioEngineNative.isLoaded()) {
-                float val = AudioEngineNative.nativeGetPluginParameter(trackId, slotIndex, param.getId());
-                knob.setValue(val, false);
-                syncVisualizerFromParam(param.getName(), val);
-            }
-
-            knob.setOnKnobChangeListener((k, value, fromUser) -> {
-                if (fromUser && AudioEngineNative.isLoaded()) {
-                    AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, param.getId(), value);
-                    syncVisualizerFromParam(param.getName(), value);
+            RotaryKnobView knob = PluginControlFactory.createRotaryKnob(getContext(), param, initialVal, (p, val) -> {
+                if (AudioEngineNative.isLoaded()) {
+                    AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, p.getId(), val);
+                    syncVisualizerFromParam(p.getName(), val);
                 }
             });
-
             activeKnobs.add(knob);
+            syncVisualizerFromParam(param.getName(), initialVal);
             return knob;
         } else if (param.getType() == PluginParamItem.Type.BOOL) {
-            LinearLayout box = new LinearLayout(getContext());
-            box.setOrientation(LinearLayout.VERTICAL);
-            box.setGravity(Gravity.CENTER);
-            box.setPadding(4, 12, 4, 12);
-
-            TextView lbl = new TextView(getContext());
-            lbl.setText(param.getName());
-            lbl.setTextColor(Color.parseColor("#8E8E93"));
-            lbl.setTextSize(11f);
-            lbl.setTypeface(null, android.graphics.Typeface.BOLD);
-            lbl.setGravity(Gravity.CENTER);
-            box.addView(lbl);
-
-            Button btnToggle = new Button(getContext());
-            btnToggle.setTextSize(11f);
-            btnToggle.setTypeface(null, android.graphics.Typeface.BOLD);
-
-            boolean initialVal = param.getDefaultValue() > 0.5f;
-            if (AudioEngineNative.isLoaded()) {
-                initialVal = AudioEngineNative.nativeGetPluginParameter(trackId, slotIndex, param.getId()) > 0.5f;
-            }
-            updateBoolButton(btnToggle, initialVal);
-
-            btnToggle.setOnClickListener(v -> {
-                boolean current = btnToggle.getText().toString().equals("ON");
-                boolean next = !current;
-                updateBoolButton(btnToggle, next);
+            return PluginControlFactory.createBooleanToggle(getContext(), param, initialVal > 0.5f, (p, val) -> {
                 if (AudioEngineNative.isLoaded()) {
-                    AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, param.getId(), next ? 1.0f : 0.0f);
+                    AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, p.getId(), val);
                 }
             });
-
-            box.addView(btnToggle);
-            return box;
         } else {
-            LinearLayout box = new LinearLayout(getContext());
-            box.setOrientation(LinearLayout.VERTICAL);
-            box.setGravity(Gravity.CENTER);
-            box.setPadding(4, 12, 4, 12);
-
-            TextView lbl = new TextView(getContext());
-            lbl.setText(param.getName());
-            lbl.setTextColor(Color.parseColor("#8E8E93"));
-            lbl.setTextSize(11f);
-            lbl.setTypeface(null, android.graphics.Typeface.BOLD);
-            lbl.setGravity(Gravity.CENTER);
-            box.addView(lbl);
-
-            LinearLayout rowStep = new LinearLayout(getContext());
-            rowStep.setOrientation(LinearLayout.HORIZONTAL);
-            rowStep.setGravity(Gravity.CENTER);
-
-            Button btnMinus = new Button(getContext());
-            btnMinus.setText("◀");
-            btnMinus.setTextSize(10f);
-            btnMinus.setBackgroundColor(Color.parseColor("#242734"));
-            btnMinus.setTextColor(Color.WHITE);
-            btnMinus.setLayoutParams(new LinearLayout.LayoutParams(60, 80));
-
-            TextView txtVal = new TextView(getContext());
-            txtVal.setTextSize(12f);
-            txtVal.setTextColor(Color.WHITE);
-            txtVal.setTypeface(null, android.graphics.Typeface.BOLD);
-            txtVal.setGravity(Gravity.CENTER);
-            txtVal.setPadding(8, 0, 8, 0);
-
-            Button btnPlus = new Button(getContext());
-            btnPlus.setText("▶");
-            btnPlus.setTextSize(10f);
-            btnPlus.setBackgroundColor(Color.parseColor("#242734"));
-            btnPlus.setTextColor(Color.WHITE);
-            btnPlus.setLayoutParams(new LinearLayout.LayoutParams(60, 80));
-
-            int currentVal = (int) param.getDefaultValue();
-            if (AudioEngineNative.isLoaded()) {
-                currentVal = (int) AudioEngineNative.nativeGetPluginParameter(trackId, slotIndex, param.getId());
-            }
-            updateChoiceLabel(txtVal, param, currentVal);
-
-            final int[] valHolder = {currentVal};
-            btnMinus.setOnClickListener(v -> {
-                if (valHolder[0] > (int) param.getMinValue()) {
-                    valHolder[0]--;
-                    updateChoiceLabel(txtVal, param, valHolder[0]);
-                    if (AudioEngineNative.isLoaded()) {
-                        AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, param.getId(), (float) valHolder[0]);
-                    }
+            return PluginControlFactory.createChoiceStepper(getContext(), param, (int) initialVal, (p, val) -> {
+                if (AudioEngineNative.isLoaded()) {
+                    AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, p.getId(), val);
                 }
             });
-
-            btnPlus.setOnClickListener(v -> {
-                if (valHolder[0] < (int) param.getMaxValue()) {
-                    valHolder[0]++;
-                    updateChoiceLabel(txtVal, param, valHolder[0]);
-                    if (AudioEngineNative.isLoaded()) {
-                        AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, param.getId(), (float) valHolder[0]);
-                    }
-                }
-            });
-
-            rowStep.addView(btnMinus);
-            rowStep.addView(txtVal);
-            rowStep.addView(btnPlus);
-            box.addView(rowStep);
-            return box;
         }
     }
 
@@ -313,21 +205,6 @@ public class PluginUiDialog extends Dialog {
         }
     }
 
-    private void updateBoolButton(Button btn, boolean state) {
-        btn.setText(state ? "ON" : "OFF");
-        btn.setTextColor(state ? Color.parseColor("#30D158") : Color.parseColor("#8E8E93"));
-        btn.setBackgroundColor(state ? Color.parseColor("#163824") : Color.parseColor("#242734"));
-    }
-
-    private void updateChoiceLabel(TextView txt, PluginParamItem param, int val) {
-        if (param.getType() == PluginParamItem.Type.CHOICE && !param.getChoices().isEmpty()) {
-            int idx = Math.max(0, Math.min(param.getChoices().size() - 1, val));
-            txt.setText(param.getChoices().get(idx));
-        } else {
-            txt.setText(String.valueOf(val));
-        }
-    }
-
     private void refreshAllKnobValues() {
         if (!AudioEngineNative.isLoaded()) return;
         for (RotaryKnobView knob : activeKnobs) {
@@ -336,157 +213,17 @@ public class PluginUiDialog extends Dialog {
         }
     }
 
-    private void showPresetsDialog() {
-        Dialog dialog = new Dialog(getContext());
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
-
-        TextView title = new TextView(getContext());
-        title.setText("📁 Preset Library: " + descriptor.getName());
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        File presetDir = new File(getContext().getFilesDir(), "presets/" + descriptor.getPluginId());
-        if (!presetDir.exists()) presetDir.mkdirs();
-
-        File[] files = presetDir.listFiles((d, name) -> name.endsWith(".cobasspatch"));
-        if (files == null || files.length == 0) {
-            TextView emptyText = new TextView(getContext());
-            emptyText.setText("No saved user patches found. Click SAVE to create one.");
-            emptyText.setTextColor(Color.parseColor("#8E8E93"));
-            emptyText.setPadding(0, 16, 0, 16);
-            layout.addView(emptyText);
-        } else {
-            for (File f : files) {
-                LinearLayout row = new LinearLayout(getContext());
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setPadding(0, 6, 0, 6);
-
-                TextView txtName = new TextView(getContext());
-                txtName.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-                txtName.setText(f.getName().replace(".cobasspatch", ""));
-                txtName.setTextColor(Color.WHITE);
-                txtName.setTextSize(13f);
-
-                Button btnLoad = new Button(getContext());
-                btnLoad.setText("LOAD");
-                btnLoad.setTextSize(10f);
-                btnLoad.setBackgroundColor(Color.parseColor("#0A84FF"));
-                btnLoad.setOnClickListener(v -> {
-                    loadPatchFromFile(f);
-                    dialog.dismiss();
-                });
-
-                Button btnDel = new Button(getContext());
-                btnDel.setText("✕");
-                btnDel.setTextSize(10f);
-                btnDel.setBackgroundColor(Color.parseColor("#FF453A"));
-                btnDel.setOnClickListener(v -> {
-                    f.delete();
-                    dialog.dismiss();
-                    showPresetsDialog();
-                });
-
-                row.addView(txtName);
-                row.addView(btnLoad);
-                row.addView(btnDel);
-                layout.addView(row);
-            }
-        }
-
-        Button btnDone = new Button(getContext());
-        btnDone.setText("Close");
-        btnDone.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnDone.setTextColor(Color.WHITE);
-        btnDone.setOnClickListener(v -> dialog.dismiss());
-        layout.addView(btnDone);
-
-        dialog.setContentView(scroll);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-        dialog.show();
+    @Override
+    public String onGetPluginStateJson() {
+        return AudioEngineNative.isLoaded() ? AudioEngineNative.nativeGetPluginStateJson(trackId, slotIndex) : "{}";
     }
 
-    private void showSavePatchDialog() {
-        Dialog dialog = new Dialog(getContext());
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-
-        TextView title = new TextView(getContext());
-        title.setText("💾 Save User Patch Preset");
-        title.setTextColor(Color.parseColor("#30D158"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        EditText editName = new EditText(getContext());
-        editName.setHint("Patch Name");
-        editName.setTextColor(Color.WHITE);
-        editName.setHintTextColor(Color.parseColor("#8E8E93"));
-        editName.setSingleLine(true);
-        layout.addView(editName);
-
-        Button btnSave = new Button(getContext());
-        btnSave.setText("Save Preset (.cobasspatch)");
-        btnSave.setBackgroundColor(Color.parseColor("#30D158"));
-        btnSave.setTextColor(Color.WHITE);
-        btnSave.setOnClickListener(v -> {
-            String name = editName.getText().toString().trim();
-            if (name.isEmpty()) name = "User_Patch";
-
-            File presetDir = new File(getContext().getFilesDir(), "presets/" + descriptor.getPluginId());
-            if (!presetDir.exists()) presetDir.mkdirs();
-
-            File targetFile = new File(presetDir, name.replaceAll("[^a-zA-Z0-9_-]", "_") + ".cobasspatch");
-            savePatchToFile(targetFile);
-            dialog.dismiss();
-            Toast.makeText(getContext(), "Saved: " + targetFile.getName(), Toast.LENGTH_SHORT).show();
-        });
-        layout.addView(btnSave);
-
-        dialog.setContentView(layout);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+    @Override
+    public void onSetPluginStateJson(String jsonState) {
+        if (AudioEngineNative.isLoaded()) {
+            AudioEngineNative.nativeSetPluginStateJson(trackId, slotIndex, jsonState);
+            refreshAllKnobValues();
         }
-        dialog.show();
-    }
-
-    private void savePatchToFile(File file) {
-        if (!AudioEngineNative.isLoaded()) return;
-        String json = AudioEngineNative.nativeGetPluginStateJson(trackId, slotIndex);
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(json.getBytes(StandardCharsets.UTF_8));
-            fos.flush();
-        } catch (Exception ignored) {}
-    }
-
-    private void loadPatchFromFile(File file) {
-        if (!AudioEngineNative.isLoaded()) return;
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] buf = new byte[(int) file.length()];
-            int read = fis.read(buf);
-            if (read > 0) {
-                String json = new String(buf, 0, read, StandardCharsets.UTF_8);
-                AudioEngineNative.nativeSetPluginStateJson(trackId, slotIndex, json);
-                refreshAllKnobValues();
-                Toast.makeText(getContext(), "Loaded: " + file.getName(), Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception ignored) {}
     }
 
     @Override

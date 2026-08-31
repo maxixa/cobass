@@ -33,10 +33,14 @@ public class PluginHostManager {
             AudioEngineNative.nativeScanPlugins(nativeLibDir);
         }
 
-        // 2. Scan internal app data plugins folder
-        File internalPluginDir = new File(context.getFilesDir(), "plugins");
+        // 2. Scan internal executable plugins cache folder (SELinux compliant)
+        File internalPluginDir = new File(context.getCodeCacheDir(), "plugins");
         if (internalPluginDir.exists()) {
             AudioEngineNative.nativeScanPlugins(internalPluginDir.getAbsolutePath());
+        }
+        File legacyPluginDir = new File(context.getFilesDir(), "plugins");
+        if (legacyPluginDir.exists()) {
+            AudioEngineNative.nativeScanPlugins(legacyPluginDir.getAbsolutePath());
         }
 
         int count = AudioEngineNative.nativeGetPluginCount();

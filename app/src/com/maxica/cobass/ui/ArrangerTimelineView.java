@@ -12,6 +12,8 @@ import com.maxica.cobass.model.ClipItem;
 import com.maxica.cobass.model.SnapGrid;
 import com.maxica.cobass.model.ToolMode;
 import com.maxica.cobass.model.TrackItem;
+import com.maxica.cobass.sequencer.ArrangerHistoryManager;
+import com.maxica.cobass.sequencer.ArrangerSnapEngine;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -138,9 +140,7 @@ public class ArrangerTimelineView extends View {
     private boolean hasModifiedClipsInGesture = false;
 
     // Undo / Redo Transaction Stack
-    private static final int MAX_UNDO_STACK = 50;
-    private final Deque<List<ClipItem>> undoStack = new ArrayDeque<>();
-    private final Deque<List<ClipItem>> redoStack = new ArrayDeque<>();
+    private final ArrangerHistoryManager historyManager = new ArrangerHistoryManager();
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint marqueePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -234,54 +234,13 @@ public class ArrangerTimelineView extends View {
     public SnapGrid getSnapGrid() { return snapGrid; }
 
     public long computeMagneticSnap(long targetStartTick, long clipLength, @Nullable ClipItem activeClip) {
-        long baseSnapped = snapGrid.snap(targetStartTick);
-        if (!isMagneticSnapEnabled || pixelsPerTick <= 0.0f) {
-            activeMagneticGuideTick = -1;
-            return baseSnapped;
-        }
-
-        long thresholdTicks = (long) (magneticSensitivityPx / pixelsPerTick);
-        long bestSnapStart = baseSnapped;
-        long bestDelta = thresholdTicks + 1;
-        long magneticGuide = -1;
-
-        List<Long> snapTargets = new ArrayList<>();
-        snapTargets.add(loopStartTick);
-        snapTargets.add(loopEndTick);
-        snapTargets.add(currentPlayheadTick);
-
-        for (ClipItem c : clips) {
-            if (c == activeClip || (c.isSelected() && activeClip != null && activeClip.isSelected())) continue;
-            snapTargets.add(c.getStartTick());
-            snapTargets.add(c.getEndTick());
-        }
-
-        for (long target : snapTargets) {
-            // Test Start Edge snapping to Target
-            long deltaStart = Math.abs(targetStartTick - target);
-            if (deltaStart < bestDelta) {
-                bestDelta = deltaStart;
-                bestSnapStart = target;
-                magneticGuide = target;
-            }
-
-            // Test End Edge snapping to Target
-            long candidateStartForEndSnap = target - clipLength;
-            long deltaEnd = Math.abs(targetStartTick - candidateStartForEndSnap);
-            if (deltaEnd < bestDelta) {
-                bestDelta = deltaEnd;
-                bestSnapStart = candidateStartForEndSnap;
-                magneticGuide = target;
-            }
-        }
-
-        if (bestDelta <= thresholdTicks) {
-            activeMagneticGuideTick = magneticGuide;
-            return Math.max(0, bestSnapStart);
-        } else {
-            activeMagneticGuideTick = -1;
-            return baseSnapped;
-        }
+        ArrangerSnapEngine.SnapResult result = ArrangerSnapEngine.computeMagneticSnap(
+            targetStartTick, clipLength, activeClip, clips, snapGrid,
+            isMagneticSnapEnabled, pixelsPerTick, magneticSensitivityPx,
+            loopStartTick, loopEndTick, currentPlayheadTick
+        );
+        activeMagneticGuideTick = result.magneticGuideTick;
+        return result.snappedTick;
     }
 
     public void setPlayheadTick(long tick) { this.currentPlayheadTick = tick; invalidate(); }
@@ -339,8 +298,7 @@ public class ArrangerTimelineView extends View {
         this.clips.addAll(clipList);
         this.primaryHitClip = null;
         this.dragAnchors.clear();
-        this.undoStack.clear();
-        this.redoStack.clear();
+        this.historyManager.clear();
         this.isDraggingClipsActive = false;
         this.isSlippingContent = false;
         invalidate();
@@ -496,54 +454,25 @@ public class ArrangerTimelineView extends View {
 
     // --- UNDO / REDO STACK ---
     public void captureUndoPoint() {
-        pushUndoState(cloneClipsList(clips));
+        historyManager.captureUndoPoint(clips);
     }
 
-    private void pushUndoState(List<ClipItem> snapshot) {
-        if (snapshot == null) return;
-        if (undoStack.size() >= MAX_UNDO_STACK) {
-            undoStack.removeLast();
-        }
-        undoStack.push(snapshot);
-        redoStack.clear();
-    }
-
-    public boolean canUndo() { return !undoStack.isEmpty(); }
-    public boolean canRedo() { return !redoStack.isEmpty(); }
+    public boolean canUndo() { return historyManager.canUndo(); }
+    public boolean canRedo() { return historyManager.canRedo(); }
 
     public void performUndo() {
-        if (undoStack.isEmpty()) return;
-
-        redoStack.push(cloneClipsList(clips));
-        List<ClipItem> previous = undoStack.pop();
-        restoreClipsList(previous);
-
-        if (listener != null) listener.onClipsBatchChanged();
-        invalidate();
+        if (historyManager.undo(clips)) {
+            primaryHitClip = null;
+            if (listener != null) listener.onClipsBatchChanged();
+            invalidate();
+        }
     }
 
     public void performRedo() {
-        if (redoStack.isEmpty()) return;
-
-        undoStack.push(cloneClipsList(clips));
-        List<ClipItem> next = redoStack.pop();
-        restoreClipsList(next);
-
-        if (listener != null) listener.onClipsBatchChanged();
-        invalidate();
-    }
-
-    private List<ClipItem> cloneClipsList(List<ClipItem> source) {
-        List<ClipItem> copy = new ArrayList<>(source.size());
-        for (ClipItem c : source) copy.add(c.copy());
-        return copy;
-    }
-
-    private void restoreClipsList(List<ClipItem> snapshot) {
-        clips.clear();
-        primaryHitClip = null;
-        if (snapshot != null) {
-            for (ClipItem c : snapshot) clips.add(c.copy());
+        if (historyManager.redo(clips)) {
+            primaryHitClip = null;
+            if (listener != null) listener.onClipsBatchChanged();
+            invalidate();
         }
     }
 

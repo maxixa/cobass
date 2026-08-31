@@ -381,10 +381,12 @@ public:
     bool setStateJson(const char* json) {
         if (!json) return false;
         for (size_t i = 0; i < params_.size(); ++i) {
-            std::string key = "\"" + std::to_string(i) + "\":";
+            std::string key = "\"" + std::to_string(i) + "\"";
             const char* pos = std::strstr(json, key.c_str());
             if (pos) {
-                params_[i] = std::strtof(pos + key.size(), nullptr);
+                pos += key.size();
+                while (*pos == ' ' || *pos == '\t' || *pos == ':') pos++;
+                params_[i] = std::strtof(pos, nullptr);
             }
         }
         return true;

@@ -127,6 +127,8 @@ def main():
         "-o", str(base_apk),
         "--auto-add-overlay"
     ]
+    if Path("config/presets").is_dir():
+        link_cmd.extend(["-A", "config/presets"])
     if extra_pkgs:
         link_cmd.extend(["--extra-packages", extra_pkgs])
     link_cmd.extend(compiled_res_zips)

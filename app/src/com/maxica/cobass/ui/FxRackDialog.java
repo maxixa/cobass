@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,8 +20,6 @@ import com.maxica.cobass.audio.AudioEngineNative;
 import com.maxica.cobass.model.PluginDescriptorItem;
 import com.maxica.cobass.model.TrackItem;
 import com.maxica.cobass.plugin.PluginHostManager;
-
-import java.util.List;
 
 public class FxRackDialog extends Dialog {
 
@@ -113,7 +110,6 @@ public class FxRackDialog extends Dialog {
             row.addView(txtSlotNum);
 
             if (pluginId.isEmpty()) {
-                // Empty Slot
                 Button btnAdd = new Button(getContext());
                 btnAdd.setText("+ Add Insert Plugin");
                 btnAdd.setTextSize(10f);
@@ -122,10 +118,17 @@ public class FxRackDialog extends Dialog {
                 LinearLayout.LayoutParams addLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 80);
                 addLp.setMargins(8, 0, 0, 0);
                 btnAdd.setLayoutParams(addLp);
-                btnAdd.setOnClickListener(v -> showPluginBrowserDialog(slotIndex));
+                btnAdd.setOnClickListener(v -> {
+                    new FxPluginBrowserDialog(getContext(), slotIndex, fx -> {
+                        if (AudioEngineNative.isLoaded()) {
+                            AudioEngineNative.nativeAddTrackFxPlugin(track.getId(), slotIndex, fx.getPluginId());
+                        }
+                        refreshModularRackSlots();
+                        Toast.makeText(getContext(), "Loaded " + fx.getName() + " into Slot " + (slotIndex + 1), Toast.LENGTH_SHORT).show();
+                    }).show();
+                });
                 row.addView(btnAdd);
             } else {
-                // Loaded Plugin Slot
                 PluginDescriptorItem desc = PluginHostManager.getInstance().findPluginById(pluginId);
                 String displayName = desc != null ? desc.getName() : pluginId;
 
@@ -138,7 +141,6 @@ public class FxRackDialog extends Dialog {
                 txtName.setPadding(10, 0, 4, 0);
                 row.addView(txtName);
 
-                // Bypass Toggle
                 boolean isBypassed = AudioEngineNative.isLoaded() && AudioEngineNative.nativeIsTrackFxBypassed(track.getId(), slotIndex);
                 Button btnBypass = new Button(getContext());
                 btnBypass.setText(isBypassed ? "BYPASS" : "ACTIVE");
@@ -155,7 +157,6 @@ public class FxRackDialog extends Dialog {
                 });
                 row.addView(btnBypass);
 
-                // Edit Plugin UI Button
                 Button btnEdit = new Button(getContext());
                 btnEdit.setText("⚙ EDIT");
                 btnEdit.setTextSize(9f);
@@ -172,7 +173,6 @@ public class FxRackDialog extends Dialog {
                 });
                 row.addView(btnEdit);
 
-                // Move Up Button
                 Button btnUp = new Button(getContext());
                 btnUp.setText("▲");
                 btnUp.setTextSize(9f);
@@ -189,7 +189,6 @@ public class FxRackDialog extends Dialog {
                 });
                 row.addView(btnUp);
 
-                // Move Down Button
                 Button btnDown = new Button(getContext());
                 btnDown.setText("▼");
                 btnDown.setTextSize(9f);
@@ -206,7 +205,6 @@ public class FxRackDialog extends Dialog {
                 });
                 row.addView(btnDown);
 
-                // Remove Button
                 Button btnDel = new Button(getContext());
                 btnDel.setText("✕");
                 btnDel.setTextSize(10f);
@@ -226,68 +224,6 @@ public class FxRackDialog extends Dialog {
 
             rackContainer.addView(row);
         }
-    }
-
-    private void showPluginBrowserDialog(int slotIndex) {
-        Dialog browserDialog = new Dialog(getContext());
-        browserDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
-
-        TextView title = new TextView(getContext());
-        title.setText("Insert FX Plugin Browser (Slot " + (slotIndex + 1) + ")");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        List<PluginDescriptorItem> effects = PluginHostManager.getInstance().getEffectPlugins();
-        if (effects.isEmpty()) {
-            TextView empty = new TextView(getContext());
-            empty.setText("No modular FX plugins discovered in app library.");
-            empty.setTextColor(Color.parseColor("#8E8E93"));
-            empty.setPadding(0, 16, 0, 16);
-            layout.addView(empty);
-        } else {
-            for (PluginDescriptorItem fx : effects) {
-                Button btn = new Button(getContext());
-                btn.setText(fx.getName() + " (" + fx.getVendor() + ")");
-                btn.setTextSize(11f);
-                btn.setTextColor(Color.WHITE);
-                btn.setBackgroundColor(Color.parseColor("#242734"));
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(0, 4, 0, 4);
-                btn.setLayoutParams(lp);
-                btn.setOnClickListener(v -> {
-                    if (AudioEngineNative.isLoaded()) {
-                        AudioEngineNative.nativeAddTrackFxPlugin(track.getId(), slotIndex, fx.getPluginId());
-                    }
-                    browserDialog.dismiss();
-                    refreshModularRackSlots();
-                    Toast.makeText(getContext(), "Loaded " + fx.getName() + " into Slot " + (slotIndex + 1), Toast.LENGTH_SHORT).show();
-                });
-                layout.addView(btn);
-            }
-        }
-
-        Button btnCancel = new Button(getContext());
-        btnCancel.setText("Cancel");
-        btnCancel.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnCancel.setTextColor(Color.WHITE);
-        btnCancel.setOnClickListener(v -> browserDialog.dismiss());
-        layout.addView(btnCancel);
-
-        browserDialog.setContentView(scroll);
-        if (browserDialog.getWindow() != null) {
-            browserDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            browserDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-        browserDialog.show();
     }
 
     private interface ParamPersistCallback {

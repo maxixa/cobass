@@ -33,7 +33,7 @@ public class PluginApkInstaller {
         Intent intent = new Intent(ACTION_COBASS_PLUGIN);
         List<ResolveInfo> plugins = pm.queryIntentServices(intent, PackageManager.GET_META_DATA);
 
-        File internalPluginDir = new File(context.getFilesDir(), "plugins");
+        File internalPluginDir = new File(context.getCodeCacheDir(), "plugins");
         if (!internalPluginDir.exists()) internalPluginDir.mkdirs();
 
         int mountedCount = 0;
@@ -68,7 +68,7 @@ public class PluginApkInstaller {
      * Sideloads a standalone plugin directly from an APK / bundle file picked via Storage Access Framework.
      */
     public static boolean installPluginFromUri(Context context, Uri uri) {
-        File internalPluginDir = new File(context.getFilesDir(), "plugins");
+        File internalPluginDir = new File(context.getCodeCacheDir(), "plugins");
         if (!internalPluginDir.exists()) internalPluginDir.mkdirs();
 
         boolean success = false;

@@ -38,12 +38,20 @@ public:
 
     void setCustomInstrument(std::unique_ptr<PluginInstance> instrument) {
         std::lock_guard<std::mutex> lock(instrumentMutex_);
+        if (customInstrument_) {
+            customInstrument_->allNotesOff();
+        } else {
+            for (auto& v : voices_) v.hardStop();
+        }
         if (instrument) instrument->reset(sampleRate_);
         customInstrument_ = std::move(instrument);
     }
 
     void removeCustomInstrument() {
         std::lock_guard<std::mutex> lock(instrumentMutex_);
+        if (customInstrument_) {
+            customInstrument_->allNotesOff();
+        }
         customInstrument_.reset();
     }
 

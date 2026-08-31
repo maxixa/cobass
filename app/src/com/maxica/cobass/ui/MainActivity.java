@@ -14,9 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +27,7 @@ import com.maxica.cobass.model.ToolMode;
 import com.maxica.cobass.model.TrackItem;
 import com.maxica.cobass.plugin.PluginApkInstaller;
 import com.maxica.cobass.plugin.PluginHostManager;
+import com.maxica.cobass.project.PresetUnpacker;
 import com.maxica.cobass.project.ProjectData;
 
 import java.util.ArrayList;
@@ -121,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
                 AudioEngineNative.nativeSetBpm(currentBpm);
                 AudioEngineNative.nativeSetLoop(loopStartTick, loopEndTick, isLooping);
 
-                // Auto-mount any installed plugin APKs on device startup
+                PresetUnpacker.unpackFactoryPresets(this);
                 PluginApkInstaller.scanAndMountInstalledPluginApks(this);
                 PluginHostManager.getInstance().scanPlugins(this);
             }
@@ -239,7 +237,12 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
         }
 
         if (btnSnapGrid != null) {
-            btnSnapGrid.setOnClickListener(v -> showSnapStudioDialog());
+            btnSnapGrid.setOnClickListener(v -> {
+                new SnapStudioDialog(this, arrangerView.getSnapGrid(), sg -> {
+                    arrangerView.setSnapGrid(sg);
+                    btnSnapGrid.setText("Snap: " + sg.getLabel());
+                }).show();
+            });
         }
 
         if (btnToolSelect != null) btnToolSelect.setOnClickListener(v -> setTool(ToolMode.SELECT));
@@ -279,14 +282,12 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // 1. Audio Sample Import Callback
         if (requestCode == WaveEditorDialog.REQUEST_CODE_IMPORT_AUDIO && resultCode == RESULT_OK && data != null && data.getData() != null) {
             if (activeWaveEditorDialog != null && activeWaveEditorDialog.isShowing()) {
                 activeWaveEditorDialog.importAudioFromUri(data.getData());
             }
         }
 
-        // 2. Standalone Plugin APK Sideloading Callback
         if (requestCode == REQUEST_CODE_IMPORT_PLUGIN_APK && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri pluginApkUri = data.getData();
             new Thread(() -> {
@@ -363,7 +364,6 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
                 }
             }
         }
-
         return d;
     }
 
@@ -550,7 +550,6 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
         Button btnResetDefaults = dialog.findViewById(R.id.btnResetDefaults);
         Button btnClosePrefs = dialog.findViewById(R.id.btnClosePrefs);
 
-        // Modular Plugin Engine Controls
         TextView txtPluginSummary = dialog.findViewById(R.id.txtPluginSummary);
         Button btnSideload = dialog.findViewById(R.id.btnSideloadPluginApk);
         Button btnRescan = dialog.findViewById(R.id.btnRescanPlugins);
@@ -628,55 +627,6 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
         int synths = PluginHostManager.getInstance().getSynthPlugins().size();
         int fxs = PluginHostManager.getInstance().getEffectPlugins().size();
         txtPluginSummary.setText(String.format(Locale.US, "Plugins Available: %d (%d Synths, %d FX)", total, synths, fxs));
-    }
-
-    private void showSnapStudioDialog() {
-        if (arrangerView == null) return;
-        Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        ScrollView scroll = new ScrollView(this);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E24"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
-
-        TextView title = new TextView(this);
-        title.setText("🧲 Snap & Quantize Studio");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        SnapGrid[] straights = {SnapGrid.BAR_1, SnapGrid.BEAT_1, SnapGrid.BEAT_1_8TH, SnapGrid.BEAT_1_16TH, SnapGrid.OFF};
-        for (SnapGrid sg : straights) {
-            Button btn = new Button(this);
-            btn.setText(sg.getLabel());
-            btn.setTextSize(10f);
-            btn.setBackgroundColor(arrangerView.getSnapGrid() == sg ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-            btn.setTextColor(Color.WHITE);
-            btn.setOnClickListener(v -> {
-                arrangerView.setSnapGrid(sg);
-                btnSnapGrid.setText("Snap: " + sg.getLabel());
-                dialog.dismiss();
-            });
-            layout.addView(btn);
-        }
-
-        Button btnDone = new Button(this);
-        btnDone.setText("Done");
-        btnDone.setBackgroundColor(Color.parseColor("#3A3A3C"));
-        btnDone.setTextColor(Color.WHITE);
-        btnDone.setOnClickListener(v -> dialog.dismiss());
-        layout.addView(btnDone);
-
-        dialog.setContentView(scroll);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-        dialog.show();
     }
 
     private void setTool(ToolMode mode) {
@@ -782,224 +732,49 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
     @Override
     public void onTrackInspectorRequested(TrackItem track) {
-        showTrackInspectorDialog(track);
-    }
-
-    private void showTrackInspectorDialog(TrackItem track) {
-        Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_track_inspector);
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-
-        TextView txtTitle = dialog.findViewById(R.id.txtInspectorTitle);
-        EditText editName = dialog.findViewById(R.id.editTrackName);
-        SeekBar seekVolume = dialog.findViewById(R.id.seekTrackVolume);
-        SeekBar seekPan = dialog.findViewById(R.id.seekTrackPan);
-        TextView txtVol = dialog.findViewById(R.id.txtVolumeReadout);
-        TextView txtPan = dialog.findViewById(R.id.txtPanReadout);
-        Button btnPhase = dialog.findViewById(R.id.btnTogglePhase);
-        Button btnFx = dialog.findViewById(R.id.btnOpenFxRack);
-        Button btnUp = dialog.findViewById(R.id.btnMoveTrackUp);
-        Button btnDown = dialog.findViewById(R.id.btnMoveTrackDown);
-        Button btnDupl = dialog.findViewById(R.id.btnDuplicateTrack);
-        Button btnDel = dialog.findViewById(R.id.btnDeleteTrack);
-        Button btnClose = dialog.findViewById(R.id.btnCloseInspector);
-
-        View layoutInstrument = dialog.findViewById(R.id.layoutInstrumentEngine);
-        TextView txtCurrentInstrument = dialog.findViewById(R.id.txtCurrentInstrument);
-        Button btnChangeSynth = dialog.findViewById(R.id.btnChangeSynth);
-        Button btnEditSynth = dialog.findViewById(R.id.btnEditSynth);
-
-        if (track.getType() == TrackItem.Type.SYNTH) {
-            layoutInstrument.setVisibility(View.VISIBLE);
-            String synthId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeGetTrackSynthPluginId(track.getId()) : "";
-            PluginDescriptorItem currentSynthDesc = PluginHostManager.getInstance().findPluginById(synthId);
-            txtCurrentInstrument.setText(currentSynthDesc != null ? currentSynthDesc.getName() : "Cobass PolySynth (Default Engine)");
-
-            btnChangeSynth.setOnClickListener(v -> showInstrumentBrowserDialog(track, txtCurrentInstrument));
-            btnEditSynth.setOnClickListener(v -> {
-                if (currentSynthDesc != null) {
-                    PluginUiDialog pDialog = new PluginUiDialog(this, track.getId(), -1, currentSynthDesc, () -> {
-                        if (arrangerView != null) arrangerView.invalidate();
-                    });
-                    pDialog.show();
-                } else {
-                    Toast.makeText(this, "Default PolySynth is active", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            layoutInstrument.setVisibility(View.GONE);
-        }
-
-        txtTitle.setText("Track Inspector: " + track.getName());
-        editName.setText(track.getName());
-
-        seekVolume.setProgress((int) (track.getVolume() * 100));
-        txtVol.setText((int) (track.getVolume() * 100) + "%");
-
-        seekPan.setProgress((int) ((track.getPan() + 1.0f) * 50));
-        txtPan.setText(String.format("Pan: %+d", (int) (track.getPan() * 100)));
-
-        btnPhase.setBackgroundColor(track.isPhaseInverted() ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-
-        dialog.findViewById(R.id.btnColorBlue).setOnClickListener(v -> { track.setColor(Color.parseColor("#0A84FF")); if (arrangerView != null) arrangerView.invalidate(); });
-        dialog.findViewById(R.id.btnColorOrange).setOnClickListener(v -> { track.setColor(Color.parseColor("#FF9F0A")); if (arrangerView != null) arrangerView.invalidate(); });
-        dialog.findViewById(R.id.btnColorGreen).setOnClickListener(v -> { track.setColor(Color.parseColor("#30D158")); if (arrangerView != null) arrangerView.invalidate(); });
-        dialog.findViewById(R.id.btnColorPurple).setOnClickListener(v -> { track.setColor(Color.parseColor("#BF5AF2")); if (arrangerView != null) arrangerView.invalidate(); });
-        dialog.findViewById(R.id.btnColorRed).setOnClickListener(v -> { track.setColor(Color.parseColor("#FF453A")); if (arrangerView != null) arrangerView.invalidate(); });
-        dialog.findViewById(R.id.btnColorCyan).setOnClickListener(v -> { track.setColor(Color.parseColor("#64D2FF")); if (arrangerView != null) arrangerView.invalidate(); });
-
-        seekVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        new TrackInspectorDialog(this, track, new TrackInspectorDialog.OnTrackInspectorActionListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float vol = progress / 100.0f;
-                track.setVolume(vol);
-                txtVol.setText(progress + "%");
-                if (AudioEngineNative.isLoaded()) AudioEngineNative.nativeSetTrackVolume(track.getId(), vol);
+            public void onTrackUpdated(TrackItem t) {
                 if (arrangerView != null) arrangerView.invalidate();
             }
-            @Override public void onStartTrackingTouch(SeekBar s) {}
-            @Override public void onStopTrackingTouch(SeekBar s) {}
-        });
 
-        seekPan.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float pan = (progress / 50.0f) - 1.0f;
-                track.setPan(pan);
-                txtPan.setText(String.format("Pan: %+d", (int) (pan * 100)));
-                if (AudioEngineNative.isLoaded()) AudioEngineNative.nativeSetTrackPan(track.getId(), pan);
-                if (arrangerView != null) arrangerView.invalidate();
-            }
-            @Override public void onStartTrackingTouch(SeekBar s) {}
-            @Override public void onStopTrackingTouch(SeekBar s) {}
-        });
-
-        btnPhase.setOnClickListener(v -> {
-            track.setPhaseInverted(!track.isPhaseInverted());
-            btnPhase.setBackgroundColor(track.isPhaseInverted() ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-            if (AudioEngineNative.isLoaded()) AudioEngineNative.nativeSetTrackPhaseInvert(track.getId(), track.isPhaseInverted());
-        });
-
-        btnFx.setOnClickListener(v -> {
-            dialog.dismiss();
-            onTrackFxRequested(track);
-        });
-
-        btnUp.setOnClickListener(v -> {
-            int idx = tracks.indexOf(track);
-            if (idx > 0) {
-                tracks.remove(idx);
-                tracks.add(idx - 1, track);
-                if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
-                Toast.makeText(this, "Moved track up", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        btnDown.setOnClickListener(v -> {
-            int idx = tracks.indexOf(track);
-            if (idx >= 0 && idx < tracks.size() - 1) {
-                tracks.remove(idx);
-                tracks.add(idx + 1, track);
-                if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
-                Toast.makeText(this, "Moved track down", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        btnDupl.setOnClickListener(v -> {
-            dialog.dismiss();
-            duplicateTrackWithClips(track);
-        });
-
-        btnDel.setOnClickListener(v -> {
-            dialog.dismiss();
-            deleteTrackWithClips(track);
-        });
-
-        btnClose.setOnClickListener(v -> {
-            String newName = editName.getText().toString().trim();
-            if (!newName.isEmpty()) track.setName(newName);
-            if (arrangerView != null) arrangerView.invalidate();
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
-
-    private void showInstrumentBrowserDialog(TrackItem track, TextView txtCurrentInstrument) {
-        Dialog browserDialog = new Dialog(this);
-        browserDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        ScrollView scroll = new ScrollView(this);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
-
-        TextView title = new TextView(this);
-        title.setText("Choose Instrument Engine");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        Button btnDefault = new Button(this);
-        btnDefault.setText("Cobass PolySynth (Internal Default)");
-        btnDefault.setTextSize(11f);
-        btnDefault.setTextColor(Color.WHITE);
-        btnDefault.setBackgroundColor(Color.parseColor("#16385C"));
-        btnDefault.setOnClickListener(v -> {
-            if (AudioEngineNative.isLoaded()) {
-                AudioEngineNative.nativeRemoveTrackSynthPlugin(track.getId());
-            }
-            track.setInstrumentPluginId("");
-            track.setInstrumentPluginStateJson("{}");
-            txtCurrentInstrument.setText("Cobass PolySynth (Default Engine)");
-            browserDialog.dismiss();
-            Toast.makeText(this, "Switched to Default PolySynth", Toast.LENGTH_SHORT).show();
-        });
-        layout.addView(btnDefault);
-
-        List<PluginDescriptorItem> synths = PluginHostManager.getInstance().getSynthPlugins();
-        for (PluginDescriptorItem synth : synths) {
-            Button btn = new Button(this);
-            btn.setText(synth.getName() + " (" + synth.getVendor() + ")");
-            btn.setTextSize(11f);
-            btn.setTextColor(Color.WHITE);
-            btn.setBackgroundColor(Color.parseColor("#242734"));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(0, 6, 0, 0);
-            btn.setLayoutParams(lp);
-            btn.setOnClickListener(v -> {
-                if (AudioEngineNative.isLoaded()) {
-                    AudioEngineNative.nativeSetTrackSynthPlugin(track.getId(), synth.getPluginId());
+            public void onMoveTrackUp(TrackItem t) {
+                int idx = tracks.indexOf(t);
+                if (idx > 0) {
+                    tracks.remove(idx);
+                    tracks.add(idx - 1, t);
+                    if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
+                    Toast.makeText(MainActivity.this, "Moved track up", Toast.LENGTH_SHORT).show();
                 }
-                track.setInstrumentPluginId(synth.getPluginId());
-                txtCurrentInstrument.setText(synth.getName());
-                browserDialog.dismiss();
-                Toast.makeText(this, "Loaded " + synth.getName() + " onto track", Toast.LENGTH_SHORT).show();
-            });
-            layout.addView(btn);
-        }
+            }
 
-        Button btnCancel = new Button(this);
-        btnCancel.setText("Cancel");
-        btnCancel.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnCancel.setTextColor(Color.WHITE);
-        btnCancel.setOnClickListener(v -> browserDialog.dismiss());
-        layout.addView(btnCancel);
+            @Override
+            public void onMoveTrackDown(TrackItem t) {
+                int idx = tracks.indexOf(t);
+                if (idx >= 0 && idx < tracks.size() - 1) {
+                    tracks.remove(idx);
+                    tracks.add(idx + 1, t);
+                    if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
+                    Toast.makeText(MainActivity.this, "Moved track down", Toast.LENGTH_SHORT).show();
+                }
+            }
 
-        browserDialog.setContentView(scroll);
-        if (browserDialog.getWindow() != null) {
-            browserDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            browserDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-        browserDialog.show();
+            @Override
+            public void onDuplicateTrack(TrackItem t) {
+                duplicateTrackWithClips(t);
+            }
+
+            @Override
+            public void onDeleteTrack(TrackItem t) {
+                deleteTrackWithClips(t);
+            }
+
+            @Override
+            public void onOpenFxRack(TrackItem t) {
+                onTrackFxRequested(t);
+            }
+        }).show();
     }
 
     private void duplicateTrackWithClips(TrackItem source) {

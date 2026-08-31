@@ -15,6 +15,7 @@ import com.maxica.cobass.model.ClipItem;
 import com.maxica.cobass.model.MusicalScale;
 import com.maxica.cobass.model.SnapGrid;
 import com.maxica.cobass.model.ToolMode;
+import com.maxica.cobass.sequencer.MidiTransformEngine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -900,7 +901,7 @@ public class PianoRollCanvasView extends View {
                         }
                     } else if (toolMode == ToolMode.SPLIT) {
                         if (hit != null) {
-                            if (clip.splitNoteAt(hit, touchTick)) {
+                            if (MidiTransformEngine.splitNoteAt(clip, hit, touchTick)) {
                                 hasModifiedNotesInGesture = true;
                                 if (listener != null) {
                                     listener.onNotesChanged();
@@ -911,7 +912,7 @@ public class PianoRollCanvasView extends View {
                             }
                         }
                     } else if (toolMode == ToolMode.GLUE) {
-                        int glued = clip.glue();
+                        int glued = MidiTransformEngine.glue(clip);
                         if (glued > 0) {
                             hasModifiedNotesInGesture = true;
                             if (listener != null) {
@@ -922,7 +923,7 @@ public class PianoRollCanvasView extends View {
                             return true;
                         }
                     } else if (toolMode == ToolMode.CHOP) {
-                        int chopped = clip.chop(snapGrid.getTicks());
+                        int chopped = MidiTransformEngine.chop(clip, snapGrid.getTicks());
                         if (chopped > 0) {
                             hasModifiedNotesInGesture = true;
                             if (listener != null) {
@@ -945,7 +946,7 @@ public class PianoRollCanvasView extends View {
                     } else if (toolMode == ToolMode.PENCIL) {
                         if (activeChordIntervals != null && hit == null) {
                             long chordLen = Math.max(snapGrid.getTicks() * 2, PPQ);
-                            clip.stampChord(midiNote, activeChordIntervals, touchTick, chordLen, 0.85f);
+                            MidiTransformEngine.stampChord(clip, midiNote, activeChordIntervals, touchTick, chordLen, 0.85f);
                             hasModifiedNotesInGesture = true;
                             playAudition(midiNote, 0.85f);
                             if (listener != null) {
