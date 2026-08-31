@@ -1,0 +1,24 @@
+[[dependency]]
+group = "androidx.annotation"
+artifact = "annotation"
+version = "1.7.0"
+
+[[dependency]]
+group = "androidx.core"
+artifact = "core"
+version = "1.12.0"
+
+[[dependency]]
+group = "androidx.appcompat"
+artifact = "appcompat"
+version = "1.6.1"
+
+[[dependency]]
+group = "androidx.activity"
+artifact = "activity"
+version = "1.8.2"
+
+[[dependency]]
+group = "androidx.recyclerview"
+artifact = "recyclerview"
+version = "1.3.2"

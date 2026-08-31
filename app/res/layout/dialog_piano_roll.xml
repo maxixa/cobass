@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Top Action, Transport & Tool Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#161820"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:id="@+id/txtPianoClipTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Piano Roll"
+            android:textColor="@color/cubase_blue"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:layout_marginEnd="6dp" />
+
+        <!-- Undo & Redo -->
+        <Button
+            android:id="@+id/btnPrUndo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:text="↶"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <Button
+            android:id="@+id/btnPrRedo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="2dp"
+            android:text="↷"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Transport Group -->
+                <Button
+                    android:id="@+id/btnPrPlay"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:text="▶"
+                    android:textColor="#30D158"
+                    android:textSize="13sp"
+                    android:backgroundTint="#163824"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrStop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="■"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrLoop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔁"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1C385C"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrFollow"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🎯"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1C385C"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrZoomSettings"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔍"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Snap & Quantize Studio Selector -->
+                <Button
+                    android:id="@+id/btnPrSnapGrid"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="Snap: 1/16"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Note Drawing & Manipulation Tools -->
+                <Button
+                    android:id="@+id/btnPrToolPencil"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:text="✏️"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1C385C"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrToolBrush"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🖌️"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrToolSplit"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="✂️"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrToolGlue"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🩹"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrToolChop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔪"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrToolSelect"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔲"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrToolErase"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="⌫"
+                    android:textSize="13sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Selection & Batch Operations -->
+                <Button
+                    android:id="@+id/btnPrSelectAll"
+                    android:layout_width="40dp"
+                    android:layout_height="34dp"
+                    android:text="ALL"
+                    android:textColor="#C7C7CC"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrDeselect"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="CLR"
+                    android:textColor="#8E8E93"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrDuplicate"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="⧉"
+                    android:textColor="#0A84FF"
+                    android:textSize="13sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrMuteNote"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔇"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrDeleteNotes"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🗑️"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Musical Scales, Folding & Chord Assistants -->
+                <Button
+                    android:id="@+id/btnPrScale"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="🎹 CHROMATIC"
+                    android:textColor="#C7C7CC"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnPrScaleFold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="FOLD: OFF"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnPrScaleSnap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="SNAP: OFF"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnPrChord"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🎸 CHORD"
+                    android:textColor="#0A84FF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#1C385C"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- MIDI Transform Studio & Octave Transposition -->
+                <Button
+                    android:id="@+id/btnPrTransform"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="⚡ FX"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#0A84FF"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnPrOctUp"
+                    android:layout_width="40dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="▲12"
+                    android:textColor="#C7C7CC"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnPrOctDown"
+                    android:layout_width="40dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="▼12"
+                    android:textColor="#C7C7CC"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnPrClose"
+            android:layout_width="36dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:text="✕"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:backgroundTint="#FF453A"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <!-- Piano Roll Canvas Viewport -->
+    <com.maxica.cobass.ui.PianoRollCanvasView
+        android:id="@+id/pianoRollCanvas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

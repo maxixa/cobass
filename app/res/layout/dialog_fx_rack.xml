@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtFxTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="FX Rack"
+                android:textColor="@color/cubase_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnCloseFx"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#3A3A3C" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2E313E"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 1. MODULAR 8-SLOT INSERT FX RACK -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MODULAR INSERT FX RACK (8 SLOTS)"
+            android:textColor="@color/cubase_blue"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/rackSlotsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2E313E"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="14dp" />
+
+        <!-- 2. CORE ANALOG UTILITY STRIP (EQ / COMP / REVERB / DELAY) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CORE ANALOG UTILITY STRIP"
+            android:textColor="@color/cubase_text_dim"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <!-- 4-Band Parametric EQ Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="1. PARAMETRIC EQ (Low / Mid / High)"
+            android:textColor="@color/cubase_text"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <SeekBar
+                android:id="@+id/seekEqLow"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="50" />
+
+            <SeekBar
+                android:id="@+id/seekEqMid"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="50" />
+
+            <SeekBar
+                android:id="@+id/seekEqHigh"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="50" />
+        </LinearLayout>
+
+        <!-- Studio Compressor Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="2. DYNAMIC COMPRESSOR (Thresh / Ratio)"
+            android:textColor="@color/cubase_text"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <SeekBar
+                android:id="@+id/seekCompThresh"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="60" />
+
+            <SeekBar
+                android:id="@+id/seekCompRatio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="30" />
+        </LinearLayout>
+
+        <!-- Space FX (Reverb & Delay) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="3. SPATIAL FX (Reverb Wet / Delay Mix)"
+            android:textColor="@color/cubase_text"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <SeekBar
+                android:id="@+id/seekReverbMix"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="30" />
+
+            <SeekBar
+                android:id="@+id/seekDelayMix"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="35" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

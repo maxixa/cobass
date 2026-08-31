@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Top Action & Transport Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#161820"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:id="@+id/txtWaveClipTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wave Editor"
+            android:textColor="@color/cubase_blue"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:layout_marginEnd="6dp" />
+
+        <!-- Undo & Redo -->
+        <Button
+            android:id="@+id/btnWaveUndo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:text="↶"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <Button
+            android:id="@+id/btnWaveRedo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="2dp"
+            android:text="↷"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Transport Group -->
+                <Button
+                    android:id="@+id/btnWavePlay"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:text="▶"
+                    android:textColor="#30D158"
+                    android:textSize="13sp"
+                    android:backgroundTint="#163824"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnWaveStop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="■"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnWaveLoop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔁"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1C385C"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnWaveFollow"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🎯"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1C385C"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnWaveZoomDialog"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔍"
+                    android:textSize="12sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Tool Modes -->
+                <Button
+                    android:id="@+id/btnWaveToolSelect"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="🔲 SELECT"
+                    android:textColor="#0A84FF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#1C385C"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnWaveToolTrim"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="✂ TRIM"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnWaveToolSlice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔪 SLICE"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <!-- Zero Crossing -->
+                <Button
+                    android:id="@+id/btnWaveZeroSnap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="Ø SNAP: ON"
+                    android:textColor="#30D158"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#163824"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Phase 6 I/O: Import, Record, Export -->
+                <Button
+                    android:id="@+id/btnWaveImport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="📂 IMPORT"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#0A84FF"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp" />
+
+                <Button
+                    android:id="@+id/btnWaveRecord"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="🎙 RECORD"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#FF453A"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp" />
+
+                <Button
+                    android:id="@+id/btnWaveExport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="💾 SAVE / SHARE"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#30D158"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Studios -->
+                <Button
+                    android:id="@+id/btnWavePitchStudio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="🎚️ PITCH / TIME"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#8944AB"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp" />
+
+                <Button
+                    android:id="@+id/btnWaveSliceStudio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="🥁 TRANSIENT"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#D97706"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp" />
+
+                <Button
+                    android:id="@+id/btnWaveDspStudio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="⚡ DSP"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp" />
+
+                <Button
+                    android:id="@+id/btnWaveAudition"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="Audition"
+                    android:textSize="11sp"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnWaveClose"
+            android:layout_width="36dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:text="✕"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:backgroundTint="#FF453A"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <!-- Waveform Viewport Canvas -->
+    <com.maxica.cobass.ui.WaveEditorCanvasView
+        android:id="@+id/waveCanvas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

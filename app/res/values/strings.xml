@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cobass</string>
+    <string name="title_phase1">Cobass DAW - Real-Time Audio Engine</string>
+    <string name="btn_start_engine">Start AAudio Engine</string>
+    <string name="btn_stop_engine">Stop AAudio Engine</string>
+    <string name="btn_toggle_tone">Toggle Test Tone (440 Hz)</string>
+    <string name="lbl_status">Engine Status: IDLE</string>
+    <string name="lbl_latency">Latency Mode: Unknown</string>
+</resources>

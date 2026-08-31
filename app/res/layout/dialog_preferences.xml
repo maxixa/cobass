@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Preferences &amp; Plugin Manager"
+                android:textColor="@color/cubase_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnClosePrefs"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:backgroundTint="#3A3A3C" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2E313E"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 1. MODULAR PLUGIN ENGINE & SIDELOADING SECTION -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MODULAR PLUGIN ENGINE &amp; SIDELOADING"
+            android:textColor="@color/cubase_blue"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtPluginSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="#14161C"
+            android:padding="10dp"
+            android:text="Plugins Available: 0 (0 Synths, 0 FX)"
+            android:textColor="@color/accent_green"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btnSideloadPluginApk"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1.2"
+                android:text="📦 Sideload Plugin (.apk)"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:backgroundTint="#0A84FF" />
+
+            <Button
+                android:id="@+id/btnRescanPlugins"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="🔄 Rescan Installed"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:backgroundTint="#3A3A3C" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2E313E"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 2. General UI Scale Slider -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="General UI Scale"
+                android:textColor="@color/cubase_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtScalePercent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100%"
+                android:textColor="@color/accent_green"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/seekUiScale"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:max="80"
+            android:progress="30" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="70% (Compact)"
+                android:textColor="@color/cubase_text_dim"
+                android:textSize="11sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="150% (Large)"
+                android:textColor="@color/cubase_text_dim"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- 3. Tempo (BPM) Setting -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Project Tempo (BPM)"
+                android:textColor="@color/cubase_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtBpmDisplay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="120 BPM"
+                android:textColor="@color/cubase_blue"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/seekBpm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:max="180"
+            android:progress="60" />
+
+        <!-- 4. Audio Diagnostics Info -->
+        <TextView
+            android:id="@+id/txtAudioDiag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="#14161C"
+            android:padding="12dp"
+            android:text="Driver: AAudio (Low-Latency Exclusive)\nSample Rate: 48000 Hz | Burst: 192"
+            android:textColor="@color/cubase_text_dim"
+            android:textSize="12sp"
+            android:lineSpacingExtra="3dp" />
+
+        <Button
+            android:id="@+id/btnResetDefaults"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="16dp"
+            android:text="Reset to Default (100%)"
+            android:textSize="12sp"
+            android:backgroundTint="#2C2C2E" />
+
+    </LinearLayout>
+</ScrollView>

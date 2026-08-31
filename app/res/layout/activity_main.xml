@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/bg_surface"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="COBASS"
+            android:textColor="@color/cubase_blue"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="6dp" />
+
+        <!-- Quick Undo / Redo for Arranger -->
+        <Button
+            android:id="@+id/btnArrUndo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:text="↶"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <Button
+            android:id="@+id/btnArrRedo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="2dp"
+            android:text="↷"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <Button
+                    android:id="@+id/btnPlay"
+                    android:layout_width="44dp"
+                    android:layout_height="36dp"
+                    android:text="▶"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnStop"
+                    android:layout_width="44dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="3dp"
+                    android:text="■"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnLoop"
+                    android:layout_width="54dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="3dp"
+                    android:text="LOOP"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnLoopHalve"
+                    android:layout_width="32dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="/2"
+                    android:textColor="#C7C7CC"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnLoopDouble"
+                    android:layout_width="32dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="2x"
+                    android:textColor="#C7C7CC"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnLoopToSel"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🎯"
+                    android:textSize="11sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <TextView
+                    android:id="@+id/txtTimeCounter"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="001:01:000"
+                    android:textAlignment="center"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/accent_green"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <!-- Tools: Select, Pencil, Split, Glue, Slip, Erase -->
+                <Button
+                    android:id="@+id/btnToolSelect"
+                    android:layout_width="54dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="6dp"
+                    android:text="Select"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnToolPencil"
+                    android:layout_width="54dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="Pencil"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnToolSplit"
+                    android:layout_width="46dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="Split"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnToolGlue"
+                    android:layout_width="46dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="Glue"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnToolSlip"
+                    android:layout_width="44dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="Slip"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnToolEraser"
+                    android:layout_width="48dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="Erase"
+                    android:textSize="10sp" />
+
+                <!-- Multi-Selection & Clipboard Bar -->
+                <Button
+                    android:id="@+id/btnArrSelectAll"
+                    android:layout_width="42dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="6dp"
+                    android:text="ALL"
+                    android:textSize="10sp"
+                    android:textColor="#C7C7CC"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnArrDeselect"
+                    android:layout_width="48dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="DESEL"
+                    android:textSize="9sp"
+                    android:textColor="#8E8E93"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnArrDuplicate"
+                    android:layout_width="48dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="DUPL"
+                    android:textSize="10sp"
+                    android:textColor="#0A84FF"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnArrMuteClip"
+                    android:layout_width="48dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="MUTE"
+                    android:textSize="10sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnArrDeleteClips"
+                    android:layout_width="44dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="DEL"
+                    android:textSize="10sp"
+                    android:backgroundTint="#FF453A"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnSnapGrid"
+                    android:layout_width="78dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="6dp"
+                    android:text="Snap: 1/4"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnOpenProject"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="6dp"
+                    android:text="📁 PROJ"
+                    android:textSize="10sp"
+                    android:backgroundTint="#30D158" />
+
+                <Button
+                    android:id="@+id/btnOpenMixer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="3dp"
+                    android:text="🎛 MIX"
+                    android:textSize="10sp"
+                    android:backgroundTint="#0A84FF" />
+
+                <Button
+                    android:id="@+id/btnAddSynth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="3dp"
+                    android:text="+ Synth"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnAddAudio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="+ Audio"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnPreferences"
+            android:layout_width="38dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:text="⚙"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:backgroundTint="#2C2C2E"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <com.maxica.cobass.ui.ArrangerTimelineView
+        android:id="@+id/arrangerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

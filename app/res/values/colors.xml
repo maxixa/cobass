@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#121316</color>
+    <color name="bg_surface">#1C1E24</color>
+    <color name="cubase_blue">#0A84FF</color>
+    <color name="cubase_red">#FF453A</color>
+    <color name="cubase_text">#F2F2F7</color>
+    <color name="cubase_text_dim">#8E8E93</color>
+    <color name="accent_green">#30D158</color>
+</resources>

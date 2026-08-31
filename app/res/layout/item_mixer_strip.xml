@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="120dp"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_surface"
+    android:layout_marginEnd="6dp"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/txtStripName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Track 1"
+        android:textAlignment="center"
+        android:textColor="@color/cubase_text"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnStripFx"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_marginTop="6dp"
+        android:text="FX RACK"
+        android:textSize="10sp"
+        android:backgroundTint="#0A84FF" />
+
+    <!-- Pan Slider -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="PAN"
+        android:textAlignment="center"
+        android:textColor="@color/cubase_text_dim"
+        android:textSize="10sp" />
+
+    <SeekBar
+        android:id="@+id/faderPan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="50" />
+
+    <!-- Long-Throw Gain Fader & VU Meter -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+
+        <SeekBar
+            android:id="@+id/faderVolume"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="50" />
+
+        <LinearLayout
+            android:layout_width="14dp"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_marginStart="4dp">
+
+            <ProgressBar
+                android:id="@+id/meterL"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="6dp"
+                android:layout_height="match_parent"
+                android:max="100"
+                android:progress="30" />
+
+            <ProgressBar
+                android:id="@+id/meterR"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="6dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="2dp"
+                android:max="100"
+                android:progress="30" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- M / S / Phase Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btnStripMute"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:text="M"
+            android:textSize="11sp"
+            android:backgroundTint="#3A3A3C" />
+
+        <Button
+            android:id="@+id/btnStripSolo"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:layout_marginStart="3dp"
+            android:text="S"
+            android:textSize="11sp"
+            android:backgroundTint="#3A3A3C" />
+
+        <Button
+            android:id="@+id/btnStripPhase"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:layout_marginStart="3dp"
+            android:text="Ø"
+            android:textSize="11sp"
+            android:backgroundTint="#3A3A3C" />
+    </LinearLayout>
+</LinearLayout>

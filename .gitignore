@@ -1,0 +1,54 @@
+# Build Artifacts & Packaging Outputs
+out/
+build_tmp/
+build/
+*.apk
+*.idsig
+*.dex
+*.class
+*.flat
+*.zip
+
+# Native Build Outputs
+app/lib/arm64-v8a/
+app/lib/armeabi-v7a/
+app/lib/x86_64/
+*.so
+*.o
+*.a
+
+# Dependency Caches (Managed via deps.toml & resolved.lock.json)
+libs/downloaded/
+libs/exploded/
+libs/cache/
+libs/native/
+
+# Keystores & Security
+config/debug.keystore
+*.keystore
+*.jks
+
+# Backup Archives & LLM Context Dumps
+backups/
+*.tar.gz
+*.zip
+beatforge_llm_bundle.txt
+llm_context.md
+
+# IDE & OS Metadata
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# Gradle Prohibition (Enforces NO_GRADLE_POLICY)
+.gradle/
+gradlew
+gradlew.bat
+build.gradle
+settings.gradle

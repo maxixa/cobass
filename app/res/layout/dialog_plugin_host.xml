@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Top Action & Plugin Header Strip -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/bg_surface"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:id="@+id/txtPluginTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hyperion Synth"
+            android:textColor="@color/cubase_blue"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:singleLine="true" />
+
+        <TextView
+            android:id="@+id/txtPluginVendor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="v1.0 • Maxica Audio"
+            android:textColor="@color/cubase_text_dim"
+            android:textSize="11sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- A/B Comparison Toggle -->
+        <Button
+            android:id="@+id/btnAbCompare"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:text="A / B"
+            android:textColor="#C7C7CC"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:backgroundTint="#242734"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+        <!-- Preset Manager Dropdown -->
+        <Button
+            android:id="@+id/btnPluginPresets"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:text="📁 PRESETS ▾"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:backgroundTint="#16385C"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+        <!-- Save Patch Button -->
+        <Button
+            android:id="@+id/btnSavePatch"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:text="💾 SAVE"
+            android:textColor="#30D158"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:backgroundTint="#163824"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+        <!-- Bypass Toggle Button -->
+        <Button
+            android:id="@+id/btnPluginBypass"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:text="⚡ BYPASS"
+            android:textColor="#FF453A"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:backgroundTint="#242734"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+        <!-- Close Dialog -->
+        <Button
+            android:id="@+id/btnClosePluginDialog"
+            android:layout_width="38dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="8dp"
+            android:text="✕"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:backgroundTint="#3A3A3C"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <!-- Visualizer / Waveform Display Container -->
+    <FrameLayout
+        android:id="@+id/pluginVisualizerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:background="#161822"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/txtVisualizerInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Live DSP Parameter Matrix"
+            android:textColor="@color/cubase_text_dim"
+            android:textSize="12sp" />
+    </FrameLayout>
+
+    <!-- Scrollable Modular Parameter Grid Container -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/bg_dark"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:id="@+id/paramMatrixContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+</LinearLayout>

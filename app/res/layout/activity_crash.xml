@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:padding="16dp">
+
+    <!-- Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/bg_surface"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⚠️ COBASS CRASH DEBUGGER"
+            android:textColor="@color/cubase_red"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnCopyLog"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="📋 Copy Log"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:backgroundTint="@color/cubase_blue" />
+
+        <Button
+            android:id="@+id/btnRestartApp"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
+            android:text="🔄 Restart"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:backgroundTint="@color/accent_green" />
+
+        <Button
+            android:id="@+id/btnCloseCrash"
+            android:layout_width="40dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
+            android:text="✕"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:backgroundTint="#3A3A3C" />
+    </LinearLayout>
+
+    <!-- Error Banner Summary -->
+    <TextView
+        android:id="@+id/txtCrashSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="#261414"
+        android:padding="10dp"
+        android:text="An unhandled exception occurred."
+        android:textColor="@color/cubase_red"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- Diagnostic Details & Stack Trace View -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp"
+        android:background="#15161C"
+        android:padding="12dp">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/txtCrashLog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="Collecting logs..."
+                android:textColor="#E5E5EA"
+                android:textSize="11sp"
+                android:textIsSelectable="true" />
+        </HorizontalScrollView>
+    </ScrollView>
+
+</LinearLayout>

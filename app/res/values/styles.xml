@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Cobass" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="android:textColor">@color/cubase_text</item>
+        <item name="android:colorAccent">@color/cubase_blue</item>
+    </style>
+</resources>
