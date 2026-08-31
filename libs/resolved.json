@@ -1,0 +1,402 @@
+{
+  "generator": "Cobass LibResolver",
+  "totalArtifacts": 44,
+  "artifacts": [
+    {
+      "group": "androidx.activity",
+      "artifact": "activity",
+      "version": "1.8.2",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.8.2/activity-1.8.2.aar",
+      "isDirect": true,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.annotation",
+      "artifact": "annotation",
+      "version": "1.7.0",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.7.0/annotation-1.7.0.jar",
+      "isDirect": true,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.annotation",
+      "artifact": "annotation-experimental",
+      "version": "1.3.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.annotation",
+      "artifact": "annotation-jvm",
+      "version": "1.7.0",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.7.0/annotation-jvm-1.7.0.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.appcompat",
+      "artifact": "appcompat",
+      "version": "1.6.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.aar",
+      "isDirect": true,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.appcompat",
+      "artifact": "appcompat-resources",
+      "version": "1.6.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.arch.core",
+      "artifact": "core-common",
+      "version": "2.2.0",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.arch.core",
+      "artifact": "core-runtime",
+      "version": "2.2.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-runtime/2.2.0/core-runtime-2.2.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.collection",
+      "artifact": "collection",
+      "version": "1.1.0",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.1.0/collection-1.1.0.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.concurrent",
+      "artifact": "concurrent-futures",
+      "version": "1.1.0",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/concurrent/concurrent-futures/1.1.0/concurrent-futures-1.1.0.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.core",
+      "artifact": "core",
+      "version": "1.12.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.12.0/core-1.12.0.aar",
+      "isDirect": true,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.core",
+      "artifact": "core-ktx",
+      "version": "1.8.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.cursoradapter",
+      "artifact": "cursoradapter",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.customview",
+      "artifact": "customview",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/customview/customview/1.0.0/customview-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.customview",
+      "artifact": "customview-poolingcontainer",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/customview/customview-poolingcontainer/1.0.0/customview-poolingcontainer-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.drawerlayout",
+      "artifact": "drawerlayout",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.emoji2",
+      "artifact": "emoji2",
+      "version": "1.2.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.emoji2",
+      "artifact": "emoji2-views-helper",
+      "version": "1.2.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.fragment",
+      "artifact": "fragment",
+      "version": "1.3.6",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.3.6/fragment-1.3.6.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.interpolator",
+      "artifact": "interpolator",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-common",
+      "version": "2.6.1",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.6.1/lifecycle-common-2.6.1.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-livedata",
+      "version": "2.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-livedata-core",
+      "version": "2.6.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.6.1/lifecycle-livedata-core-2.6.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-process",
+      "version": "2.4.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-runtime",
+      "version": "2.6.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.6.1/lifecycle-runtime-2.6.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-viewmodel",
+      "version": "2.6.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.6.1/lifecycle-viewmodel-2.6.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-viewmodel-savedstate",
+      "version": "2.6.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.6.1/lifecycle-viewmodel-savedstate-2.6.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.loader",
+      "artifact": "loader",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/loader/loader/1.0.0/loader-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.profileinstaller",
+      "artifact": "profileinstaller",
+      "version": "1.3.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/profileinstaller/profileinstaller/1.3.0/profileinstaller-1.3.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.recyclerview",
+      "artifact": "recyclerview",
+      "version": "1.3.2",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/recyclerview/recyclerview/1.3.2/recyclerview-1.3.2.aar",
+      "isDirect": true,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.resourceinspection",
+      "artifact": "resourceinspection-annotation",
+      "version": "1.0.1",
+      "packaging": "jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.savedstate",
+      "artifact": "savedstate",
+      "version": "1.2.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.2.1/savedstate-1.2.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.startup",
+      "artifact": "startup-runtime",
+      "version": "1.1.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.tracing",
+      "artifact": "tracing",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/tracing/tracing/1.0.0/tracing-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.vectordrawable",
+      "artifact": "vectordrawable",
+      "version": "1.1.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.vectordrawable",
+      "artifact": "vectordrawable-animated",
+      "version": "1.1.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.versionedparcelable",
+      "artifact": "versionedparcelable",
+      "version": "1.1.1",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "androidx.viewpager",
+      "artifact": "viewpager",
+      "version": "1.0.0",
+      "packaging": "aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "com.google.guava",
+      "artifact": "listenablefuture",
+      "version": "1.0",
+      "packaging": "jar",
+      "url": "https://repo.maven.apache.org/maven2/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "org.jetbrains.kotlin",
+      "artifact": "kotlin-stdlib",
+      "version": "1.8.22",
+      "packaging": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.8.22/kotlin-stdlib-1.8.22.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "org.jetbrains.kotlin",
+      "artifact": "kotlin-stdlib-common",
+      "version": "1.8.22",
+      "packaging": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.22/kotlin-stdlib-common-1.8.22.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "org.jetbrains.kotlinx",
+      "artifact": "kotlinx-coroutines-android",
+      "version": "1.6.4",
+      "packaging": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.4/kotlinx-coroutines-android-1.6.4.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "org.jetbrains.kotlinx",
+      "artifact": "kotlinx-coroutines-core-jvm",
+      "version": "1.6.4",
+      "packaging": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar",
+      "isDirect": false,
+      "sha256": ""
+    },
+    {
+      "group": "org.jetbrains",
+      "artifact": "annotations",
+      "version": "13.0",
+      "packaging": "jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+      "isDirect": false,
+      "sha256": ""
+    }
+  ]
+}

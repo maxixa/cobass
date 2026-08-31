@@ -124,6 +124,12 @@ public class ClipItem {
         }
     }
 
+    public void addNote(Note note) {
+        if (note != null) {
+            notes.add(note);
+        }
+    }
+
     public void addNote(int note, float vel, long offset, long len) {
         notes.add(new Note(note, vel, offset, len));
     }
@@ -421,7 +427,6 @@ public class ClipItem {
         }
     }
 
-    // --- PHASE 5: ADVANCED VELOCITY DYNAMICS & COMPRESSION ---
     public void compressVelocities(float minVel, float maxVel) {
         List<Note> targets = getSelectedNotes().isEmpty() ? notes : getSelectedNotes();
         if (targets.isEmpty()) return;

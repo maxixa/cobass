@@ -82,6 +82,7 @@ public class PianoRollCanvasView extends View {
 
     // Two-Finger Pan Navigation
     private boolean isTwoFingerPanning = false;
+    private boolean wasTwoFingerPanning = false;
     private float lastPanMidX = 0f;
     private float lastPanMidY = 0f;
 
@@ -731,26 +732,32 @@ public class PianoRollCanvasView extends View {
         final int pointerCount = event.getPointerCount();
         final float gridBottom = getHeight() - velocityLaneHeight;
 
-        // 1. Two-Finger Pan Navigation (Cancels accidental single-finger note drawing)
+        // 1. Two-Finger Pan Navigation (Instantly cancels and rolls back accidental single-finger note creation)
         if (pointerCount >= 2) {
             float midX = (event.getX(0) + event.getX(1)) / 2f;
             float midY = (event.getY(0) + event.getY(1)) / 2f;
 
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_POINTER_DOWN:
+                case MotionEvent.ACTION_DOWN:
                     isTwoFingerPanning = true;
+                    wasTwoFingerPanning = true;
                     lastPanMidX = midX;
                     lastPanMidY = midY;
                     stopAudition();
 
-                    // Instantly roll back any note created by finger 1 prior to finger 2 landing
-                    if (isCreatingNewNote && pendingNewNote != null && clip != null) {
-                        clip.removeNote(pendingNewNote);
-                        pendingNewNote = null;
-                        isCreatingNewNote = false;
-                        hasModifiedNotesInGesture = false;
-                        gestureStartSnapshot = null;
+                    // Restore exact note snapshot and resync engine immediately
+                    if (gestureStartSnapshot != null && clip != null) {
+                        clip.restoreNotesList(gestureStartSnapshot);
+                        if (listener != null) {
+                            listener.onNotesChanged();
+                        }
                     }
+
+                    pendingNewNote = null;
+                    isCreatingNewNote = false;
+                    hasModifiedNotesInGesture = false;
+                    gestureStartSnapshot = null;
 
                     isDrawingVelocityRamp = false;
                     activeVelocityDragNote = null;
@@ -790,6 +797,21 @@ public class PianoRollCanvasView extends View {
             return true;
         }
 
+        // If this gesture was initiated as / converted to a 2-finger pan, suppress residual single-finger edit
+        if (wasTwoFingerPanning) {
+            if (event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                wasTwoFingerPanning = false;
+                isTwoFingerPanning = false;
+                stopAudition();
+                pendingNewNote = null;
+                isCreatingNewNote = false;
+                hasModifiedNotesInGesture = false;
+                gestureStartSnapshot = null;
+                invalidate();
+            }
+            return true;
+        }
+
         // 2. Single-Touch Processing
         final float x = event.getX();
         final float y = event.getY();
@@ -797,6 +819,7 @@ public class PianoRollCanvasView extends View {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 isTwoFingerPanning = false;
+                wasTwoFingerPanning = false;
                 dragStartRawX = x;
                 dragStartRawY = y;
                 hasModifiedNotesInGesture = false;
@@ -959,7 +982,7 @@ public class PianoRollCanvasView extends View {
                             ClipItem.Note newNote = new ClipItem.Note(midiNote, 0.85f, touchTick, defaultLen);
                             newNote.isSelected = true;
 
-                            clip.addNote(midiNote, 0.85f, touchTick, defaultLen);
+                            clip.addNote(newNote);
 
                             pendingNewNote = newNote;
                             primaryDragNote = newNote;

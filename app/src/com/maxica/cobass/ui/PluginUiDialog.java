@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -40,6 +41,7 @@ public class PluginUiDialog extends Dialog {
     private String stateB = "{}";
     private boolean isStateActiveA = true;
 
+    private SynthVisualizerView visualizerView;
     private final List<RotaryKnobView> activeKnobs = new ArrayList<>();
 
     public PluginUiDialog(@NonNull Context context, int trackId, int slotIndex,
@@ -69,10 +71,19 @@ public class PluginUiDialog extends Dialog {
         Button btnPresets = findViewById(R.id.btnPluginPresets);
         Button btnSavePatch = findViewById(R.id.btnSavePatch);
         Button btnClose = findViewById(R.id.btnClosePluginDialog);
+        FrameLayout visualizerContainer = findViewById(R.id.pluginVisualizerContainer);
         LinearLayout paramContainer = findViewById(R.id.paramMatrixContainer);
 
         txtTitle.setText(descriptor.getName());
         txtVendor.setText("v" + descriptor.getVersion() + " • " + descriptor.getVendor());
+
+        // Install Live 60FPS Interactive Visualizer HUD
+        if (visualizerContainer != null) {
+            visualizerContainer.removeAllViews();
+            visualizerView = new SynthVisualizerView(getContext());
+            visualizerContainer.addView(visualizerView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
 
         // Capture Initial State A
         if (AudioEngineNative.isLoaded()) {
@@ -140,7 +151,6 @@ public class PluginUiDialog extends Dialog {
             return;
         }
 
-        // Layout parameters in rows of 4
         final int columnsPerRow = 4;
         LinearLayout currentRow = null;
 
@@ -170,11 +180,13 @@ public class PluginUiDialog extends Dialog {
             if (AudioEngineNative.isLoaded()) {
                 float val = AudioEngineNative.nativeGetPluginParameter(trackId, slotIndex, param.getId());
                 knob.setValue(val, false);
+                syncVisualizerFromParam(param.getName(), val);
             }
 
             knob.setOnKnobChangeListener((k, value, fromUser) -> {
                 if (fromUser && AudioEngineNative.isLoaded()) {
                     AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, param.getId(), value);
+                    syncVisualizerFromParam(param.getName(), value);
                 }
             });
 
@@ -216,7 +228,6 @@ public class PluginUiDialog extends Dialog {
             box.addView(btnToggle);
             return box;
         } else {
-            // Discrete Integer / Stepped Choices
             LinearLayout box = new LinearLayout(getContext());
             box.setOrientation(LinearLayout.VERTICAL);
             box.setGravity(Gravity.CENTER);
@@ -290,6 +301,18 @@ public class PluginUiDialog extends Dialog {
         }
     }
 
+    private void syncVisualizerFromParam(String name, float value) {
+        if (visualizerView == null) return;
+        String lower = name.toLowerCase();
+        if (lower.contains("cutoff")) {
+            visualizerView.setFilterParams(value, 1.5f);
+        } else if (lower.contains("resonance")) {
+            visualizerView.setFilterParams(3500.0f, value);
+        } else if (lower.contains("attack")) {
+            visualizerView.setEnvelopeParams(value, 120.0f, 0.70f, 250.0f);
+        }
+    }
+
     private void updateBoolButton(Button btn, boolean state) {
         btn.setText(state ? "ON" : "OFF");
         btn.setTextColor(state ? Color.parseColor("#30D158") : Color.parseColor("#8E8E93"));
@@ -313,7 +336,6 @@ public class PluginUiDialog extends Dialog {
         }
     }
 
-    // --- PRESET MANAGER & PATCH IO ---
     private void showPresetsDialog() {
         Dialog dialog = new Dialog(getContext());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -469,6 +491,9 @@ public class PluginUiDialog extends Dialog {
 
     @Override
     public void dismiss() {
+        if (visualizerView != null) {
+            visualizerView.stopAnimation();
+        }
         super.dismiss();
         if (onDismissCallback != null) onDismissCallback.run();
     }
