@@ -8,11 +8,11 @@ extern "C" {
 
 #define COBASS_PLUGIN_API_VERSION 1
 #define COBASS_MAX_PARAMS 64
-#define COBASS_MAX_CHOICES 8
+#define COBASS_MAX_CHOICES 16
 
 typedef enum {
-    COBASS_PLUGIN_TYPE_SYNTH  = 0,
-    COBASS_PLUGIN_TYPE_EFFECT = 1
+    COBASS_PLUGIN_TYPE_SYNTH  = 0, // Instrument: Receives MIDI events, generates audio
+    COBASS_PLUGIN_TYPE_EFFECT = 1  // Insert FX: Processes audio in-place
 } CobassPluginType;
 
 typedef enum {
@@ -25,7 +25,7 @@ typedef enum {
 typedef struct {
     uint32_t id;
     char name[32];
-    char label[16];          // Unit label: "Hz", "dB", "%", "ms"
+    char label[16];          // Unit label: "Hz", "dB", "%", "ms", "st", etc.
     CobassParamType type;
     float minValue;
     float maxValue;
@@ -38,7 +38,7 @@ typedef struct {
 
 typedef struct {
     uint32_t apiVersion;
-    char pluginId[64];       // Unique ID, e.g. "com.maxica.cobass.plugins.hyperion"
+    char pluginId[64];       // Unique Reverse-DNS ID (e.g., "com.maxica.cobass.plugins.hyperion")
     char name[48];           // Human-readable name
     char vendor[32];         // Vendor name
     char version[16];        // Semantic version

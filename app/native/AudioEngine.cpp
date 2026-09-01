@@ -73,6 +73,38 @@ int32_t AudioEngine::addSynthTrack(const std::string& name) {
     return mixer_.addSynthTrack(name);
 }
 
+int32_t AudioEngine::addStepSequencerTrack(const std::string& name) {
+    return mixer_.addStepSequencerTrack(name);
+}
+
+void AudioEngine::setStepSequencerStep(int32_t trackId, int32_t laneIndex, int32_t stepIndex, bool active, float velocity, int32_t pitch, float gate, float nudge, int32_t ratchets, float prob) {
+    Track* t = mixer_.getTrack(trackId);
+    if (t && t->getType() == TrackType::StepSequencer) {
+        static_cast<StepSequencerTrack*>(t)->setLaneStep(laneIndex, stepIndex, active, velocity, pitch, gate, nudge, ratchets, prob);
+    }
+}
+
+void AudioEngine::loadStepSequencerSample(int32_t trackId, int32_t laneIndex, const float* data, int32_t length, int32_t channels) {
+    Track* t = mixer_.getTrack(trackId);
+    if (t && t->getType() == TrackType::StepSequencer) {
+        static_cast<StepSequencerTrack*>(t)->loadLaneSample(laneIndex, data, length, channels);
+    }
+}
+
+void AudioEngine::clearStepSequencerLane(int32_t trackId, int32_t laneIndex) {
+    Track* t = mixer_.getTrack(trackId);
+    if (t && t->getType() == TrackType::StepSequencer) {
+        static_cast<StepSequencerTrack*>(t)->clearLaneSteps(laneIndex);
+    }
+}
+
+void AudioEngine::setStepSequencerLaneParams(int32_t trackId, int32_t laneIndex, int32_t midiNote, int32_t stepCount, int32_t stepTicks, float volume, float pan, bool mute, bool solo) {
+    Track* t = mixer_.getTrack(trackId);
+    if (t && t->getType() == TrackType::StepSequencer) {
+        static_cast<StepSequencerTrack*>(t)->setLaneParams(laneIndex, midiNote, stepCount, stepTicks, volume, pan, mute, solo);
+    }
+}
+
 int32_t AudioEngine::addAudioTrack(const std::string& name) {
     return mixer_.addAudioTrack(name);
 }

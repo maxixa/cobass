@@ -70,11 +70,16 @@ public class TrackInspectorDialog extends Dialog {
         Button btnChangeSynth = findViewById(R.id.btnChangeSynth);
         Button btnEditSynth = findViewById(R.id.btnEditSynth);
 
-        if (track.getType() == TrackItem.Type.SYNTH) {
+        if (track.getType() == TrackItem.Type.SYNTH || track.getType() == TrackItem.Type.STEP_SEQUENCER) {
             layoutInstrument.setVisibility(View.VISIBLE);
             String synthId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeGetTrackSynthPluginId(track.getId()) : "";
             PluginDescriptorItem currentSynthDesc = PluginHostManager.getInstance().findPluginById(synthId);
-            txtCurrentInstrument.setText(currentSynthDesc != null ? currentSynthDesc.getName() : "Cobass PolySynth (Default Engine)");
+
+            if (currentSynthDesc != null) {
+                txtCurrentInstrument.setText(currentSynthDesc.getName());
+            } else {
+                txtCurrentInstrument.setText(track.getType() == TrackItem.Type.STEP_SEQUENCER ? "Cobalt Drum Synth (Default Engine)" : "Cobass PolySynth (Default Engine)");
+            }
 
             btnChangeSynth.setOnClickListener(v -> {
                 new InstrumentBrowserDialog(getContext(), new InstrumentBrowserDialog.OnInstrumentSelectedListener() {
@@ -85,8 +90,8 @@ public class TrackInspectorDialog extends Dialog {
                         }
                         track.setInstrumentPluginId("");
                         track.setInstrumentPluginStateJson("{}");
-                        txtCurrentInstrument.setText("Cobass PolySynth (Default Engine)");
-                        Toast.makeText(getContext(), "Switched to Default PolySynth", Toast.LENGTH_SHORT).show();
+                        txtCurrentInstrument.setText(track.getType() == TrackItem.Type.STEP_SEQUENCER ? "Cobalt Drum Synth (Default)" : "Cobass PolySynth (Default)");
+                        Toast.makeText(getContext(), "Switched to Default Engine", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -103,13 +108,20 @@ public class TrackInspectorDialog extends Dialog {
 
             btnEditSynth.setOnClickListener(v -> {
                 String curId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeGetTrackSynthPluginId(track.getId()) : "";
+                if (curId == null || curId.isEmpty()) {
+                    curId = track.getType() == TrackItem.Type.STEP_SEQUENCER ? "com.maxica.cobass.plugins.cobalt_drums" : "com.maxica.cobass.plugins.hyperion";
+                    if (AudioEngineNative.isLoaded()) {
+                        AudioEngineNative.nativeSetTrackSynthPlugin(track.getId(), curId);
+                    }
+                    track.setInstrumentPluginId(curId);
+                }
                 PluginDescriptorItem current = PluginHostManager.getInstance().findPluginById(curId);
                 if (current != null) {
                     new PluginUiDialog(getContext(), track.getId(), -1, current, () -> {
                         if (listener != null) listener.onTrackUpdated(track);
                     }).show();
                 } else {
-                    Toast.makeText(getContext(), "Default PolySynth is active", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Instrument Active: " + curId, Toast.LENGTH_SHORT).show();
                 }
             });
         } else {

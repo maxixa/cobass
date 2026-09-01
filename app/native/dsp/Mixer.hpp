@@ -8,6 +8,7 @@
 #include "Track.hpp"
 #include "SynthTrack.hpp"
 #include "AudioTrack.hpp"
+#include "StepSequencerTrack.hpp"
 
 class Mixer {
 public:
@@ -61,6 +62,22 @@ public:
             if (tracks_[i].load(std::memory_order_relaxed) == nullptr) {
                 const int32_t id = nextTrackId_++;
                 Track* track = new AudioTrack(id, name);
+                track->setSampleRate(sampleRate_);
+                if (tracks_[i].compare_exchange_strong(expected, track, std::memory_order_release)) {
+                    return id;
+                }
+                delete track;
+            }
+        }
+        return -1;
+    }
+
+    int32_t addStepSequencerTrack(const std::string& name) {
+        for (size_t i = 0; i < MAX_TRACKS; ++i) {
+            Track* expected = nullptr;
+            if (tracks_[i].load(std::memory_order_relaxed) == nullptr) {
+                const int32_t id = nextTrackId_++;
+                Track* track = new StepSequencerTrack(id, name);
                 track->setSampleRate(sampleRate_);
                 if (tracks_[i].compare_exchange_strong(expected, track, std::memory_order_release)) {
                     return id;

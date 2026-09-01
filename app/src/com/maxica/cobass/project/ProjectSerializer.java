@@ -2,6 +2,8 @@ package com.maxica.cobass.project;
 
 import android.graphics.Color;
 import com.maxica.cobass.model.ClipItem;
+import com.maxica.cobass.model.SnapGrid;
+import com.maxica.cobass.model.StepPatternItem;
 import com.maxica.cobass.model.TrackItem;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -67,6 +69,48 @@ public class ProjectSerializer {
             tObj.put("compRatio", (double) t.getCompRatio());
             tObj.put("reverbMix", (double) t.getReverbMix());
             tObj.put("delayMix", (double) t.getDelayMix());
+
+            // Step Sequencer Pattern State
+            if (t.getType() == TrackItem.Type.STEP_SEQUENCER && t.getStepPattern() != null) {
+                JSONObject patObj = new JSONObject();
+                StepPatternItem pat = t.getStepPattern();
+                patObj.put("name", pat.getName());
+                patObj.put("baseLength", pat.getBaseLength());
+                JSONArray lanesArr = new JSONArray();
+                for (StepPatternItem.Lane l : pat.getLanes()) {
+                    JSONObject lObj = new JSONObject();
+                    lObj.put("id", l.id);
+                    lObj.put("name", l.name);
+                    lObj.put("midiNote", l.midiNote);
+                    lObj.put("stepCount", l.stepCount);
+                    lObj.put("subdivision", l.subdivision.name());
+                    lObj.put("volume", (double) l.volume);
+                    lObj.put("pan", (double) l.pan);
+                    lObj.put("isMuted", l.isMuted);
+                    lObj.put("isSolo", l.isSolo);
+
+                    JSONArray stepsArr = new JSONArray();
+                    for (int si = 0; si < l.stepCount && si < l.steps.size(); si++) {
+                        StepPatternItem.Step s = l.steps.get(si);
+                        if (s.active || s.ratchets > 1 || Math.abs(s.nudge) > 0.01f || s.probability < 0.99f || s.pitchOffset != 0) {
+                            JSONObject sObj = new JSONObject();
+                            sObj.put("idx", si);
+                            sObj.put("act", s.active);
+                            sObj.put("vel", (double) s.velocity);
+                            sObj.put("pitch", s.pitchOffset);
+                            sObj.put("gate", (double) s.gate);
+                            sObj.put("nudge", (double) s.nudge);
+                            sObj.put("ratchet", s.ratchets);
+                            sObj.put("prob", (double) s.probability);
+                            stepsArr.put(sObj);
+                        }
+                    }
+                    lObj.put("steps", stepsArr);
+                    lanesArr.put(lObj);
+                }
+                patObj.put("lanes", lanesArr);
+                tObj.put("stepPattern", patObj);
+            }
 
             trackArr.put(tObj);
         }
@@ -157,6 +201,53 @@ public class ProjectSerializer {
                 item.setCompRatio((float) tObj.optDouble("compRatio", 3.0));
                 item.setReverbMix((float) tObj.optDouble("reverbMix", 0.3));
                 item.setDelayMix((float) tObj.optDouble("delayMix", 0.35));
+
+                // Restore Step Sequencer Pattern
+                JSONObject patObj = tObj.optJSONObject("stepPattern");
+                if (patObj != null) {
+                    StepPatternItem pat = new StepPatternItem(item.getId(), patObj.optString("name", "Pattern"));
+                    pat.setBaseLength(patObj.optInt("baseLength", 16));
+                    JSONArray lanesArr = patObj.optJSONArray("lanes");
+                    if (lanesArr != null) {
+                        for (int li = 0; li < lanesArr.length(); li++) {
+                            JSONObject lObj = lanesArr.getJSONObject(li);
+                            int laneId = lObj.optInt("id", li);
+                            String laneName = lObj.optString("name", "Lane " + (li + 1));
+                            int midiNote = lObj.optInt("midiNote", 60);
+                            int stepCount = lObj.optInt("stepCount", 16);
+                            StepPatternItem.Lane lane = new StepPatternItem.Lane(laneId, laneName, midiNote, stepCount);
+                            try {
+                                lane.subdivision = SnapGrid.valueOf(lObj.optString("subdivision", "BEAT_1_4"));
+                            } catch (Exception ignored) {
+                                lane.subdivision = SnapGrid.BEAT_1_4;
+                            }
+                            lane.volume = (float) lObj.optDouble("volume", 0.8);
+                            lane.pan = (float) lObj.optDouble("pan", 0.0);
+                            lane.isMuted = lObj.optBoolean("isMuted", false);
+                            lane.isSolo = lObj.optBoolean("isSolo", false);
+
+                            JSONArray stepsArr = lObj.optJSONArray("steps");
+                            if (stepsArr != null) {
+                                for (int si = 0; si < stepsArr.length(); si++) {
+                                    JSONObject sObj = stepsArr.getJSONObject(si);
+                                    int sIdx = sObj.getInt("idx");
+                                    if (sIdx >= 0 && sIdx < lane.steps.size()) {
+                                        StepPatternItem.Step st = lane.steps.get(sIdx);
+                                        st.active = sObj.optBoolean("act", true);
+                                        st.velocity = (float) sObj.optDouble("vel", 0.85);
+                                        st.pitchOffset = sObj.optInt("pitch", 0);
+                                        st.gate = (float) sObj.optDouble("gate", 0.75);
+                                        st.nudge = (float) sObj.optDouble("nudge", 0.0);
+                                        st.ratchets = sObj.optInt("ratchet", 1);
+                                        st.probability = (float) sObj.optDouble("prob", 1.0);
+                                    }
+                                }
+                            }
+                            pat.getLanes().add(lane);
+                        }
+                    }
+                    item.setStepPattern(pat);
+                }
 
                 data.tracks.add(item);
             }

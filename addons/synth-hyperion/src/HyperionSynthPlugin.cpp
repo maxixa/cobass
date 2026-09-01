@@ -11,71 +11,268 @@
 #include "ADSR.hpp"
 
 static const CobassParamDescriptor HYPERION_PARAMS[] = {
-    // --- OSCILLATOR 1 [0..4] ---
-    {0, "Osc1 Wave", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 3.0f, 0.0f, 1.0f, false, {"Sawtooth", "Pulse", "Triangle", "Sine"}, 4},
-    {1, "Osc1 Octave", "oct", COBASS_PARAM_TYPE_INT, -2.0f, 2.0f, 0.0f, 1.0f, false, {}, 0},
+    // --- OSCILLATOR 1 [0..7] ---
+    {0, "Osc1 Wave", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 11.0f, 1.0f, 1.0f, false,
+        {"Sine", "Saw", "Pulse", "Triangle", "Noise", "Hypersaw", "Future Donk", "Vowel", "Metallic FM", "Dirty Reese", "Hard Sync", "Screamer"}, 12},
+    {1, "Osc1 Octave", "oct", COBASS_PARAM_TYPE_INT, -3.0f, 3.0f, 0.0f, 1.0f, false, {}, 0},
     {2, "Osc1 Semi", "st", COBASS_PARAM_TYPE_INT, -12.0f, 12.0f, 0.0f, 1.0f, false, {}, 0},
     {3, "Osc1 Fine", "cent", COBASS_PARAM_TYPE_FLOAT, -50.0f, 50.0f, 0.0f, 1.0f, false, {}, 0},
     {4, "Osc1 PW", "%", COBASS_PARAM_TYPE_FLOAT, 0.05f, 0.95f, 0.50f, 0.01f, false, {}, 0},
+    {5, "Osc1 Unison", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 3.0f, 2.0f, 1.0f, false, {"1 Voice", "2 Voices", "4 Voices", "8 Voices"}, 4},
+    {6, "Osc1 Detune", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.25f, 0.01f, false, {}, 0},
+    {7, "Osc1 Spread", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.80f, 0.01f, false, {}, 0},
 
-    // --- OSCILLATOR 2 [5..10] ---
-    {5, "Osc2 Wave", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 3.0f, 0.0f, 1.0f, false, {"Sawtooth", "Pulse", "Triangle", "Sine"}, 4},
-    {6, "Osc2 Octave", "oct", COBASS_PARAM_TYPE_INT, -2.0f, 2.0f, 0.0f, 1.0f, false, {}, 0},
-    {7, "Osc2 Semi", "st", COBASS_PARAM_TYPE_INT, -12.0f, 12.0f, 7.0f, 1.0f, false, {}, 0},
-    {8, "Osc2 Fine", "cent", COBASS_PARAM_TYPE_FLOAT, -50.0f, 50.0f, 5.0f, 1.0f, false, {}, 0},
-    {9, "Osc2 PW", "%", COBASS_PARAM_TYPE_FLOAT, 0.05f, 0.95f, 0.50f, 0.01f, false, {}, 0},
-    {10, "Osc2 Sync", "", COBASS_PARAM_TYPE_BOOL, 0.0f, 1.0f, 0.0f, 1.0f, false, {}, 0},
+    // --- OSCILLATOR 2 [8..16] ---
+    {8, "Osc2 Wave", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 11.0f, 1.0f, 1.0f, false,
+        {"Sine", "Saw", "Pulse", "Triangle", "Noise", "Hypersaw", "Future Donk", "Vowel", "Metallic FM", "Dirty Reese", "Hard Sync", "Screamer"}, 12},
+    {9, "Osc2 Octave", "oct", COBASS_PARAM_TYPE_INT, -3.0f, 3.0f, 0.0f, 1.0f, false, {}, 0},
+    {10, "Osc2 Semi", "st", COBASS_PARAM_TYPE_INT, -12.0f, 12.0f, 7.0f, 1.0f, false, {}, 0},
+    {11, "Osc2 Fine", "cent", COBASS_PARAM_TYPE_FLOAT, -50.0f, 50.0f, 5.0f, 1.0f, false, {}, 0},
+    {12, "Osc2 PW", "%", COBASS_PARAM_TYPE_FLOAT, 0.05f, 0.95f, 0.50f, 0.01f, false, {}, 0},
+    {13, "Osc2 Sync", "", COBASS_PARAM_TYPE_BOOL, 0.0f, 1.0f, 0.0f, 1.0f, false, {}, 0},
+    {14, "Osc2 Unison", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 3.0f, 2.0f, 1.0f, false, {"1 Voice", "2 Voices", "4 Voices", "8 Voices"}, 4},
+    {15, "Osc2 Detune", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.30f, 0.01f, false, {}, 0},
+    {16, "Osc2 Spread", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.80f, 0.01f, false, {}, 0},
 
-    // --- MIXER & CROSS-MODULATION [11..15] ---
-    {11, "Osc1 Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.80f, 0.01f, false, {}, 0},
-    {12, "Osc2 Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.65f, 0.01f, false, {}, 0},
-    {13, "Sub Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.30f, 0.01f, false, {}, 0},
-    {14, "Noise Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.0f, 0.01f, false, {}, 0},
-    {15, "Cross FM", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.0f, 0.01f, false, {}, 0},
+    // --- MIXER, SUB & CROSS-FM [17..21] ---
+    {17, "Osc1 Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.80f, 0.01f, false, {}, 0},
+    {18, "Osc2 Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.70f, 0.01f, false, {}, 0},
+    {19, "Sub Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.35f, 0.01f, false, {}, 0},
+    {20, "Noise Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.0f, 0.01f, false, {}, 0},
+    {21, "Cross FM", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.0f, 0.01f, false, {}, 0},
 
-    // --- ZERO-DELAY FEEDBACK FILTER [16..20] ---
-    {16, "Filter Mode", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 4.0f, 0.0f, 1.0f, false, {"Ladder 24", "SVF LP12", "SVF BP12", "SVF HP12", "Notch12"}, 5},
-    {17, "Cutoff", "Hz", COBASS_PARAM_TYPE_FLOAT, 20.0f, 20000.0f, 4500.0f, 1.0f, true, {}, 0},
-    {18, "Resonance", "Q", COBASS_PARAM_TYPE_FLOAT, 0.5f, 14.0f, 1.5f, 0.05f, false, {}, 0},
-    {19, "Drive", "x", COBASS_PARAM_TYPE_FLOAT, 0.5f, 4.0f, 1.0f, 0.05f, false, {}, 0},
-    {20, "Filter Env", "%", COBASS_PARAM_TYPE_FLOAT, -1.0f, 1.0f, 0.60f, 0.01f, false, {}, 0},
+    // --- EXPANDED DANCE FILTER SUITE [22..28] ---
+    {22, "Filter Mode", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 7.0f, 0.0f, 1.0f, false,
+        {"Ladder 24", "Diode 18 Acid", "SVF LP12", "SVF BP12", "SVF HP12", "Notch 12", "Formant Vowel", "Comb Resonator"}, 8},
+    {23, "Cutoff", "Hz", COBASS_PARAM_TYPE_FLOAT, 20.0f, 20000.0f, 4500.0f, 1.0f, true, {}, 0},
+    {24, "Resonance", "Q", COBASS_PARAM_TYPE_FLOAT, 0.5f, 16.0f, 1.8f, 0.05f, false, {}, 0},
+    {25, "Filter Drive", "x", COBASS_PARAM_TYPE_FLOAT, 0.5f, 5.0f, 1.2f, 0.05f, false, {}, 0},
+    {26, "Filter Env", "%", COBASS_PARAM_TYPE_FLOAT, -1.0f, 1.0f, 0.50f, 0.01f, false, {}, 0},
+    {27, "Vowel Morph", "", COBASS_PARAM_TYPE_FLOAT, 0.0f, 4.0f, 0.0f, 0.05f, false, {}, 0},
+    {28, "Key Tracking", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.50f, 0.01f, false, {}, 0},
 
-    // --- AMP EXPONENTIAL ENVELOPE [21..24] ---
-    {21, "Amp Attack", "ms", COBASS_PARAM_TYPE_FLOAT, 1.0f, 2000.0f, 10.0f, 1.0f, false, {}, 0},
-    {22, "Amp Decay", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 3000.0f, 120.0f, 1.0f, false, {}, 0},
-    {23, "Amp Sustain", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.70f, 0.01f, false, {}, 0},
-    {24, "Amp Release", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 4000.0f, 250.0f, 1.0f, false, {}, 0},
+    // --- AMP ENVELOPE [29..32] ---
+    {29, "Amp Attack", "ms", COBASS_PARAM_TYPE_FLOAT, 1.0f, 2000.0f, 5.0f, 1.0f, false, {}, 0},
+    {30, "Amp Decay", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 3000.0f, 140.0f, 1.0f, false, {}, 0},
+    {31, "Amp Sustain", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.75f, 0.01f, false, {}, 0},
+    {32, "Amp Release", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 4000.0f, 250.0f, 1.0f, false, {}, 0},
 
-    // --- MODULATION ENVELOPE [25..28] ---
-    {25, "Mod Attack", "ms", COBASS_PARAM_TYPE_FLOAT, 1.0f, 2000.0f, 5.0f, 1.0f, false, {}, 0},
-    {26, "Mod Decay", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 3000.0f, 220.0f, 1.0f, false, {}, 0},
-    {27, "Mod Sustain", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.20f, 0.01f, false, {}, 0},
-    {28, "Mod Release", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 4000.0f, 300.0f, 1.0f, false, {}, 0},
+    // --- MOD ENVELOPE & ATTACK PUNCH [33..38] ---
+    {33, "Mod Attack", "ms", COBASS_PARAM_TYPE_FLOAT, 1.0f, 2000.0f, 5.0f, 1.0f, false, {}, 0},
+    {34, "Mod Decay", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 3000.0f, 180.0f, 1.0f, false, {}, 0},
+    {35, "Mod Sustain", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.20f, 0.01f, false, {}, 0},
+    {36, "Mod Release", "ms", COBASS_PARAM_TYPE_FLOAT, 5.0f, 4000.0f, 200.0f, 1.0f, false, {}, 0},
+    {37, "Punch Drop", "st", COBASS_PARAM_TYPE_FLOAT, 0.0f, 36.0f, 0.0f, 1.0f, false, {}, 0},
+    {38, "Punch Decay", "ms", COBASS_PARAM_TYPE_FLOAT, 2.0f, 60.0f, 15.0f, 1.0f, false, {}, 0},
 
-    // --- LFO 1 [29..32] ---
-    {29, "LFO1 Wave", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 4.0f, 1.0f, 1.0f, false, {"Sine", "Triangle", "Sawtooth", "Square", "S&H"}, 5},
-    {30, "LFO1 Rate", "Hz", COBASS_PARAM_TYPE_FLOAT, 0.05f, 30.0f, 2.0f, 0.01f, false, {}, 0},
-    {31, "LFO1 Cutoff", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.25f, 0.01f, false, {}, 0},
-    {32, "LFO1 Pitch", "st", COBASS_PARAM_TYPE_FLOAT, 0.0f, 2.0f, 0.0f, 0.01f, false, {}, 0},
+    // --- LFO 1 [39..42] ---
+    {39, "LFO1 Wave", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 4.0f, 1.0f, 1.0f, false, {"Sine", "Triangle", "Sawtooth", "Square", "S&H"}, 5},
+    {40, "LFO1 Rate", "Hz", COBASS_PARAM_TYPE_FLOAT, 0.05f, 30.0f, 2.0f, 0.01f, false, {}, 0},
+    {41, "LFO1 Cutoff", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.25f, 0.01f, false, {}, 0},
+    {42, "LFO1 Pitch", "st", COBASS_PARAM_TYPE_FLOAT, 0.0f, 2.0f, 0.0f, 0.01f, false, {}, 0},
 
-    // --- UNISON & MASTER ARTICULATION [33..36] ---
-    {33, "Unison Mode", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 3.0f, 1.0f, 1.0f, false, {"1 Voice", "3 Voices", "5 Voices", "7 Supersaw"}, 4},
-    {34, "Unison Detune", "st", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.20f, 0.01f, false, {}, 0},
-    {35, "Portamento", "ms", COBASS_PARAM_TYPE_FLOAT, 0.0f, 500.0f, 0.0f, 1.0f, false, {}, 0},
-    {36, "Master Gain", "dB", COBASS_PARAM_TYPE_FLOAT, -24.0f, 6.0f, 0.0f, 0.1f, false, {}, 0}
+    // --- INTERNAL DANCE FX RACK [43..51] ---
+    {43, "FX Drive", "dB", COBASS_PARAM_TYPE_FLOAT, 0.0f, 24.0f, 0.0f, 0.1f, false, {}, 0},
+    {44, "FX Dimension", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.40f, 0.01f, false, {}, 0},
+    {45, "FX Delay Time", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 4.0f, 2.0f, 1.0f, false, {"1/4 Beat", "1/8 Beat", "1/8 Dotted", "1/16 Beat", "1/8 Triplet"}, 5},
+    {46, "FX Delay FB", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 0.90f, 0.35f, 0.01f, false, {}, 0},
+    {47, "FX Delay Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.25f, 0.01f, false, {}, 0},
+    {48, "FX Reverb Size", "%", COBASS_PARAM_TYPE_FLOAT, 0.10f, 0.98f, 0.65f, 0.01f, false, {}, 0},
+    {49, "FX Reverb Mix", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.25f, 0.01f, false, {}, 0},
+    {50, "FX OTT Comp", "%", COBASS_PARAM_TYPE_FLOAT, 0.0f, 1.0f, 0.30f, 0.01f, false, {}, 0},
+    {51, "FX Output Trim", "dB", COBASS_PARAM_TYPE_FLOAT, -24.0f, 6.0f, 0.0f, 0.1f, false, {}, 0},
+
+    // --- MASTER CONTROLS [52..53] ---
+    {52, "Portamento", "ms", COBASS_PARAM_TYPE_FLOAT, 0.0f, 500.0f, 0.0f, 1.0f, false, {}, 0},
+    {53, "Master Gain", "dB", COBASS_PARAM_TYPE_FLOAT, -24.0f, 6.0f, 0.0f, 0.1f, false, {}, 0}
 };
 
 static const CobassPluginManifest HYPERION_MANIFEST = {
     COBASS_PLUGIN_API_VERSION,
     "com.maxica.cobass.plugins.hyperion",
-    "Hyperion Wavetable Synth v2",
+    "Hyperion Dance Synth v3",
     "Maxica Audio",
-    "2.0.0",
+    "3.0.0",
     COBASS_PLUGIN_TYPE_SYNTH,
     sizeof(HYPERION_PARAMS) / sizeof(CobassParamDescriptor),
     HYPERION_PARAMS,
     true,  // supportsMidi
     false  // supportsSidechain
+};
+
+class InternalDanceFxRack {
+public:
+    InternalDanceFxRack() {
+        delayBufferL_.assign(MAX_DELAY_SAMPLES, 0.0f);
+        delayBufferR_.assign(MAX_DELAY_SAMPLES, 0.0f);
+        haasBuffer_.assign(2048, 0.0f);
+
+        const int combTuning[8] = {1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617};
+        const int allpassTuning[4] = {556, 441, 341, 225};
+        for (int i = 0; i < 8; ++i) {
+            verbCombs_[i].assign(combTuning[i], 0.0f);
+            verbCombIdx_[i] = 0;
+            verbDampState_[i] = 0.0f;
+        }
+        for (int i = 0; i < 4; ++i) {
+            verbAllPass_[i].assign(allpassTuning[i], 0.0f);
+            verbAllPassIdx_[i] = 0;
+        }
+    }
+
+    void reset(float sampleRate) {
+        sampleRate_ = std::max(8000.0f, sampleRate);
+        std::fill(delayBufferL_.begin(), delayBufferL_.end(), 0.0f);
+        std::fill(delayBufferR_.begin(), delayBufferR_.end(), 0.0f);
+        std::fill(haasBuffer_.begin(), haasBuffer_.end(), 0.0f);
+        delayWriteIdx_ = 0;
+        haasWriteIdx_ = 0;
+        ottEnvL_ = ottEnvR_ = 0.0f;
+        for (int i = 0; i < 8; ++i) {
+            std::fill(verbCombs_[i].begin(), verbCombs_[i].end(), 0.0f);
+            verbCombIdx_[i] = 0;
+            verbDampState_[i] = 0.0f;
+        }
+        for (int i = 0; i < 4; ++i) {
+            std::fill(verbAllPass_[i].begin(), verbAllPass_[i].end(), 0.0f);
+            verbAllPassIdx_[i] = 0;
+        }
+    }
+
+    inline void process(float inL, float inR,
+                        float driveDb, float dimWidth, int delayDivIdx, float delayFb, float delayMix,
+                        float verbSize, float verbMix, float ottComp, float outTrimDb,
+                        float& outL, float& outR) noexcept {
+
+        float sL = inL;
+        float sR = inR;
+
+        // --- STAGE 1: ASYMMETRIC DRIVE & SATURATION ---
+        if (driveDb > 0.01f) {
+            const float driveGain = std::pow(10.0f, driveDb / 20.0f);
+            sL = std::tanh((sL + 0.05f) * driveGain) - 0.05f;
+            sR = std::tanh((sR + 0.05f) * driveGain) - 0.05f;
+        }
+
+        // --- STAGE 2: DIMENSION EXPANDER & HAAS WIDENER ---
+        if (dimWidth > 0.01f) {
+            const int haasDelaySamples = static_cast<int>(0.012f * sampleRate_); // 12ms delay
+            int readIdx = static_cast<int>(haasWriteIdx_) - haasDelaySamples;
+            if (readIdx < 0) readIdx += static_cast<int>(haasBuffer_.size());
+
+            float delayedR = haasBuffer_[readIdx];
+            haasBuffer_[haasWriteIdx_] = sR;
+            haasWriteIdx_ = (haasWriteIdx_ + 1) % haasBuffer_.size();
+
+            float side = (sL - delayedR) * dimWidth * 0.45f;
+            sL += side;
+            sR -= side;
+        }
+
+        // --- STAGE 3: STEREO PING-PONG DELAY ---
+        if (delayMix > 0.005f) {
+            static constexpr float DELAY_DIVS[5] = {0.500f, 0.250f, 0.375f, 0.125f, 0.1667f};
+            int div = std::clamp(delayDivIdx, 0, 4);
+            int delaySamples = std::clamp(static_cast<int>(DELAY_DIVS[div] * sampleRate_), 10, static_cast<int>(MAX_DELAY_SAMPLES - 10));
+
+            int readIdxL = static_cast<int>(delayWriteIdx_) - delaySamples;
+            if (readIdxL < 0) readIdxL += MAX_DELAY_SAMPLES;
+            int readIdxR = static_cast<int>(delayWriteIdx_) - (delaySamples / 2);
+            if (readIdxR < 0) readIdxR += MAX_DELAY_SAMPLES;
+
+            float dL = delayBufferL_[readIdxL];
+            float dR = delayBufferR_[readIdxR];
+
+            delayBufferL_[delayWriteIdx_] = sL + dR * delayFb;
+            delayBufferR_[delayWriteIdx_] = sR + dL * delayFb;
+            delayWriteIdx_ = (delayWriteIdx_ + 1) % MAX_DELAY_SAMPLES;
+
+            sL = sL * (1.0f - delayMix) + dL * delayMix;
+            sR = sR * (1.0f - delayMix) + dR * delayMix;
+        }
+
+        // --- STAGE 4: LUSH DANCE REVERB ---
+        if (verbMix > 0.005f) {
+            float inMono = (sL + sR) * 0.5f * 0.025f;
+            float combSumL = 0.0f, combSumR = 0.0f;
+
+            for (int k = 0; k < 8; ++k) {
+                float outC = verbCombs_[k][verbCombIdx_[k]];
+                verbDampState_[k] = (outC * 0.75f) + (verbDampState_[k] * 0.25f);
+                verbCombs_[k][verbCombIdx_[k]] = inMono + (verbDampState_[k] * verbSize);
+                if (++verbCombIdx_[k] >= verbCombs_[k].size()) verbCombIdx_[k] = 0;
+
+                if (k % 2 == 0) combSumL += outC;
+                else combSumR += outC;
+            }
+
+            // Allpass diffusers
+            for (int a = 0; a < 2; ++a) {
+                float bufOut = verbAllPass_[a][verbAllPassIdx_[a]];
+                float outA = -combSumL + bufOut;
+                verbAllPass_[a][verbAllPassIdx_[a]] = combSumL + (bufOut * 0.5f);
+                if (++verbAllPassIdx_[a] >= verbAllPass_[a].size()) verbAllPassIdx_[a] = 0;
+                combSumL = outA;
+            }
+            for (int a = 2; a < 4; ++a) {
+                float bufOut = verbAllPass_[a][verbAllPassIdx_[a]];
+                float outA = -combSumR + bufOut;
+                verbAllPass_[a][verbAllPassIdx_[a]] = combSumR + (bufOut * 0.5f);
+                if (++verbAllPassIdx_[a] >= verbAllPass_[a].size()) verbAllPassIdx_[a] = 0;
+                combSumR = outA;
+            }
+
+            sL = sL * (1.0f - verbMix) + combSumL * verbMix;
+            sR = sR * (1.0f - verbMix) + combSumR * verbMix;
+        }
+
+        // --- STAGE 5: OTT MASTER PUNCH LIMITER ---
+        if (ottComp > 0.01f) {
+            float pkL = std::abs(sL);
+            float pkR = std::abs(sR);
+            ottEnvL_ = 0.992f * ottEnvL_ + 0.008f * pkL;
+            ottEnvR_ = 0.992f * ottEnvR_ + 0.008f * pkR;
+
+            float avgEnv = std::max(1e-4f, (ottEnvL_ + ottEnvR_) * 0.5f);
+            float grDb = 0.0f;
+            float envDb = 20.0f * std::log10(avgEnv);
+
+            if (envDb > -12.0f) {
+                grDb = (-12.0f - envDb) * 0.65f; // Downward compression
+            } else if (envDb < -28.0f) {
+                grDb = (-28.0f - envDb) * 0.40f; // Upward expansion
+            }
+
+            float gainLinear = std::pow(10.0f, (grDb * ottComp) / 20.0f);
+            sL *= gainLinear;
+            sR *= gainLinear;
+        }
+
+        const float outTrimLinear = std::pow(10.0f, outTrimDb / 20.0f);
+        outL = sL * outTrimLinear;
+        outR = sR * outTrimLinear;
+    }
+
+private:
+    static constexpr size_t MAX_DELAY_SAMPLES = 96000;
+    float sampleRate_ = 48000.0f;
+
+    std::vector<float> delayBufferL_;
+    std::vector<float> delayBufferR_;
+    size_t delayWriteIdx_ = 0;
+
+    std::vector<float> haasBuffer_;
+    size_t haasWriteIdx_ = 0;
+
+    std::array<std::vector<float>, 8> verbCombs_;
+    std::array<size_t, 8> verbCombIdx_{};
+    std::array<float, 8> verbDampState_{};
+
+    std::array<std::vector<float>, 4> verbAllPass_;
+    std::array<size_t, 4> verbAllPassIdx_{};
+
+    float ottEnvL_ = 0.0f;
+    float ottEnvR_ = 0.0f;
 };
 
 class HyperionProcessor {
@@ -88,34 +285,33 @@ private:
         float glideCoeff = 1.0f;
         bool active = false;
 
-        // PolyBLEP Oscillators per Voice
-        PolyBlepOscillator osc1;
-        PolyBlepOscillator osc2;
+        float punchEnv = 0.0f;
+        float punchDecayCoeff = 0.95f;
+
+        std::array<PolyBlepOscillator, 8> osc1Stack;
+        std::array<PolyBlepOscillator, 8> osc2Stack;
         PolyBlepOscillator oscSub;
         PolyBlepOscillator oscNoise;
 
-        // Unison Sub-phases (up to 7 unison spread)
-        std::array<double, 7> unisonPhases{};
-
-        // Envelopes & ZDF Filters
         ADSR ampEnv;
         ADSR modEnv;
         ZdfFilter filterL;
         ZdfFilter filterR;
 
         void init(float sampleRate) {
-            osc1.setSampleRate(sampleRate);
-            osc2.setSampleRate(sampleRate);
+            for (auto& o : osc1Stack) o.setSampleRate(sampleRate);
+            for (auto& o : osc2Stack) o.setSampleRate(sampleRate);
             oscSub.setSampleRate(sampleRate);
             oscNoise.setSampleRate(sampleRate);
             oscNoise.setWaveform(OscillatorWaveform::Noise);
+
             ampEnv.setSampleRate(sampleRate);
             modEnv.setSampleRate(sampleRate);
             filterL.setSampleRate(sampleRate);
             filterR.setSampleRate(sampleRate);
         }
 
-        void trigger(int32_t midiNote, float vel, float sampleRate, float glideMs) {
+        void trigger(int32_t midiNote, float vel, float sampleRate, float glideMs, float punchDecayMs) {
             targetFreq = 440.0f * std::pow(2.0f, (midiNote - 69) / 12.0f);
 
             if (active && glideMs > 0.001f) {
@@ -129,8 +325,12 @@ private:
             velocity = vel;
             active = true;
 
-            for (size_t i = 0; i < unisonPhases.size(); ++i) {
-                unisonPhases[i] = static_cast<double>(i) / static_cast<double>(unisonPhases.size());
+            punchEnv = 1.0f;
+            punchDecayCoeff = std::exp(-1.0f / (std::max(0.002f, punchDecayMs * 0.001f) * sampleRate));
+
+            for (size_t i = 0; i < 8; ++i) {
+                osc1Stack[i].resetPhase(static_cast<double>(i) / 8.0);
+                osc2Stack[i].resetPhase(static_cast<double>(i) / 8.0);
             }
 
             ampEnv.gate(true);
@@ -153,6 +353,7 @@ private:
             modEnv.reset();
             filterL.reset();
             filterR.reset();
+            punchEnv = 0.0f;
         }
 
         float getEnergy() const noexcept {
@@ -162,16 +363,16 @@ private:
 
 public:
     explicit HyperionProcessor(float sampleRate) : sampleRate_(sampleRate) {
-        for (const auto& p : HYPERION_PARAMS) {
-            params_[p.id] = p.defaultValue;
-        }
+        for (const auto& p : HYPERION_PARAMS) params_[p.id] = p.defaultValue;
         for (auto& v : voices_) v.init(sampleRate_);
         lfo1_.setSampleRate(sampleRate_);
+        fxRack_.reset(sampleRate_);
     }
 
     void reset(float sampleRate) {
         sampleRate_ = std::max(8000.0f, sampleRate);
         lfo1_.setSampleRate(sampleRate_);
+        fxRack_.reset(sampleRate_);
         for (auto& v : voices_) {
             v.init(sampleRate_);
             v.stop();
@@ -205,7 +406,7 @@ public:
             }
         }
         if (!target) target = &voices_[0];
-        target->trigger(note, velocity, sampleRate_, params_[35]);
+        target->trigger(note, velocity, sampleRate_, params_[52], params_[38]);
     }
 
     void noteOff(int32_t note) {
@@ -224,53 +425,70 @@ public:
         std::fill_n(outL, numFrames, 0.0f);
         std::fill_n(outR, numFrames, 0.0f);
 
-        // Extract Global Parameters
-        const auto osc1Wave = static_cast<OscillatorWaveform>(static_cast<int>(params_[0]) % 4);
+        // --- EXTRACT SYNTH PARAMETERS ---
+        const auto osc1Wave = static_cast<OscillatorWaveform>(static_cast<int>(params_[0]) % 12);
         const float osc1PitchMult = std::pow(2.0f, (params_[1] * 12.0f + params_[2] + params_[3] * 0.01f) / 12.0f);
         const float osc1Pw = params_[4];
+        static constexpr int UNISON_COUNTS[4] = {1, 2, 4, 8};
+        const int osc1UnisonN = UNISON_COUNTS[std::min(3, static_cast<int>(params_[5]))];
+        const float osc1Detune = params_[6] * 0.025f;
+        const float osc1Spread = params_[7];
 
-        const auto osc2Wave = static_cast<OscillatorWaveform>(static_cast<int>(params_[5]) % 4);
-        const float osc2PitchMult = std::pow(2.0f, (params_[6] * 12.0f + params_[7] + params_[8] * 0.01f) / 12.0f);
-        const float osc2Pw = params_[9];
-        const bool osc2Sync = (params_[10] > 0.5f);
+        const auto osc2Wave = static_cast<OscillatorWaveform>(static_cast<int>(params_[8]) % 12);
+        const float osc2PitchMult = std::pow(2.0f, (params_[9] * 12.0f + params_[10] + params_[11] * 0.01f) / 12.0f);
+        const float osc2Pw = params_[12];
+        const bool osc2Sync = (params_[13] > 0.5f);
+        const int osc2UnisonN = UNISON_COUNTS[std::min(3, static_cast<int>(params_[14]))];
+        const float osc2Detune = params_[15] * 0.025f;
+        const float osc2Spread = params_[16];
 
-        const float osc1Vol = params_[11];
-        const float osc2Vol = params_[12];
-        const float subVol = params_[13];
-        const float noiseVol = params_[14];
-        const float crossFm = params_[15];
+        const float osc1Vol = params_[17];
+        const float osc2Vol = params_[18];
+        const float subVol  = params_[19];
+        const float noiseVol = params_[20];
+        const float crossFm  = params_[21];
 
-        const auto filterMode = static_cast<ZdfFilterMode>(static_cast<int>(params_[16]) % 5);
-        const float baseCutoff = params_[17];
-        const float resonance = params_[18];
-        const float drive = params_[19];
-        const float filterEnvAmt = params_[20];
+        const auto filterMode = static_cast<ZdfFilterMode>(static_cast<int>(params_[22]) % 8);
+        const float baseCutoff = params_[23];
+        const float resonance  = params_[24];
+        const float drive      = params_[25];
+        const float filterEnvAmt = params_[26];
+        const float vowelMorph   = params_[27];
+        const float keytrackPct  = params_[28];
 
-        // Envelope Rates
-        const float ampA = params_[21] * 0.001f, ampD = params_[22] * 0.001f, ampS = params_[23], ampR = params_[24] * 0.001f;
-        const float modA = params_[25] * 0.001f, modD = params_[26] * 0.001f, modS = params_[27], modR = params_[28] * 0.001f;
+        const float ampA = params_[29] * 0.001f, ampD = params_[30] * 0.001f, ampS = params_[31], ampR = params_[32] * 0.001f;
+        const float modA = params_[33] * 0.001f, modD = params_[34] * 0.001f, modS = params_[35], modR = params_[36] * 0.001f;
+        const float punchDropSt = params_[37];
 
-        // LFO 1
-        lfo1_.setWaveform(static_cast<LfoWaveform>(static_cast<int>(params_[29]) % 5));
-        lfo1_.setFrequency(params_[30]);
-        const float lfoCutoffDepth = params_[31];
-        const float lfoPitchDepth = params_[32];
+        lfo1_.setWaveform(static_cast<LfoWaveform>(static_cast<int>(params_[39]) % 5));
+        lfo1_.setFrequency(params_[40]);
+        const float lfoCutoffDepth = params_[41];
+        const float lfoPitchDepth  = params_[42];
 
-        // Unison Mode (1, 3, 5, 7 Voices)
-        const int unisonCount = 1 + (static_cast<int>(params_[33]) % 4) * 2;
-        const float unisonDetune = params_[34] * 0.018f;
-        const float masterGain = std::pow(10.0f, params_[36] / 20.0f) * 0.22f;
+        // --- INTERNAL FX PARAMETERS [43..51] ---
+        const float fxDriveDb    = params_[43];
+        const float fxDimWidth   = params_[44];
+        const int fxDelayDiv     = static_cast<int>(params_[45]);
+        const float fxDelayFb    = params_[46];
+        const float fxDelayMix   = params_[47];
+        const float fxVerbSize   = params_[48];
+        const float fxVerbMix    = params_[49];
+        const float fxOttComp    = params_[50];
+        const float fxOutTrimDb  = params_[51];
+
+        const float masterGain = std::pow(10.0f, params_[53] / 20.0f) * 0.20f;
 
         for (auto& v : voices_) {
             if (v.active) {
                 v.ampEnv.setParameters(ampA, ampD, ampS, ampR);
                 v.modEnv.setParameters(modA, modD, modS, modR);
-                v.osc1.setWaveform(osc1Wave);
-                v.osc1.setPulseWidth(osc1Pw);
-                v.osc2.setWaveform(osc2Wave);
-                v.osc2.setPulseWidth(osc2Pw);
-                v.oscSub.setWaveform(OscillatorWaveform::Pulse);
-                v.oscSub.setPulseWidth(0.5f);
+                for (int u = 0; u < 8; ++u) {
+                    v.osc1Stack[u].setWaveform(osc1Wave);
+                    v.osc1Stack[u].setPulseWidth(osc1Pw);
+                    v.osc2Stack[u].setWaveform(osc2Wave);
+                    v.osc2Stack[u].setPulseWidth(osc2Pw);
+                }
+                v.oscSub.setWaveform(OscillatorWaveform::Sine);
             }
         }
 
@@ -279,8 +497,8 @@ public:
             const float lfoPitchMod = lfoVal * lfoPitchDepth;
             const float lfoCutoffMod = std::max(0.05f, 1.0f + lfoVal * lfoCutoffDepth * 0.8f);
 
-            float sumL = 0.0f;
-            float sumR = 0.0f;
+            float rawSumL = 0.0f;
+            float rawSumR = 0.0f;
 
             for (auto& v : voices_) {
                 if (!v.active) continue;
@@ -293,7 +511,6 @@ public:
                     continue;
                 }
 
-                // Portamento Glide Slew
                 if (v.currentFreq != v.targetFreq) {
                     v.currentFreq += (v.targetFreq - v.currentFreq) * v.glideCoeff;
                     if (std::abs(v.targetFreq - v.currentFreq) < 0.05f) {
@@ -301,68 +518,84 @@ public:
                     }
                 }
 
-                float voicePitch = v.currentFreq;
-                if (std::abs(lfoPitchMod) > 0.001f) {
-                    voicePitch *= std::pow(2.0f, lfoPitchMod / 12.0f);
+                float punchModSt = punchDropSt * v.punchEnv;
+                v.punchEnv *= v.punchDecayCoeff;
+
+                float voicePitch = v.currentFreq * std::pow(2.0f, (punchModSt + lfoPitchMod) / 12.0f);
+
+                // --- OSC 1 UNISON ---
+                float osc1L = 0.0f, osc1R = 0.0f;
+                for (int u = 0; u < osc1UnisonN; ++u) {
+                    float detuneOffset = (osc1UnisonN > 1) ? (static_cast<float>(u - (osc1UnisonN - 1) / 2.0f) / ((osc1UnisonN - 1) / 2.0f)) : 0.0f;
+                    float uPitch = voicePitch * osc1PitchMult * (1.0f + detuneOffset * osc1Detune);
+                    v.osc1Stack[u].setFrequency(uPitch);
+                    float s = v.osc1Stack[u].renderSample();
+
+                    float panL = (osc1UnisonN > 1) ? (0.5f - detuneOffset * (osc1Spread * 0.5f)) : 0.5f;
+                    float panR = (osc1UnisonN > 1) ? (0.5f + detuneOffset * (osc1Spread * 0.5f)) : 0.5f;
+                    osc1L += s * panL;
+                    osc1R += s * panR;
                 }
+                const float norm1 = 1.0f / std::sqrt(static_cast<float>(osc1UnisonN));
+                osc1L *= norm1; osc1R *= norm1;
+
+                // --- OSC 2 UNISON + HARD SYNC & CROSS-FM ---
+                float osc2L = 0.0f, osc2R = 0.0f;
+                for (int u = 0; u < osc2UnisonN; ++u) {
+                    float detuneOffset = (osc2UnisonN > 1) ? (static_cast<float>(u - (osc2UnisonN - 1) / 2.0f) / ((osc2UnisonN - 1) / 2.0f)) : 0.0f;
+                    float uPitch = voicePitch * osc2PitchMult * (1.0f - detuneOffset * osc2Detune);
+
+                    if (crossFm > 0.001f) {
+                        uPitch *= (1.0f + (osc1L + osc1R) * crossFm * 1.5f);
+                    }
+
+                    v.osc2Stack[u].setFrequency(uPitch);
+
+                    if (osc2Sync) {
+                        v.osc2Stack[u].syncToMaster(v.osc1Stack[0].getPhase());
+                    }
+
+                    float s = v.osc2Stack[u].renderSample();
+                    float panL = (osc2UnisonN > 1) ? (0.5f - detuneOffset * (osc2Spread * 0.5f)) : 0.5f;
+                    float panR = (osc2UnisonN > 1) ? (0.5f + detuneOffset * (osc2Spread * 0.5f)) : 0.5f;
+                    osc2L += s * panL;
+                    osc2R += s * panR;
+                }
+                const float norm2 = 1.0f / std::sqrt(static_cast<float>(osc2UnisonN));
+                osc2L *= norm2; osc2R *= norm2;
 
                 // Sub Oscillator & Noise
                 v.oscSub.setFrequency(voicePitch * 0.5f);
                 float sSub = v.oscSub.renderSample() * subVol;
                 float sNoise = v.oscNoise.renderSample() * noiseVol;
 
-                // 7-Voice Supersaw Unison Generation
-                float rawL = 0.0f;
-                float rawR = 0.0f;
+                float rawL = (osc1L * osc1Vol) + (osc2L * osc2Vol) + sSub * 0.5f + sNoise * 0.5f;
+                float rawR = (osc1R * osc1Vol) + (osc2R * osc2Vol) + sSub * 0.5f + sNoise * 0.5f;
 
-                for (int u = 0; u < unisonCount; ++u) {
-                    float detuneOffset = (unisonCount > 1) ? (static_cast<float>(u - (unisonCount - 1) / 2.0f) / ((unisonCount - 1) / 2.0f)) : 0.0f;
-                    float uPitch1 = voicePitch * osc1PitchMult * (1.0f + detuneOffset * unisonDetune);
-                    float uPitch2 = voicePitch * osc2PitchMult * (1.0f - detuneOffset * unisonDetune);
-
-                    v.osc1.setFrequency(uPitch1);
-                    v.osc2.setFrequency(uPitch2);
-
-                    if (osc2Sync) {
-                        v.osc2.syncToMaster(v.osc1.getPhase());
-                    }
-
-                    float sOsc1 = v.osc1.renderSample();
-
-                    // Cross-FM Modulates Osc2 Frequency by Osc1 Output
-                    if (crossFm > 0.001f) {
-                        v.osc2.setFrequency(uPitch2 * (1.0f + sOsc1 * crossFm * 2.0f));
-                    }
-                    float sOsc2 = v.osc2.renderSample();
-
-                    float panL = (unisonCount > 1) ? (0.5f - detuneOffset * 0.45f) : 0.5f;
-                    float panR = (unisonCount > 1) ? (0.5f + detuneOffset * 0.45f) : 0.5f;
-
-                    float mixVoice = (sOsc1 * osc1Vol) + (sOsc2 * osc2Vol);
-                    rawL += mixVoice * panL;
-                    rawR += mixVoice * panR;
-                }
-
-                const float normFactor = 1.0f / std::sqrt(static_cast<float>(unisonCount));
-                rawL = (rawL * normFactor) + sSub * 0.5f + sNoise * 0.5f;
-                rawR = (rawR * normFactor) + sSub * 0.5f + sNoise * 0.5f;
-
-                // Apply Dynamic Filter Modulation (ModEnv + LFO)
+                // ZDF Filter
+                float keytrackMultiplier = std::pow(2.0f, (v.note - 60) * (keytrackPct / 12.0f));
                 float envCutoffDelta = baseCutoff * filterEnvAmt * modEnvVal * 4.0f;
-                float finalCutoff = std::clamp((baseCutoff + envCutoffDelta) * lfoCutoffMod, 20.0f, sampleRate_ * 0.48f);
+                float finalCutoff = std::clamp((baseCutoff * keytrackMultiplier + envCutoffDelta) * lfoCutoffMod, 20.0f, sampleRate_ * 0.48f);
 
-                v.filterL.setParameters(filterMode, finalCutoff, resonance, drive);
-                v.filterR.setParameters(filterMode, finalCutoff, resonance, drive);
+                v.filterL.setParameters(filterMode, finalCutoff, resonance, drive, vowelMorph);
+                v.filterR.setParameters(filterMode, finalCutoff, resonance, drive, vowelMorph);
 
                 float vL = v.filterL.process(rawL) * amp * v.velocity;
                 float vR = v.filterR.process(rawR) * amp * v.velocity;
 
-                sumL += vL;
-                sumR += vR;
+                rawSumL += vL;
+                rawSumR += vR;
             }
 
-            outL[i] = sumL * masterGain;
-            outR[i] = sumR * masterGain;
+            // --- INTERNAL 5-STAGE DANCE STUDIO FX RACK ---
+            float fxOutL = 0.0f, fxOutR = 0.0f;
+            fxRack_.process(rawSumL, rawSumR,
+                            fxDriveDb, fxDimWidth, fxDelayDiv, fxDelayFb, fxDelayMix,
+                            fxVerbSize, fxVerbMix, fxOttComp, fxOutTrimDb,
+                            fxOutL, fxOutR);
+
+            outL[i] = fxOutL * masterGain;
+            outR[i] = fxOutR * masterGain;
         }
     }
 
@@ -394,9 +627,10 @@ public:
 
 private:
     float sampleRate_ = 48000.0f;
-    std::array<float, 37> params_{};
+    std::array<float, 54> params_{};
     std::array<Voice, 16> voices_{};
     LFO lfo1_;
+    InternalDanceFxRack fxRack_;
 };
 
 extern "C" {

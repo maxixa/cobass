@@ -103,6 +103,14 @@ public:
         lastTick_ = endTick;
 
         const bool loopWrapped = (endTick < startTick);
+        // Advance Step Sequencer Tracks
+        for (size_t t = 0; t < Mixer::MAX_TRACKS; ++t) {
+            Track* track = mixer.getTrack(static_cast<int32_t>(t));
+            if (track && track->getType() == TrackType::StepSequencer) {
+                static_cast<StepSequencerTrack*>(track)->advancePlayback(startTick, endTick, loopWrapped);
+            }
+        }
+
         if (loopWrapped) {
             for (size_t t = 0; t < Mixer::MAX_TRACKS; ++t) {
                 Track* track = mixer.getTrack((int32_t)t);

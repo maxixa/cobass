@@ -23,6 +23,7 @@ import com.maxica.cobass.audio.AudioEngineNative;
 import com.maxica.cobass.model.ClipItem;
 import com.maxica.cobass.model.PluginDescriptorItem;
 import com.maxica.cobass.model.SnapGrid;
+import com.maxica.cobass.model.StepPatternItem;
 import com.maxica.cobass.model.ToolMode;
 import com.maxica.cobass.model.TrackItem;
 import com.maxica.cobass.plugin.PluginApkInstaller;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
     private final List<TrackItem> tracks = new ArrayList<>();
     private final List<ClipItem> clips = new ArrayList<>();
+    private final Map<Integer, StepPatternItem> trackStepPatterns = new HashMap<>();
     private String currentProjectName = "Cobass_Master";
 
     private ArrangerTimelineView arrangerView;
@@ -95,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
         Button btnAddSynth = findViewById(R.id.btnAddSynth);
         Button btnAddAudio = findViewById(R.id.btnAddAudio);
+        Button btnAddStepSeq = findViewById(R.id.btnAddStepSeq);
 
         Button btnLoopHalve = findViewById(R.id.btnLoopHalve);
         Button btnLoopDouble = findViewById(R.id.btnLoopDouble);
@@ -254,6 +257,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
         if (btnAddSynth != null) btnAddSynth.setOnClickListener(v -> addSynthTrackWithDemoClip());
         if (btnAddAudio != null) btnAddAudio.setOnClickListener(v -> addAudioTrackWithDemoClip());
+        if (btnAddStepSeq != null) btnAddStepSeq.setOnClickListener(v -> addStepSequencerTrackWithDemoPattern());
         if (btnPreferences != null) btnPreferences.setOnClickListener(v -> showPreferencesDialog());
 
         if (btnOpenMixer != null) {
@@ -346,9 +350,15 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
         d.clips.clear();
         d.clips.addAll(arrangerView != null ? arrangerView.getClips() : clips);
 
+        for (TrackItem t : d.tracks) {
+            if (t.getType() == TrackItem.Type.STEP_SEQUENCER) {
+                t.setStepPattern(trackStepPatterns.get(t.getId()));
+            }
+        }
+
         if (AudioEngineNative.isLoaded()) {
             for (TrackItem t : d.tracks) {
-                if (t.getType() == TrackItem.Type.SYNTH) {
+                if (t.getType() == TrackItem.Type.SYNTH || t.getType() == TrackItem.Type.STEP_SEQUENCER) {
                     t.setInstrumentPluginId(AudioEngineNative.nativeGetTrackSynthPluginId(t.getId()));
                     t.setInstrumentPluginStateJson(AudioEngineNative.nativeGetPluginStateJson(t.getId(), -1));
                 }
@@ -395,13 +405,43 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
         tracks.clear();
         clips.clear();
+        trackStepPatterns.clear();
 
         Map<Integer, Integer> trackIdMap = new HashMap<>();
 
         for (TrackItem t : data.tracks) {
             int newTrackId = t.getId();
             if (AudioEngineNative.isLoaded()) {
-                if (t.getType() == TrackItem.Type.SYNTH) {
+                if (t.getType() == TrackItem.Type.STEP_SEQUENCER) {
+                    newTrackId = AudioEngineNative.nativeAddStepSequencerTrack(t.getName());
+                    StepPatternItem restoredPat = t.getStepPattern();
+                    if (restoredPat == null) {
+                        restoredPat = createFactoryDrumPattern(newTrackId);
+                    }
+                    trackStepPatterns.put(newTrackId, restoredPat);
+
+                    String synthId = t.getInstrumentPluginId();
+                    if (synthId == null || synthId.isEmpty()) {
+                        synthId = "com.maxica.cobass.plugins.cobalt_drums";
+                    }
+                    AudioEngineNative.nativeSetTrackSynthPlugin(newTrackId, synthId);
+                    if (t.getInstrumentPluginStateJson() != null && !t.getInstrumentPluginStateJson().isEmpty()) {
+                        AudioEngineNative.nativeSetPluginStateJson(newTrackId, -1, t.getInstrumentPluginStateJson());
+                    }
+
+                    for (int l = 0; l < restoredPat.getLanes().size(); l++) {
+                        StepPatternItem.Lane lane = restoredPat.getLanes().get(l);
+                        AudioEngineNative.nativeSetStepSequencerLaneParams(
+                            newTrackId, l, lane.midiNote, lane.stepCount, lane.subdivision.getTicks(), lane.volume, lane.pan, lane.isMuted, lane.isSolo
+                        );
+                        for (int s = 0; s < lane.stepCount; s++) {
+                            StepPatternItem.Step step = lane.steps.get(s);
+                            AudioEngineNative.nativeSetStepSequencerStep(
+                                newTrackId, l, s, step.active, step.velocity, step.pitchOffset, step.gate, step.nudge, step.ratchets, step.probability
+                            );
+                        }
+                    }
+                } else if (t.getType() == TrackItem.Type.SYNTH) {
                     newTrackId = AudioEngineNative.nativeAddSynthTrack(t.getName());
 
                     if (t.getInstrumentPluginId() != null && !t.getInstrumentPluginId().isEmpty()) {
@@ -447,6 +487,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
             restoredTrack.setSolo(t.isSolo());
             restoredTrack.setInstrumentPluginId(t.getInstrumentPluginId());
             restoredTrack.setInstrumentPluginStateJson(t.getInstrumentPluginStateJson());
+            restoredTrack.setStepPattern(trackStepPatterns.get(newTrackId));
             for (TrackItem.PluginSlotState slot : t.getInsertFxSlots()) {
                 restoredTrack.getInsertFxSlots().add(slot.copy());
             }
@@ -506,8 +547,10 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
         }
         tracks.clear();
         clips.clear();
+        trackStepPatterns.clear();
         addSynthTrackWithDemoClip();
         addAudioTrackWithDemoClip();
+        addStepSequencerTrackWithDemoPattern();
         if (arrangerView != null) {
             arrangerView.setLoopRange(loopStartTick, loopEndTick, isLooping);
             arrangerView.setPlayheadTick(0);
@@ -667,7 +710,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
     private void addAudioTrackWithDemoClip() {
         int idx = tracks.size() + 1;
-        String name = "808 Kick " + idx;
+        String name = "808 Sub " + idx;
         int trackId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeAddAudioTrack(name) : idx;
         TrackItem track = new TrackItem(trackId, name, TrackItem.Type.AUDIO);
         tracks.add(track);
@@ -677,13 +720,119 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
             AudioEngineNative.nativeLoadSample(trackId, sample, sample.length, 1);
         }
 
-        int clipId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeAddClip(trackId, 0, 1920, "808 Beat") : (idx * 10);
-        ClipItem clip = new ClipItem(clipId, trackId, 0, 1920, "808 Beat", Color.parseColor("#D97706"), TrackItem.Type.AUDIO);
+        int clipId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeAddClip(trackId, 0, 1920, "808 Bass") : (idx * 10);
+        ClipItem clip = new ClipItem(clipId, trackId, 0, 1920, "808 Bass", Color.parseColor("#D97706"), TrackItem.Type.AUDIO);
         clip.setSampleData(sample);
         clips.add(clip);
 
         if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
         updateUndoRedoUI();
+    }
+
+    private TrackItem getTrackById(int trackId) {
+        for (TrackItem t : tracks) {
+            if (t.getId() == trackId) return t;
+        }
+        return new TrackItem(trackId, "Track", TrackItem.Type.STEP_SEQUENCER);
+    }
+
+    private void addStepSequencerTrackWithDemoPattern() {
+        int idx = tracks.size() + 1;
+        String name = "Drum Machine " + idx;
+        int trackId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeAddStepSequencerTrack(name) : idx;
+        TrackItem track = new TrackItem(trackId, name, TrackItem.Type.STEP_SEQUENCER);
+        track.setColor(Color.parseColor("#9333EA"));
+        tracks.add(track);
+
+        // Mount Cobalt Drum Synth directly to the step track
+        String drumSynthId = "com.maxica.cobass.plugins.cobalt_drums";
+        if (AudioEngineNative.isLoaded()) {
+            AudioEngineNative.nativeSetTrackSynthPlugin(trackId, drumSynthId);
+        }
+        track.setInstrumentPluginId(drumSynthId);
+
+        StepPatternItem pattern = createFactoryDrumPattern(trackId);
+        track.setStepPattern(pattern);
+        trackStepPatterns.put(trackId, pattern);
+
+        if (AudioEngineNative.isLoaded()) {
+            for (int l = 0; l < pattern.getLanes().size(); l++) {
+                StepPatternItem.Lane lane = pattern.getLanes().get(l);
+                AudioEngineNative.nativeSetStepSequencerLaneParams(
+                    trackId, l, lane.midiNote, lane.stepCount, lane.subdivision.getTicks(), lane.volume, lane.pan, lane.isMuted, lane.isSolo
+                );
+                for (int s = 0; s < lane.stepCount; s++) {
+                    StepPatternItem.Step step = lane.steps.get(s);
+                    AudioEngineNative.nativeSetStepSequencerStep(
+                        trackId, l, s, step.active, step.velocity, step.pitchOffset, step.gate, step.nudge, step.ratchets, step.probability
+                    );
+                }
+            }
+        }
+
+        int clipId = AudioEngineNative.isLoaded() ? AudioEngineNative.nativeAddClip(trackId, 0, 1920 * 2, "Drum Groove") : (idx * 10);
+        ClipItem clip = new ClipItem(clipId, trackId, 0, 1920 * 2, "Drum Groove", Color.parseColor("#9333EA"), TrackItem.Type.STEP_SEQUENCER);
+        clips.add(clip);
+
+        if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
+        updateUndoRedoUI();
+        Toast.makeText(this, "Created Cobalt Drum Machine Track", Toast.LENGTH_SHORT).show();
+    }
+
+    private StepPatternItem createFactoryDrumPattern(int trackId) {
+        StepPatternItem pat = new StepPatternItem(1, "Trap Heat 01");
+        pat.setBaseLength(16);
+
+        StepPatternItem.Lane kick = new StepPatternItem.Lane(0, "Kick 808", 36, 16);
+        kick.steps.get(0).active = true;
+        kick.steps.get(6).active = true;
+        kick.steps.get(10).active = true;
+        pat.getLanes().add(kick);
+
+        StepPatternItem.Lane snare = new StepPatternItem.Lane(1, "Snare 909", 38, 16);
+        snare.steps.get(4).active = true;
+        snare.steps.get(12).active = true;
+        pat.getLanes().add(snare);
+
+        StepPatternItem.Lane hat = new StepPatternItem.Lane(2, "Cl. Hat", 42, 16);
+        for (int i = 0; i < 16; i++) {
+            hat.steps.get(i).active = true;
+            hat.steps.get(i).velocity = (i % 2 == 0) ? 0.85f : 0.60f;
+        }
+        hat.steps.get(14).ratchets = 2;
+        hat.steps.get(15).ratchets = 4;
+        pat.getLanes().add(hat);
+
+        StepPatternItem.Lane oHat = new StepPatternItem.Lane(3, "Op. Hat", 46, 16);
+        oHat.steps.get(2).active = true;
+        oHat.steps.get(10).active = true;
+        pat.getLanes().add(oHat);
+
+        StepPatternItem.Lane clap = new StepPatternItem.Lane(4, "Clap", 39, 16);
+        clap.steps.get(4).active = true;
+        clap.steps.get(12).active = true;
+        pat.getLanes().add(clap);
+
+        StepPatternItem.Lane perc = new StepPatternItem.Lane(5, "Cowbell", 56, 16);
+        perc.steps.get(3).active = true;
+        perc.steps.get(11).active = true;
+        pat.getLanes().add(perc);
+
+        return pat;
+    }
+
+    private float[] generate808Kick(int sampleRate) {
+        int length = (int) (sampleRate * 0.8);
+        float[] buffer = new float[length];
+        double phase = 0.0;
+        for (int i = 0; i < length; i++) {
+            double progress = (double) i / length;
+            double freq = 135.0 * Math.exp(-progress * 8.5) + 40.0;
+            double env = Math.exp(-progress * 4.2);
+            phase += (2.0 * Math.PI * freq) / sampleRate;
+            buffer[i] = (float) (Math.sin(phase) * env);
+        }
+        return buffer;
     }
 
     private void startPlayheadTicker() {
@@ -783,17 +932,19 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
         if (AudioEngineNative.isLoaded()) {
             if (source.getType() == TrackItem.Type.SYNTH) {
                 newTrackId = AudioEngineNative.nativeAddSynthTrack(newName);
-
-                String synthId = AudioEngineNative.nativeGetTrackSynthPluginId(source.getId());
-                if (synthId != null && !synthId.isEmpty()) {
-                    AudioEngineNative.nativeSetTrackSynthPlugin(newTrackId, synthId);
-                    String synthState = AudioEngineNative.nativeGetPluginStateJson(source.getId(), -1);
-                    AudioEngineNative.nativeSetPluginStateJson(newTrackId, -1, synthState);
-                }
+            } else if (source.getType() == TrackItem.Type.STEP_SEQUENCER) {
+                newTrackId = AudioEngineNative.nativeAddStepSequencerTrack(newName);
             } else {
                 newTrackId = AudioEngineNative.nativeAddAudioTrack(newName);
                 float[] sample = generate808Kick(48000);
                 AudioEngineNative.nativeLoadSample(newTrackId, sample, sample.length, 1);
+            }
+
+            String synthId = AudioEngineNative.nativeGetTrackSynthPluginId(source.getId());
+            if (synthId != null && !synthId.isEmpty()) {
+                AudioEngineNative.nativeSetTrackSynthPlugin(newTrackId, synthId);
+                String synthState = AudioEngineNative.nativeGetPluginStateJson(source.getId(), -1);
+                AudioEngineNative.nativeSetPluginStateJson(newTrackId, -1, synthState);
             }
 
             for (int slot = 0; slot < 8; slot++) {
@@ -850,6 +1001,7 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
         tracks.remove(track);
         clips.removeIf(c -> c.getTrackId() == track.getId());
+        trackStepPatterns.remove(track.getId());
 
         if (AudioEngineNative.isLoaded()) {
             AudioEngineNative.nativeRemoveTrack(track.getId());
@@ -864,6 +1016,29 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
     @Override
     public void onClipDoubleTap(ClipItem clip) {
+        if (clip.getType() == TrackItem.Type.STEP_SEQUENCER) {
+            StepPatternItem pattern = trackStepPatterns.get(clip.getTrackId());
+            if (pattern == null) {
+                pattern = createFactoryDrumPattern(clip.getTrackId());
+                trackStepPatterns.put(clip.getTrackId(), pattern);
+            }
+            TrackItem track = getTrackById(clip.getTrackId());
+            new StepSequencerDialog(this, track, pattern, new StepSequencerDialog.OnStepSequencerActionListener() {
+                @Override
+                public void onPatternBakeToClip(ClipItem bakedClip) {
+                    onClipCreated(bakedClip);
+                    if (arrangerView != null) arrangerView.setTracksAndClips(tracks, clips);
+                }
+                @Override
+                public void onPatternModified() {
+                    if (arrangerView != null) arrangerView.invalidate();
+                }
+            }, () -> {
+                if (arrangerView != null) arrangerView.invalidate();
+            }).show();
+            return;
+        }
+
         if (clip.getType() == TrackItem.Type.SYNTH) {
             PianoRollEditorDialog dialog = new PianoRollEditorDialog(this, clip, () -> {
                 if (arrangerView != null) arrangerView.invalidate();
@@ -959,20 +1134,6 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
             updateCounter(tick);
             if (arrangerView != null) arrangerView.setPlayheadTick(tick);
         }
-    }
-
-    private float[] generate808Kick(int sampleRate) {
-        int length = (int) (sampleRate * 0.8);
-        float[] buffer = new float[length];
-        double phase = 0.0;
-        for (int i = 0; i < length; i++) {
-            double progress = (double) i / length;
-            double freq = 135.0 * Math.exp(-progress * 8.5) + 40.0;
-            double env = Math.exp(-progress * 4.2);
-            phase += (2.0 * Math.PI * freq) / sampleRate;
-            buffer[i] = (float) (Math.sin(phase) * env);
-        }
-        return buffer;
     }
 
     @Override

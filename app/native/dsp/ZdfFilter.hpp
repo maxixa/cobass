@@ -2,30 +2,44 @@
 #include <cmath>
 #include <algorithm>
 #include <cstdint>
+#include <array>
+#include <vector>
+#include "BiquadFilter.hpp"
 
 enum class ZdfFilterMode : int32_t {
-    Ladder24 = 0,    // 4-Pole ZDF Moog Ladder (24dB/oct with non-linear saturation)
-    Lowpass12 = 1,   // 2-Pole ZDF State Variable Lowpass (12dB/oct)
-    Bandpass12 = 2,  // 2-Pole ZDF State Variable Bandpass (12dB/oct)
-    Highpass12 = 3,  // 2-Pole ZDF State Variable Highpass (12dB/oct)
-    Notch12 = 4      // 2-Pole ZDF State Variable Band-Reject Notch
+    Ladder24 = 0,       // 4-Pole ZDF Moog Ladder (24dB/oct with transistor saturation)
+    Diode18 = 1,        // 3-Pole ZDF TB-303 Diode Ladder (18dB/oct acid squelch)
+    Lowpass12 = 2,      // 2-Pole ZDF State Variable Lowpass (12dB/oct)
+    Bandpass12 = 3,     // 2-Pole ZDF State Variable Bandpass (12dB/oct)
+    Highpass12 = 4,     // 2-Pole ZDF State Variable Highpass (12dB/oct)
+    Notch12 = 5,        // 2-Pole ZDF State Variable Band-Reject Notch
+    FormantVowel = 6,   // 3-Resonator Vocal Tract Formant (A-E-I-O-U morphing)
+    CombResonator = 7   // Tuned Feedback Delay Comb Resonator
 };
 
 class ZdfFilter {
 public:
-    ZdfFilter() = default;
+    ZdfFilter() {
+        combBuffer_.assign(MAX_COMB_SAMPLES, 0.0f);
+    }
 
     void setSampleRate(float sampleRate) noexcept {
         sampleRate_ = std::max(8000.0f, sampleRate);
+        for (int i = 0; i < 3; ++i) {
+            formantBands_[i].setSampleRate(sampleRate_);
+            formantBands_[i].reset();
+        }
+        std::fill(combBuffer_.begin(), combBuffer_.end(), 0.0f);
         updateCoefficients();
     }
 
-    void setParameters(ZdfFilterMode mode, float cutoffHz, float resonance, float drive = 1.0f) noexcept {
+    void setParameters(ZdfFilterMode mode, float cutoffHz, float resonance, float drive = 1.0f, float vowelMorph = 0.0f) noexcept {
         mode_ = mode;
         const float maxCutoff = sampleRate_ * 0.45f;
         cutoffHz_ = std::clamp(cutoffHz, 20.0f, maxCutoff);
         resonance_ = std::clamp(resonance, 0.1f, 16.0f);
         drive_ = std::clamp(drive, 0.5f, 5.0f);
+        vowelMorph_ = std::clamp(vowelMorph, 0.0f, 4.0f);
         updateCoefficients();
     }
 
@@ -44,26 +58,84 @@ public:
         drive_ = std::clamp(drive, 0.5f, 5.0f);
     }
 
+    void setVowelMorph(float vowelMorph) noexcept {
+        vowelMorph_ = std::clamp(vowelMorph, 0.0f, 4.0f);
+        updateFormants();
+    }
+
     void setMode(ZdfFilterMode mode) noexcept {
         mode_ = mode;
         updateCoefficients();
     }
 
     inline float process(float in) noexcept {
-        // Recovery guard: reset state if NaN or Inf ever occurs
+        // Recovery guard for NaN / Inf
         if (std::isnan(s1_) || std::isinf(s1_) || std::isnan(s4_) || std::isinf(s4_)) {
             reset();
         }
 
-        // Non-linear input saturation
         const float drivenIn = std::tanh(in * drive_);
 
-        if (mode_ == ZdfFilterMode::Ladder24) {
-            // 4-Pole ZDF Moog Ladder with saturating transistor feedback loop
-            // Resonance (0.1 .. 16.0) smoothly maps to k in [0.0, 3.96] (screaming acid self-oscillation)
-            const float k = std::clamp((resonance_ / (resonance_ + 1.2f)) * 4.25f, 0.0f, 3.96f);
+        // 1. Formant Vowel Mode (3-Band Parallel Vocal Formant Resonators)
+        if (mode_ == ZdfFilterMode::FormantVowel) {
+            float sum = 0.0f;
+            for (int i = 0; i < 3; ++i) {
+                sum += formantBands_[i].process(drivenIn) * formantGains_[i];
+            }
+            return std::tanh(sum * 1.6f);
+        }
 
-            // Saturated feedback prevents exponential state overflow
+        // 2. Comb Resonator Mode
+        if (mode_ == ZdfFilterMode::CombResonator) {
+            float delaySamples = std::clamp(sampleRate_ / std::max(20.0f, cutoffHz_), 2.0f, static_cast<float>(MAX_COMB_SAMPLES - 4));
+            float readPos = static_cast<float>(combWriteIdx_) - delaySamples;
+            while (readPos < 0.0f) readPos += static_cast<float>(MAX_COMB_SAMPLES);
+
+            size_t idx0 = static_cast<size_t>(readPos) % MAX_COMB_SAMPLES;
+            size_t idx1 = (idx0 + 1) % MAX_COMB_SAMPLES;
+            float frac = readPos - static_cast<float>(static_cast<size_t>(readPos));
+
+            float delayed = combBuffer_[idx0] * (1.0f - frac) + combBuffer_[idx1] * frac;
+            float feedback = std::clamp(resonance_ / 16.0f, 0.0f, 0.98f);
+
+            combDampState_ = (delayed * 0.8f) + (combDampState_ * 0.2f);
+            float newSample = drivenIn + (combDampState_ * feedback);
+
+            if (std::isnan(newSample) || std::isinf(newSample)) {
+                newSample = 0.0f;
+                combDampState_ = 0.0f;
+            }
+
+            combBuffer_[combWriteIdx_] = newSample;
+            combWriteIdx_ = (combWriteIdx_ + 1) % MAX_COMB_SAMPLES;
+
+            return std::tanh(delayed);
+        }
+
+        // 3. TB-303 18dB Diode Ladder Acid Filter
+        if (mode_ == ZdfFilterMode::Diode18) {
+            const float k = std::clamp((resonance_ / (resonance_ + 1.1f)) * 4.4f, 0.0f, 4.1f);
+            const float satFeedback = std::tanh(s3_);
+            const float u = (drivenIn - k * satFeedback) / (1.0f + k * G3_);
+
+            const float v1 = (u - s1_) * g1_;
+            const float y1 = v1 + s1_;
+            s1_ = std::clamp(y1 + v1, -20.0f, 20.0f);
+
+            const float v2 = (y1 - s2_) * g1_;
+            const float y2 = v2 + s2_;
+            s2_ = std::clamp(y2 + v2, -20.0f, 20.0f);
+
+            const float v3 = (y2 - s3_) * g1_;
+            const float y3 = v3 + s3_;
+            s3_ = std::clamp(y3 + v3, -20.0f, 20.0f);
+
+            return std::tanh(y3 * 1.25f);
+        }
+
+        // 4. Moog 24dB Transistor Ladder Filter
+        if (mode_ == ZdfFilterMode::Ladder24) {
+            const float k = std::clamp((resonance_ / (resonance_ + 1.2f)) * 4.25f, 0.0f, 3.96f);
             const float satFeedback = std::tanh(s4_);
             const float u = (drivenIn - k * satFeedback) / (1.0f + k * G4_);
 
@@ -83,29 +155,32 @@ public:
             const float y4 = v4 + s4_;
             s4_ = std::clamp(y4 + v4, -20.0f, 20.0f);
 
-            // Output stage analog warmth
             return std::tanh(y4);
-        } else {
-            // 2-Pole ZDF State Variable Filter (SVF) with zero-delay feedback
-            const float hp = (drivenIn - (2.0f * R_ + g_) * s1_ - s2_) / h_;
-            const float bp = g_ * hp + s1_;
-            s1_ = std::clamp(g_ * hp + bp, -20.0f, 20.0f);
+        }
 
-            const float lp = g_ * bp + s2_;
-            s2_ = std::clamp(g_ * bp + lp, -20.0f, 20.0f);
+        // 5. 2-Pole ZDF State Variable Filter (SVF)
+        const float hp = (drivenIn - (2.0f * R_ + g_) * s1_ - s2_) / h_;
+        const float bp = g_ * hp + s1_;
+        s1_ = std::clamp(g_ * hp + bp, -20.0f, 20.0f);
 
-            switch (mode_) {
-                case ZdfFilterMode::Lowpass12:  return std::tanh(lp);
-                case ZdfFilterMode::Bandpass12: return std::tanh(bp);
-                case ZdfFilterMode::Highpass12: return std::tanh(hp);
-                case ZdfFilterMode::Notch12:    return std::tanh(hp + lp);
-                default: return std::tanh(lp);
-            }
+        const float lp = g_ * bp + s2_;
+        s2_ = std::clamp(g_ * bp + lp, -20.0f, 20.0f);
+
+        switch (mode_) {
+            case ZdfFilterMode::Lowpass12:  return std::tanh(lp);
+            case ZdfFilterMode::Bandpass12: return std::tanh(bp);
+            case ZdfFilterMode::Highpass12: return std::tanh(hp);
+            case ZdfFilterMode::Notch12:    return std::tanh(hp + lp);
+            default: return std::tanh(lp);
         }
     }
 
     void reset() noexcept {
         s1_ = s2_ = s3_ = s4_ = 0.0f;
+        combWriteIdx_ = 0;
+        combDampState_ = 0.0f;
+        std::fill(combBuffer_.begin(), combBuffer_.end(), 0.0f);
+        for (int i = 0; i < 3; ++i) formantBands_[i].reset();
     }
 
 private:
@@ -116,22 +191,58 @@ private:
         R_ = 1.0f / (2.0f * std::clamp(resonance_, 0.2f, 20.0f));
         h_ = 1.0f + 2.0f * R_ * g_ + g_ * g_;
 
-        // Moog Ladder precomputations
         g1_ = g_ / (1.0f + g_);
-        G4_ = g1_ * g1_ * g1_ * g1_;
+        G3_ = g1_ * g1_ * g1_;
+        G4_ = G3_ * g1_;
+
+        updateFormants();
     }
+
+    void updateFormants() noexcept {
+        static constexpr float FORMANT_F1[5] = {800.0f, 500.0f, 300.0f, 500.0f, 350.0f};
+        static constexpr float FORMANT_F2[5] = {1200.0f, 1800.0f, 2300.0f, 900.0f, 700.0f};
+        static constexpr float FORMANT_F3[5] = {2500.0f, 2600.0f, 3000.0f, 2400.0f, 2300.0f};
+
+        int idx0 = static_cast<int>(vowelMorph_);
+        int idx1 = std::min(4, idx0 + 1);
+        float frac = vowelMorph_ - static_cast<float>(idx0);
+
+        float f1 = FORMANT_F1[idx0] * (1.0f - frac) + FORMANT_F1[idx1] * frac;
+        float f2 = FORMANT_F2[idx0] * (1.0f - frac) + FORMANT_F2[idx1] * frac;
+        float f3 = FORMANT_F3[idx0] * (1.0f - frac) + FORMANT_F3[idx1] * frac;
+
+        float q = std::max(1.5f, resonance_);
+        formantBands_[0].setParameters(FilterType::BandPass, std::clamp(f1, 50.0f, sampleRate_ * 0.45f), 0.0f, q);
+        formantBands_[1].setParameters(FilterType::BandPass, std::clamp(f2, 100.0f, sampleRate_ * 0.45f), 0.0f, q);
+        formantBands_[2].setParameters(FilterType::BandPass, std::clamp(f3, 200.0f, sampleRate_ * 0.45f), 0.0f, q);
+
+        formantGains_[0] = 1.0f;
+        formantGains_[1] = 0.70f;
+        formantGains_[2] = 0.40f;
+    }
+
+    static constexpr size_t MAX_COMB_SAMPLES = 4096;
 
     float sampleRate_ = 48000.0f;
     ZdfFilterMode mode_ = ZdfFilterMode::Ladder24;
     float cutoffHz_ = 2500.0f;
     float resonance_ = 1.0f;
     float drive_ = 1.0f;
+    float vowelMorph_ = 0.0f;
 
     float g_ = 0.1f;
     float g1_ = 0.09f;
     float R_ = 0.5f;
     float h_ = 1.0f;
+    float G3_ = 0.0f;
     float G4_ = 0.0f;
 
     float s1_ = 0.0f, s2_ = 0.0f, s3_ = 0.0f, s4_ = 0.0f;
+
+    std::array<BiquadFilter, 3> formantBands_;
+    std::array<float, 3> formantGains_{1.0f, 0.70f, 0.40f};
+
+    std::vector<float> combBuffer_;
+    size_t combWriteIdx_ = 0;
+    float combDampState_ = 0.0f;
 };

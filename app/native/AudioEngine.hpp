@@ -6,6 +6,9 @@
 #include <string>
 #include "LockFreeQueue.hpp"
 #include "dsp/Mixer.hpp"
+#include "dsp/StepSequencerTrack.hpp"
+#include "dsp/SynthTrack.hpp"
+#include "dsp/AudioTrack.hpp"
 #include "sequencer/Sequencer.hpp"
 #include "export/WavExporter.hpp"
 #include "plugin/PluginLoader.hpp"
@@ -62,6 +65,12 @@ public:
 
     int32_t addSynthTrack(const std::string& name);
     int32_t addAudioTrack(const std::string& name);
+    int32_t addStepSequencerTrack(const std::string& name);
+    void setStepSequencerStep(int32_t trackId, int32_t laneIndex, int32_t stepIndex, bool active, float velocity, int32_t pitch, float gate, float nudge, int32_t ratchets, float prob);
+    void loadStepSequencerSample(int32_t trackId, int32_t laneIndex, const float* data, int32_t length, int32_t channels);
+    void clearStepSequencerLane(int32_t trackId, int32_t laneIndex);
+    void setStepSequencerLaneParams(int32_t trackId, int32_t laneIndex, int32_t midiNote, int32_t stepCount, int32_t stepTicks, float volume, float pan, bool mute, bool solo);
+
     void removeTrack(int32_t trackId);
 
     void noteOn(int32_t trackId, int32_t note, float velocity);
@@ -90,27 +99,41 @@ public:
 
     bool setTrackSynthPlugin(int32_t trackId, const std::string& pluginId) {
         Track* t = mixer_.getTrack(trackId);
-        if (!t || t->getType() != TrackType::Synth) return false;
+        if (!t) return false;
 
         auto instance = PluginLoader::getInstance().instantiatePlugin(pluginId, static_cast<float>(sampleRate_));
         if (!instance) return false;
 
-        static_cast<SynthTrack*>(t)->setCustomInstrument(std::move(instance));
-        return true;
+        if (t->getType() == TrackType::Synth) {
+            static_cast<SynthTrack*>(t)->setCustomInstrument(std::move(instance));
+            return true;
+        } else if (t->getType() == TrackType::StepSequencer) {
+            static_cast<StepSequencerTrack*>(t)->setCustomInstrument(std::move(instance));
+            return true;
+        }
+        return false;
     }
 
     void removeTrackSynthPlugin(int32_t trackId) {
         Track* t = mixer_.getTrack(trackId);
-        if (t && t->getType() == TrackType::Synth) {
+        if (!t) return;
+        if (t->getType() == TrackType::Synth) {
             static_cast<SynthTrack*>(t)->removeCustomInstrument();
+        } else if (t->getType() == TrackType::StepSequencer) {
+            static_cast<StepSequencerTrack*>(t)->removeCustomInstrument();
         }
     }
 
     std::string getTrackSynthPluginId(int32_t trackId) {
         Track* t = mixer_.getTrack(trackId);
-        if (t && t->getType() == TrackType::Synth) {
-            auto* inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
-            if (inst) return inst->getDescriptor().pluginId;
+        if (t) {
+            if (t->getType() == TrackType::Synth) {
+                auto* inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+                if (inst) return inst->getDescriptor().pluginId;
+            } else if (t->getType() == TrackType::StepSequencer) {
+                auto* inst = static_cast<StepSequencerTrack*>(t)->getCustomInstrument();
+                if (inst) return inst->getDescriptor().pluginId;
+            }
         }
         return "";
     }
@@ -167,10 +190,12 @@ public:
         Track* t = mixer_.getTrack(trackId);
         if (!t) return;
 
-        if (slotIndex == -1 && t->getType() == TrackType::Synth) { // Instrument slot
-            auto* inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+        if (slotIndex == -1) {
+            PluginInstance* inst = nullptr;
+            if (t->getType() == TrackType::Synth) inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+            else if (t->getType() == TrackType::StepSequencer) inst = static_cast<StepSequencerTrack*>(t)->getCustomInstrument();
             if (inst) inst->setParameter(paramId, value);
-        } else if (slotIndex >= 0 && slotIndex < 8) {              // Insert FX slot
+        } else if (slotIndex >= 0 && slotIndex < 8) {
             auto* fx = t->getPluginChain().getPlugin(static_cast<size_t>(slotIndex));
             if (fx) fx->setParameter(paramId, value);
         }
@@ -180,8 +205,10 @@ public:
         Track* t = mixer_.getTrack(trackId);
         if (!t) return 0.0f;
 
-        if (slotIndex == -1 && t->getType() == TrackType::Synth) {
-            auto* inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+        if (slotIndex == -1) {
+            PluginInstance* inst = nullptr;
+            if (t->getType() == TrackType::Synth) inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+            else if (t->getType() == TrackType::StepSequencer) inst = static_cast<StepSequencerTrack*>(t)->getCustomInstrument();
             return inst ? inst->getParameter(paramId) : 0.0f;
         } else if (slotIndex >= 0 && slotIndex < 8) {
             auto* fx = t->getPluginChain().getPlugin(static_cast<size_t>(slotIndex));
@@ -194,8 +221,10 @@ public:
         Track* t = mixer_.getTrack(trackId);
         if (!t) return "{}";
 
-        if (slotIndex == -1 && t->getType() == TrackType::Synth) {
-            auto* inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+        if (slotIndex == -1) {
+            PluginInstance* inst = nullptr;
+            if (t->getType() == TrackType::Synth) inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+            else if (t->getType() == TrackType::StepSequencer) inst = static_cast<StepSequencerTrack*>(t)->getCustomInstrument();
             return inst ? inst->getStateJson() : "{}";
         } else if (slotIndex >= 0 && slotIndex < 8) {
             auto* fx = t->getPluginChain().getPlugin(static_cast<size_t>(slotIndex));
@@ -208,8 +237,10 @@ public:
         Track* t = mixer_.getTrack(trackId);
         if (!t) return false;
 
-        if (slotIndex == -1 && t->getType() == TrackType::Synth) {
-            auto* inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+        if (slotIndex == -1) {
+            PluginInstance* inst = nullptr;
+            if (t->getType() == TrackType::Synth) inst = static_cast<SynthTrack*>(t)->getCustomInstrument();
+            else if (t->getType() == TrackType::StepSequencer) inst = static_cast<StepSequencerTrack*>(t)->getCustomInstrument();
             return inst ? inst->setStateJson(jsonState) : false;
         } else if (slotIndex >= 0 && slotIndex < 8) {
             auto* fx = t->getPluginChain().getPlugin(static_cast<size_t>(slotIndex));

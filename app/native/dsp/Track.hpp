@@ -12,7 +12,7 @@
 #include "DelayEffect.hpp"
 #include "../plugin/PluginChain.hpp"
 
-enum class TrackType : int32_t { Synth = 0, Audio = 1, Bus = 2 };
+enum class TrackType : int32_t { Synth = 0, Audio = 1, Bus = 2, StepSequencer = 3 };
 
 class Track {
 public:

@@ -4,12 +4,9 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -24,7 +21,8 @@ public class SynthVisualizerView extends View {
         COMBINED_HUD,
         OSCILLOSCOPE,
         FILTER_CURVE,
-        ADSR_ENVELOPE
+        ADSR_ENVELOPE,
+        DRUM_MATRIX_HUD
     }
 
     private DisplayMode currentMode = DisplayMode.COMBINED_HUD;
@@ -34,7 +32,8 @@ public class SynthVisualizerView extends View {
 
     // Filter Parameters
     private float cutoffHz = 3500.0f;
-    private float resonanceQ = 1.5f;
+    private float resonanceQ = 1.8f;
+    private int filterMode = 0; // 0=Ladder24, 1=Diode18, 6=Formant, 7=Comb
 
     // ADSR Envelope Parameters
     private float attackMs = 15.0f;
@@ -54,6 +53,7 @@ public class SynthVisualizerView extends View {
     private final Paint filterFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint envPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint envFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint drumPadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
     private final Path fillPath = new Path();
     private final RectF rectF = new RectF();
@@ -100,11 +100,18 @@ public class SynthVisualizerView extends View {
 
         envFillPaint.setStyle(Paint.Style.FILL);
         envFillPaint.setColor(Color.parseColor("#22FF9F0A"));
+
+        drumPadPaint.setStyle(Paint.Style.FILL);
     }
 
     public void setFilterParams(float cutoff, float resonance) {
         this.cutoffHz = Math.max(20.0f, Math.min(20000.0f, cutoff));
         this.resonanceQ = Math.max(0.1f, Math.min(16.0f, resonance));
+        invalidate();
+    }
+
+    public void setFilterMode(int mode) {
+        this.filterMode = mode;
         invalidate();
     }
 
@@ -137,7 +144,7 @@ public class SynthVisualizerView extends View {
                     peakEnergy = AudioEngineNative.nativeGetMasterPeakL();
                 }
                 invalidate();
-                animHandler.postDelayed(this, 16); // 60 FPS
+                animHandler.postDelayed(this, 16);
             }
         });
     }
@@ -166,10 +173,8 @@ public class SynthVisualizerView extends View {
         final float width = getWidth();
         final float height = getHeight();
 
-        // Background
         canvas.drawRect(0, 0, width, height, bgPaint);
 
-        // Subtle Border & Axis
         rectF.set(1f, 1f, width - 1f, height - 1f);
         gridPaint.setColor(Color.parseColor("#262938"));
         canvas.drawRoundRect(rectF, 8f, 8f, gridPaint);
@@ -182,10 +187,13 @@ public class SynthVisualizerView extends View {
                 drawOscilloscope(canvas, 0, 0, width, height, "LIVE OSCILLOSCOPE");
                 break;
             case FILTER_CURVE:
-                drawFilterCurve(canvas, 0, 0, width, height, "24dB ZDF LADDER FREQUENCY RESPONSE");
+                drawFilterCurve(canvas, 0, 0, width, height, "DANCE FILTER FREQUENCY RESPONSE");
                 break;
             case ADSR_ENVELOPE:
                 drawAdsrEnvelope(canvas, 0, 0, width, height, "EXPONENTIAL ADSR ENVELOPE");
+                break;
+            case DRUM_MATRIX_HUD:
+                drawDrumMatrixHud(canvas, width, height);
                 break;
         }
     }
@@ -193,19 +201,45 @@ public class SynthVisualizerView extends View {
     private void drawCombinedHud(Canvas canvas, float width, float height) {
         final float colWidth = width / 3.0f;
 
-        // Column Dividers
         gridPaint.setColor(Color.parseColor("#222634"));
         canvas.drawLine(colWidth, 0, colWidth, height, gridPaint);
         canvas.drawLine(colWidth * 2.0f, 0, colWidth * 2.0f, height, gridPaint);
 
-        // Left Pane: Oscilloscope
         drawOscilloscope(canvas, 0, 0, colWidth, height, "OSCILLOSCOPE");
-
-        // Center Pane: Filter Curve
         drawFilterCurve(canvas, colWidth, 0, colWidth, height, String.format("FILTER: %.0fHz", cutoffHz));
-
-        // Right Pane: ADSR
         drawAdsrEnvelope(canvas, colWidth * 2.0f, 0, colWidth, height, "ADSR ENVELOPE");
+    }
+
+    private void drawDrumMatrixHud(Canvas canvas, float width, float height) {
+        final float padW = (width - 48f) / 8f;
+        final float padH = height - 36f;
+        final String[] drumNames = {"BD", "SD", "CL", "CH", "OH", "TM", "RM", "CB"};
+        final int[] colors = {
+            Color.parseColor("#0A84FF"), Color.parseColor("#FF9F0A"),
+            Color.parseColor("#30D158"), Color.parseColor("#BF5AF2"),
+            Color.parseColor("#FF453A"), Color.parseColor("#64D2FF"),
+            Color.parseColor("#FFD60A"), Color.parseColor("#AC8E68")
+        };
+
+        for (int i = 0; i < 8; i++) {
+            float px = 8f + (i * (padW + 4f));
+            float py = 24f;
+
+            float vEnergy = Math.max(0.15f, Math.min(1.0f, peakEnergy * (1.2f + (i % 3) * 0.3f)));
+            int alpha = (int) (vEnergy * 255);
+
+            drumPadPaint.setColor(Color.argb(alpha, Color.red(colors[i]), Color.green(colors[i]), Color.blue(colors[i])));
+            rectF.set(px, py, px + padW, py + padH);
+            canvas.drawRoundRect(rectF, 4f, 4f, drumPadPaint);
+
+            textPaint.setColor(Color.WHITE);
+            textPaint.setTextSize(11f);
+            canvas.drawText(drumNames[i], px + (padW * 0.2f), py + (padH * 0.65f), textPaint);
+        }
+
+        textPaint.setColor(Color.parseColor("#30D158"));
+        textPaint.setTextSize(12f);
+        canvas.drawText("⚡ COBALT DRUM SYNTHESIS MATRIX (8-VOICE DYNAMIC DSP)", 14f, 18f, textPaint);
     }
 
     private void drawOscilloscope(Canvas canvas, float left, float top, float width, float height, String label) {
@@ -251,14 +285,27 @@ public class SynthVisualizerView extends View {
             float frac = (float) i / steps;
             float px = left + 8f + frac * (width - 16f);
 
-            // 4-Pole 24dB Moog Ladder filter magnitude approximation
             float freqHz = (float) (20.0f * Math.pow(1000.0f, frac));
             float fRatio = freqHz / cutoffHz;
-            float mag = 1.0f / (float) Math.sqrt(1.0 + Math.pow(fRatio, 8.0));
+            float mag = 1.0f;
 
-            // Resonant bump near cutoff
-            float resonanceBump = (float) Math.exp(-Math.pow((frac - cutoffNormalized) * 6.0f, 2.0)) * (resonanceQ * 0.35f);
-            mag = Math.min(1.6f, mag + resonanceBump);
+            if (filterMode == 1) {
+                // Diode 18dB Acid Ladder
+                mag = 1.0f / (float) Math.sqrt(1.0 + Math.pow(fRatio, 6.0));
+                float acidRes = (float) Math.exp(-Math.pow((frac - cutoffNormalized) * 7.0f, 2.0)) * (resonanceQ * 0.45f);
+                mag = Math.min(1.8f, mag + acidRes);
+            } else if (filterMode == 6) {
+                // 3-Peak Formant Vowel Filter
+                float p1 = (float) Math.exp(-Math.pow(frac - 0.35f, 2.0) * 45.0f);
+                float p2 = (float) Math.exp(-Math.pow(frac - 0.60f, 2.0) * 55.0f) * 0.7f;
+                float p3 = (float) Math.exp(-Math.pow(frac - 0.85f, 2.0) * 65.0f) * 0.4f;
+                mag = Math.min(1.5f, 0.2f + p1 + p2 + p3);
+            } else {
+                // 24dB Moog Ladder
+                mag = 1.0f / (float) Math.sqrt(1.0 + Math.pow(fRatio, 8.0));
+                float resBump = (float) Math.exp(-Math.pow((frac - cutoffNormalized) * 6.0f, 2.0)) * (resonanceQ * 0.35f);
+                mag = Math.min(1.6f, mag + resBump);
+            }
 
             float py = plotBottom - (mag * plotHeight * 0.65f);
             if (i == 0) {
@@ -276,7 +323,6 @@ public class SynthVisualizerView extends View {
         canvas.drawPath(fillPath, filterFillPaint);
         canvas.drawPath(path, filterPaint);
 
-        // Peak anchor dot
         filterPaint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(peakX, plotTop + 14f, 4f, filterPaint);
         filterPaint.setStyle(Paint.Style.STROKE);
@@ -307,19 +353,15 @@ public class SynthVisualizerView extends View {
         path.moveTo(x0, plotBottom);
         fillPath.moveTo(x0, plotBottom);
 
-        // Attack (Exponential curve)
         path.quadTo((x0 + x1) * 0.5f, yPeak + (plotHeight * 0.2f), x1, yPeak);
         fillPath.quadTo((x0 + x1) * 0.5f, yPeak + (plotHeight * 0.2f), x1, yPeak);
 
-        // Decay (Soft exponential drop)
         path.quadTo((x1 + x2) * 0.5f, yPeak + (plotBottom - ySustain) * 0.4f, x2, ySustain);
         fillPath.quadTo((x1 + x2) * 0.5f, yPeak + (plotBottom - ySustain) * 0.4f, x2, ySustain);
 
-        // Sustain stage
         path.lineTo(x3, ySustain);
         fillPath.lineTo(x3, ySustain);
 
-        // Release stage
         path.quadTo((x3 + x4) * 0.5f, ySustain + (plotBottom - ySustain) * 0.7f, x4, plotBottom);
         fillPath.quadTo((x3 + x4) * 0.5f, ySustain + (plotBottom - ySustain) * 0.7f, x4, plotBottom);
 
@@ -333,12 +375,12 @@ public class SynthVisualizerView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            // Cycle Display Modes on touch
             switch (currentMode) {
-                case COMBINED_HUD:   currentMode = DisplayMode.OSCILLOSCOPE; break;
-                case OSCILLOSCOPE:   currentMode = DisplayMode.FILTER_CURVE; break;
-                case FILTER_CURVE:   currentMode = DisplayMode.ADSR_ENVELOPE; break;
-                case ADSR_ENVELOPE:  currentMode = DisplayMode.COMBINED_HUD; break;
+                case COMBINED_HUD:    currentMode = DisplayMode.DRUM_MATRIX_HUD; break;
+                case DRUM_MATRIX_HUD: currentMode = DisplayMode.OSCILLOSCOPE; break;
+                case OSCILLOSCOPE:    currentMode = DisplayMode.FILTER_CURVE; break;
+                case FILTER_CURVE:    currentMode = DisplayMode.ADSR_ENVELOPE; break;
+                case ADSR_ENVELOPE:   currentMode = DisplayMode.COMBINED_HUD; break;
             }
             invalidate();
             return true;

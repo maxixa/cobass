@@ -38,8 +38,16 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         TrackItem item = tracks.get(position);
 
         holder.txtTrackName.setText(item.getName());
-        holder.txtTrackTypeBadge.setText(item.getType() == TrackItem.Type.SYNTH ? "SYNTH" : "AUDIO (808)");
-        holder.txtTrackTypeBadge.setBackgroundColor(item.getType() == TrackItem.Type.SYNTH ? Color.parseColor("#0A84FF") : Color.parseColor("#FF9F0A"));
+        if (item.getType() == TrackItem.Type.SYNTH) {
+            holder.txtTrackTypeBadge.setText("SYNTH");
+            holder.txtTrackTypeBadge.setBackgroundColor(Color.parseColor("#0A84FF"));
+        } else if (item.getType() == TrackItem.Type.STEP_SEQUENCER) {
+            holder.txtTrackTypeBadge.setText("STEP DRUM");
+            holder.txtTrackTypeBadge.setBackgroundColor(Color.parseColor("#9333EA"));
+        } else {
+            holder.txtTrackTypeBadge.setText("AUDIO (808)");
+            holder.txtTrackTypeBadge.setBackgroundColor(Color.parseColor("#FF9F0A"));
+        }
 
         holder.seekVolume.setProgress((int) (item.getVolume() * 100));
         holder.seekPan.setProgress((int) ((item.getPan() + 1.0f) * 50));

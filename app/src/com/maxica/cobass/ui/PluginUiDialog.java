@@ -11,8 +11,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import com.maxica.cobass.R;
 import com.maxica.cobass.audio.AudioEngineNative;
@@ -36,6 +38,7 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
 
     private SynthVisualizerView visualizerView;
     private final List<RotaryKnobView> activeKnobs = new ArrayList<>();
+    private int activeCategoryFilter = 0; // 0 = ALL
 
     public PluginUiDialog(@NonNull Context context, int trackId, int slotIndex,
                           PluginDescriptorItem descriptor, Runnable onDismissCallback) {
@@ -59,6 +62,7 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
 
         TextView txtTitle = findViewById(R.id.txtPluginTitle);
         TextView txtVendor = findViewById(R.id.txtPluginVendor);
+        Button btnVariation = findViewById(R.id.btnPluginVariation);
         Button btnBypass = findViewById(R.id.btnPluginBypass);
         Button btnAb = findViewById(R.id.btnAbCompare);
         Button btnPresets = findViewById(R.id.btnPluginPresets);
@@ -73,6 +77,9 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
         if (visualizerContainer != null) {
             visualizerContainer.removeAllViews();
             visualizerView = new SynthVisualizerView(getContext());
+            if (descriptor.getPluginId().contains("drums")) {
+                visualizerView.setDisplayMode(SynthVisualizerView.DisplayMode.DRUM_MATRIX_HUD);
+            }
             visualizerContainer.addView(visualizerView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
@@ -85,6 +92,19 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
             }
         }
         updateBypassButtonState(btnBypass);
+
+        if (btnVariation != null) {
+            btnVariation.setOnClickListener(v -> {
+                new VariationStudioDialog(
+                    getContext(),
+                    trackId,
+                    slotIndex,
+                    descriptor,
+                    this::refreshAllKnobValues,
+                    this
+                ).show();
+            });
+        }
 
         btnBypass.setOnClickListener(v -> {
             isBypassed = !isBypassed;
@@ -116,7 +136,7 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
         btnSavePatch.setOnClickListener(v -> PluginPresetDialog.showSaveDialog(getContext(), descriptor, this));
         btnClose.setOnClickListener(v -> dismiss());
 
-        buildParameterMatrix(paramContainer);
+        buildCategorizedParameterMatrix(paramContainer);
     }
 
     private void updateBypassButtonState(Button btnBypass) {
@@ -126,12 +146,12 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
         btnBypass.setBackgroundColor(isBypassed ? Color.parseColor("#4D1E24") : Color.parseColor("#163824"));
     }
 
-    private void buildParameterMatrix(LinearLayout container) {
+    private void buildCategorizedParameterMatrix(LinearLayout container) {
         container.removeAllViews();
         activeKnobs.clear();
 
-        List<PluginParamItem> params = descriptor.getParameters();
-        if (params.isEmpty()) {
+        List<PluginParamItem> allParams = descriptor.getParameters();
+        if (allParams.isEmpty()) {
             TextView emptyText = new TextView(getContext());
             emptyText.setText("This plugin does not expose adjustable parameters.");
             emptyText.setTextColor(Color.parseColor("#8E8E93"));
@@ -141,10 +161,87 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
             return;
         }
 
+        // 1. Build Categorized Tabs & Audition Ribbon
+        if (descriptor.getPluginId().contains("drums") || allParams.size() > 12) {
+            HorizontalScrollView tabScroll = new HorizontalScrollView(getContext());
+            tabScroll.setHorizontalScrollBarEnabled(false);
+            LinearLayout tabRow = new LinearLayout(getContext());
+            tabRow.setOrientation(LinearLayout.HORIZONTAL);
+            tabRow.setPadding(0, 4, 0, 10);
+
+            String[] categories;
+            if (descriptor.getPluginId().contains("drums")) {
+                categories = new String[]{"ALL PARAMS", "KICK & SNARE", "HATS & CLAP", "TOMS & PERC", "MASTER"};
+            } else {
+                categories = new String[]{"ALL PARAMS", "OSCILLATORS & FM", "FILTER & KEYTRACK", "ENVELOPES & PUNCH", "DANCE FX SUITE", "MASTER & GLIDE"};
+            }
+
+            for (int i = 0; i < categories.length; i++) {
+                final int catIdx = i;
+                Button btnTab = new Button(getContext());
+                btnTab.setText(categories[i]);
+                btnTab.setTextSize(10f);
+                btnTab.setTypeface(null, android.graphics.Typeface.BOLD);
+                boolean isSel = (activeCategoryFilter == catIdx);
+                btnTab.setBackgroundColor(isSel ? Color.parseColor("#0A84FF") : Color.parseColor("#20232E"));
+                btnTab.setTextColor(isSel ? Color.WHITE : Color.parseColor("#8E8E93"));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 72);
+                lp.setMargins(0, 0, 8, 0);
+                btnTab.setLayoutParams(lp);
+                btnTab.setOnClickListener(v -> {
+                    activeCategoryFilter = catIdx;
+                    buildCategorizedParameterMatrix(container);
+                });
+                tabRow.addView(btnTab);
+            }
+            tabScroll.addView(tabRow);
+            container.addView(tabScroll);
+
+            // 2. Direct Audition Pad Ribbon
+            LinearLayout audRow = new LinearLayout(getContext());
+            audRow.setOrientation(LinearLayout.HORIZONTAL);
+            audRow.setPadding(0, 0, 0, 10);
+
+            if (descriptor.getPluginId().contains("drums")) {
+                addAuditionPad(audRow, "▶ Kick", 36, Color.parseColor("#0A84FF"));
+                addAuditionPad(audRow, "▶ Snare", 38, Color.parseColor("#FF9F0A"));
+                addAuditionPad(audRow, "▶ Clap", 39, Color.parseColor("#30D158"));
+                addAuditionPad(audRow, "▶ Cl.Hat", 42, Color.parseColor("#BF5AF2"));
+                addAuditionPad(audRow, "▶ Op.Hat", 46, Color.parseColor("#FF453A"));
+                addAuditionPad(audRow, "▶ Cowbell", 56, Color.parseColor("#FFD60A"));
+            } else {
+                addAuditionPad(audRow, "▶ C2 Sub", 36, Color.parseColor("#0A84FF"));
+                addAuditionPad(audRow, "▶ C3 Bass", 48, Color.parseColor("#30D158"));
+                addAuditionPad(audRow, "▶ C4 Pluck", 60, Color.parseColor("#FF9F0A"));
+                addAuditionPad(audRow, "▶ C5 Lead", 72, Color.parseColor("#BF5AF2"));
+            }
+            container.addView(audRow);
+        }
+
+        // Filter parameters by category
+        List<PluginParamItem> filteredParams = new ArrayList<>();
+        for (PluginParamItem p : allParams) {
+            int id = p.getId();
+            if (descriptor.getPluginId().contains("drums")) {
+                if (activeCategoryFilter == 0) filteredParams.add(p);
+                else if (activeCategoryFilter == 1 && id >= 4 && id <= 13) filteredParams.add(p);
+                else if (activeCategoryFilter == 2 && id >= 14 && id <= 22) filteredParams.add(p);
+                else if (activeCategoryFilter == 3 && id >= 23 && id <= 31) filteredParams.add(p);
+                else if (activeCategoryFilter == 4 && id >= 0 && id <= 3) filteredParams.add(p);
+            } else {
+                if (activeCategoryFilter == 0) filteredParams.add(p);
+                else if (activeCategoryFilter == 1 && id >= 0 && id <= 21) filteredParams.add(p);
+                else if (activeCategoryFilter == 2 && id >= 22 && id <= 28) filteredParams.add(p);
+                else if (activeCategoryFilter == 3 && id >= 29 && id <= 42) filteredParams.add(p);
+                else if (activeCategoryFilter == 4 && id >= 43 && id <= 51) filteredParams.add(p);
+                else if (activeCategoryFilter == 5 && id >= 52) filteredParams.add(p);
+            }
+        }
+
         final int columnsPerRow = 4;
         LinearLayout currentRow = null;
 
-        for (int i = 0; i < params.size(); i++) {
+        for (int i = 0; i < filteredParams.size(); i++) {
             if (i % columnsPerRow == 0) {
                 currentRow = new LinearLayout(getContext());
                 currentRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -153,13 +250,31 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
                 container.addView(currentRow);
             }
 
-            PluginParamItem p = params.get(i);
+            PluginParamItem p = filteredParams.get(i);
             View paramView = createParamControlView(p);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
             lp.setMargins(6, 0, 6, 0);
             paramView.setLayoutParams(lp);
             if (currentRow != null) currentRow.addView(paramView);
         }
+    }
+
+    private void addAuditionPad(LinearLayout parent, String label, int midiNote, int color) {
+        Button btn = new Button(getContext());
+        btn.setText(label);
+        btn.setTextSize(9f);
+        btn.setTypeface(null, android.graphics.Typeface.BOLD);
+        btn.setTextColor(Color.WHITE);
+        btn.setBackgroundColor(color);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 68, 1.0f);
+        lp.setMargins(0, 0, 4, 0);
+        btn.setLayoutParams(lp);
+        btn.setOnClickListener(v -> {
+            if (AudioEngineNative.isLoaded()) {
+                AudioEngineNative.nativeNoteOn(trackId, midiNote, 1.0f);
+            }
+        });
+        parent.addView(btn);
     }
 
     private View createParamControlView(PluginParamItem param) {
@@ -188,6 +303,9 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
             return PluginControlFactory.createChoiceStepper(getContext(), param, (int) initialVal, (p, val) -> {
                 if (AudioEngineNative.isLoaded()) {
                     AudioEngineNative.nativeSetPluginParameter(trackId, slotIndex, p.getId(), val);
+                    if (p.getName().contains("Filter Mode") && visualizerView != null) {
+                        visualizerView.setFilterMode((int) val);
+                    }
                 }
             });
         }
@@ -197,7 +315,7 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
         if (visualizerView == null) return;
         String lower = name.toLowerCase();
         if (lower.contains("cutoff")) {
-            visualizerView.setFilterParams(value, 1.5f);
+            visualizerView.setFilterParams(value, 1.8f);
         } else if (lower.contains("resonance")) {
             visualizerView.setFilterParams(3500.0f, value);
         } else if (lower.contains("attack")) {

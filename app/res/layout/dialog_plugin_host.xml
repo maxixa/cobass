@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="v1.0 • Maxica Audio"
+            android:text="v3.0 • Maxica Audio"
             android:textColor="@color/cubase_text_dim"
             android:textSize="11sp" />
 
@@ -39,11 +39,25 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
+        <!-- Intelligent Variation Randomizer -->
+        <Button
+            android:id="@+id/btnPluginVariation"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:text="🎲 VARIATION"
+            android:textColor="#FFD60A"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:backgroundTint="#3D3216"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
         <!-- A/B Comparison Toggle -->
         <Button
             android:id="@+id/btnAbCompare"
             android:layout_width="wrap_content"
             android:layout_height="34dp"
+            android:layout_marginStart="4dp"
             android:text="A / B"
             android:textColor="#C7C7CC"
             android:textSize="11sp"

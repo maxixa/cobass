@@ -96,6 +96,40 @@ Java_com_maxica_cobass_audio_AudioEngineNative_nativeAddSynthTrack(JNIEnv* env, 
 }
 
 JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeAddStepSequencerTrack(JNIEnv* env, jclass /*clazz*/, jstring name) {
+    if (!gAudioEngine) return -1;
+    const char* nativeName = env->GetStringUTFChars(name, nullptr);
+    int32_t id = gAudioEngine->addStepSequencerTrack(nativeName ? nativeName : "Step Drum");
+    if (nativeName) env->ReleaseStringUTFChars(name, nativeName);
+    return id;
+}
+
+JNIEXPORT void JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeSetStepSequencerStep(JNIEnv* /*env*/, jclass /*clazz*/, jint trackId, jint laneIndex, jint stepIndex, jboolean active, jfloat velocity, jint pitch, jfloat gate, jfloat nudge, jint ratchets, jfloat prob) {
+    if (gAudioEngine) gAudioEngine->setStepSequencerStep(trackId, laneIndex, stepIndex, active == JNI_TRUE, velocity, pitch, gate, nudge, ratchets, prob);
+}
+
+JNIEXPORT void JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeLoadStepSequencerSample(JNIEnv* env, jclass /*clazz*/, jint trackId, jint laneIndex, jfloatArray data, jint length, jint channels) {
+    if (!gAudioEngine || !data) return;
+    jfloat* pcm = env->GetFloatArrayElements(data, nullptr);
+    if (pcm) {
+        gAudioEngine->loadStepSequencerSample(trackId, laneIndex, pcm, length, channels);
+        env->ReleaseFloatArrayElements(data, pcm, JNI_ABORT);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeClearStepSequencerLane(JNIEnv* /*env*/, jclass /*clazz*/, jint trackId, jint laneIndex) {
+    if (gAudioEngine) gAudioEngine->clearStepSequencerLane(trackId, laneIndex);
+}
+
+JNIEXPORT void JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeSetStepSequencerLaneParams(JNIEnv* /*env*/, jclass /*clazz*/, jint trackId, jint laneIndex, jint midiNote, jint stepCount, jint stepTicks, jfloat volume, jfloat pan, jboolean mute, jboolean solo) {
+    if (gAudioEngine) gAudioEngine->setStepSequencerLaneParams(trackId, laneIndex, midiNote, stepCount, stepTicks, volume, pan, mute == JNI_TRUE, solo == JNI_TRUE);
+}
+
+JNIEXPORT jint JNICALL
 Java_com_maxica_cobass_audio_AudioEngineNative_nativeAddAudioTrack(JNIEnv* env, jclass /*clazz*/, jstring name) {
     if (!gAudioEngine) return -1;
     const char* nativeName = env->GetStringUTFChars(name, nullptr);

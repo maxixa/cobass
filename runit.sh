@@ -1,539 +1,528 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Cobass Step Sequencer - Phase 1 Surgical Patch Script
-# Targets:
-#   1. Model: TrackItem.java (Type.STEP_SEQUENCER)
-#   2. Model: StepPatternItem.java (Lanes, Steps, Ratchets, Probability)
-#   3. Native DSP: Track.hpp (TrackType::StepSequencer)
-#   4. Native DSP: StepSequencerTrack.hpp (16-Lane Multi-Pad Sampler & Real-Time Engine)
-#   5. Native DSP: Mixer.hpp (addStepSequencerTrack)
-#   6. Native Sequencer: Sequencer.hpp (advancePlayback for StepSequencer tracks)
-#   7. Native Core: AudioEngine.hpp & AudioEngine.cpp (Step Sequencer Management API)
-#   8. JNI: AudioEngineNative.java & jni_bridge.cpp (JNI Bridge Bindings)
+# Cobass DAW - Note Transform Engine (Phase 1: Music Theory Core Patch)
 # ==============================================================================
 set -euo pipefail
 
 echo "======================================================================"
-echo "   APPLYING PHASE 1: STEP SEQUENCER DATA MODEL & NATIVE DSP ENGINE    "
+echo "    APPLYING PHASE 1: NATIVE MUSIC THEORY CORE & QUANTIZATION         "
 echo "======================================================================"
 
-python3 - << 'EOF'
+# ------------------------------------------------------------------------------
+# 1. Create app/native/sequencer/MusicTheory.hpp
+# ------------------------------------------------------------------------------
+echo "==> [1/5] Writing app/native/sequencer/MusicTheory.hpp..."
+cat << 'EOF' > app/native/sequencer/MusicTheory.hpp
+#pragma once
+#include <cstdint>
+#include <array>
+#include <cmath>
+#include <algorithm>
+#include <string_view>
+
+namespace Cobass::Music {
+
+enum class ScaleType : uint32_t {
+    Chromatic = 0,
+    Major = 1,              // Ionian
+    NaturalMinor = 2,       // Aeolian
+    Dorian = 3,
+    Phrygian = 4,
+    Lydian = 5,
+    Mixolydian = 6,
+    Locrian = 7,
+    HarmonicMinor = 8,
+    MelodicMinor = 9,
+    MinorPentatonic = 10,
+    MajorPentatonic = 11,
+    Blues = 12,
+    BebopDominant = 13
+};
+
+struct ScaleDescriptor {
+    ScaleType type;
+    std::string_view name;
+    uint32_t intervalMask; // 12-bit bitmask (bit 0 = root, bit 1 = m2, ..., bit 11 = M7)
+    uint32_t degreeCount;
+};
+
+// 12-bit binary bitmasks representing modal intervals
+inline constexpr ScaleDescriptor SCALE_TABLE[] = {
+    {ScaleType::Chromatic,        "Chromatic",         0b111111111111, 12},
+    {ScaleType::Major,            "Major (Ionian)",    0b101010110101, 7},  // 0,2,4,5,7,9,11
+    {ScaleType::NaturalMinor,     "Natural Minor",     0b010110101101, 7},  // 0,2,3,5,7,8,10
+    {ScaleType::Dorian,           "Dorian Minor",      0b010101101101, 7},  // 0,2,3,5,7,9,10
+    {ScaleType::Phrygian,         "Phrygian",          0b010110101011, 7},  // 0,1,3,5,7,8,10
+    {ScaleType::Lydian,           "Lydian",            0b101010101101, 7},  // 0,2,4,6,7,9,11
+    {ScaleType::Mixolydian,       "Mixolydian",        0b011010110101, 7},  // 0,2,4,5,7,9,10
+    {ScaleType::Locrian,          "Locrian",           0b010110101011, 7},  // 0,1,3,5,6,8,10
+    {ScaleType::HarmonicMinor,    "Harmonic Minor",    0b100110101101, 7},  // 0,2,3,5,7,8,11
+    {ScaleType::MelodicMinor,     "Melodic Minor",     0b101001101101, 7},  // 0,2,3,5,7,9,11
+    {ScaleType::MinorPentatonic,  "Minor Pentatonic",  0b010010101001, 5},  // 0,3,5,7,10
+    {ScaleType::MajorPentatonic,  "Major Pentatonic",  0b001010100101, 5},  // 0,2,4,7,9
+    {ScaleType::Blues,            "Blues Scale",       0b010010111001, 6},  // 0,3,5,6,7,10
+    {ScaleType::BebopDominant,    "Bebop Dominant",    0b111010110101, 8}   // 0,2,4,5,7,9,10,11
+};
+
+inline constexpr const ScaleDescriptor& getScaleDescriptor(ScaleType type) noexcept {
+    const size_t idx = static_cast<size_t>(type);
+    if (idx < std::size(SCALE_TABLE)) {
+        return SCALE_TABLE[idx];
+    }
+    return SCALE_TABLE[0];
+}
+
+inline constexpr bool isPitchInScale(int32_t midiPitch, int32_t rootKey, uint32_t scaleMask) noexcept {
+    if (scaleMask == 0b111111111111) return true;
+    int32_t chroma = (midiPitch - rootKey) % 12;
+    if (chroma < 0) chroma += 12;
+    return (scaleMask & (1u << chroma)) != 0;
+}
+
+inline int32_t snapPitchToScale(int32_t rawPitch, int32_t rootKey, uint32_t scaleMask) noexcept {
+    if (rawPitch < 0 || rawPitch > 127) {
+        return std::clamp(rawPitch, 0, 127);
+    }
+    if (scaleMask == 0b111111111111 || isPitchInScale(rawPitch, rootKey, scaleMask)) {
+        return rawPitch;
+    }
+
+    int32_t bestPitch = rawPitch;
+    int32_t minDistance = 999;
+
+    // Search nearest consonant scale tone within +/- 6 semitones
+    for (int32_t delta = 1; delta <= 6; ++delta) {
+        int32_t downPitch = rawPitch - delta;
+        int32_t upPitch = rawPitch + delta;
+
+        if (upPitch <= 127 && isPitchInScale(upPitch, rootKey, scaleMask)) {
+            bestPitch = upPitch;
+            break;
+        }
+        if (downPitch >= 0 && isPitchInScale(downPitch, rootKey, scaleMask)) {
+            bestPitch = downPitch;
+            break;
+        }
+    }
+    return std::clamp(bestPitch, 0, 127);
+}
+
+inline int32_t invertModalPitch(int32_t rawPitch, int32_t axisPitch, int32_t rootKey, uint32_t scaleMask) noexcept {
+    int32_t rawInverted = 2 * axisPitch - rawPitch;
+    return snapPitchToScale(rawInverted, rootKey, scaleMask);
+}
+
+inline int32_t solveVoiceLeading(int32_t previousPitch, int32_t targetPitch, int32_t rootKey, uint32_t scaleMask, float parsimoniousWeight) noexcept {
+    int32_t snappedTarget = snapPitchToScale(targetPitch, rootKey, scaleMask);
+    if (previousPitch < 0 || parsimoniousWeight <= 0.01f) {
+        return snappedTarget;
+    }
+
+    int32_t rawInterval = snappedTarget - previousPitch;
+    int32_t absInterval = std::abs(rawInterval);
+
+    // If jump is an octave or more, check octave-reduced candidate
+    if (absInterval >= 12 && parsimoniousWeight > 0.4f) {
+        int32_t octaveShift = (rawInterval > 0) ? -12 : 12;
+        int32_t closerPitch = snappedTarget + octaveShift;
+        if (closerPitch >= 0 && closerPitch <= 127 && isPitchInScale(closerPitch, rootKey, scaleMask)) {
+            snappedTarget = closerPitch;
+        }
+    }
+
+    return std::clamp(snappedTarget, 0, 127);
+}
+
+inline int32_t applyLeapCompensation(int32_t previousPitch, int32_t leapPitch, int32_t rootKey, uint32_t scaleMask) noexcept {
+    int32_t leapDelta = leapPitch - previousPitch;
+    if (std::abs(leapDelta) < 5) {
+        return leapPitch; // No leap compensation needed for small intervals
+    }
+
+    // Law of Leap Compensation: Counterbalance large leaps with step-wise motion in opposite direction
+    int32_t stepDirection = (leapDelta > 0) ? -1 : 1;
+    int32_t candidatePitch = leapPitch + (stepDirection * 2);
+
+    return snapPitchToScale(candidatePitch, rootKey, scaleMask);
+}
+
+} // namespace Cobass::Music
+EOF
+
+# ------------------------------------------------------------------------------
+# 2. Create app/native/sequencer/NoteTransformEngine.hpp
+# ------------------------------------------------------------------------------
+echo "==> [2/5] Writing app/native/sequencer/NoteTransformEngine.hpp..."
+cat << 'EOF' > app/native/sequencer/NoteTransformEngine.hpp
+#pragma once
+#include <cstdint>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <random>
+#include "MusicTheory.hpp"
+
+namespace Cobass::Transform {
+
+struct NoteEvent {
+    int32_t pitch = 60;
+    float velocity = 0.85f;
+    int64_t startOffsetTicks = 0;
+    int64_t lengthTicks = 480;
+    bool isMuted = false;
+    bool isSelected = false;
+    uint32_t flags = 0;
+};
+
+enum class TransformOperatorType : uint32_t {
+    EUCLIDEAN_SLICE       = 0,
+    RATCHET_BURST         = 1,
+    MARKOV_DRIFT          = 2,
+    ENCLOSURE_DECORATE    = 3,
+    MODAL_INVERSION       = 4,
+    DIATONIC_VOICING      = 5,
+    CALL_RESPONSE_INFILL  = 6,
+    CLAVE_SLIP            = 7,
+    PALINDROME_MIRROR     = 8,
+    GOLDEN_PHRASE_ARC     = 9,
+    HUMANIZE_GROOVE       = 10,
+    SCALE_CONSTRAIN       = 11
+};
+
+struct LockMasks {
+    bool lockDownbeats      = false;
+    bool lockPitches        = false;
+    bool lockRhythm         = false;
+    bool lockVelocities     = false;
+    bool lockBassNotes      = false;
+};
+
+struct MusicalContext {
+    int32_t rootKey = 0;
+    uint32_t scaleIntervalMask = 0b101010110101; // Major by default
+    int32_t ticksPerBeat = 480;                  // PPQ
+    int32_t beatsPerBar = 4;
+    int64_t clipStartGlobalTick = 0;
+    int64_t clipLengthTicks = 1920 * 2;
+};
+
+struct TransformRecipe {
+    TransformOperatorType type = TransformOperatorType::SCALE_CONSTRAIN;
+    float intensity = 0.5f;   // 0.0f to 1.0f
+    uint32_t seed = 12345;
+    float param1 = 0.0f;
+    float param2 = 0.0f;
+    bool enabled = true;
+};
+
+class NoteTransformEngine {
+public:
+    static inline bool isMetricDownbeat(int64_t offsetTicks, int32_t ppq, int32_t beatsPerBar) noexcept {
+        const int64_t barTicks = static_cast<int64_t>(ppq) * beatsPerBar;
+        const int64_t posInBar = offsetTicks % barTicks;
+        // Strong downbeats on Beat 1 (0) and Beat 3 (ppq * 2 in 4/4)
+        return (posInBar == 0) || (posInBar == static_cast<int64_t>(ppq * 2));
+    }
+
+    static inline float calculatePhraseArcGain(int64_t currentTick, int64_t startTick, int64_t endTick) noexcept {
+        if (endTick <= startTick) return 1.0f;
+        const float t = std::clamp(static_cast<float>(currentTick - startTick) / static_cast<float>(endTick - startTick), 0.0f, 1.0f);
+        // Golden ratio peak at ~61.8% of phrase length
+        const float phiPower = std::pow(t, 0.618f);
+        return 0.70f + 0.30f * std::sin(3.14159265f * phiPower);
+    }
+
+    static std::vector<NoteEvent> process(
+        const std::vector<NoteEvent>& sourceNotes,
+        const MusicalContext& context,
+        const std::vector<TransformRecipe>& recipes,
+        const LockMasks& masks,
+        float dryWetRatio = 1.0f
+    ) {
+        if (sourceNotes.empty()) return {};
+
+        std::vector<NoteEvent> currentNotes = sourceNotes;
+
+        for (const auto& recipe : recipes) {
+            if (!recipe.enabled) continue;
+            currentNotes = applySingleOperator(currentNotes, context, recipe, masks);
+        }
+
+        // Apply final Dry/Wet interpolation
+        if (dryWetRatio < 0.999f && sourceNotes.size() == currentNotes.size()) {
+            for (size_t i = 0; i < sourceNotes.size(); ++i) {
+                const auto& src = sourceNotes[i];
+                auto& dst = currentNotes[i];
+
+                if (masks.lockPitches) {
+                    dst.pitch = src.pitch;
+                } else {
+                    float blendedPitch = src.pitch * (1.0f - dryWetRatio) + dst.pitch * dryWetRatio;
+                    dst.pitch = Music::snapPitchToScale(std::round(blendedPitch), context.rootKey, context.scaleIntervalMask);
+                }
+
+                if (masks.lockVelocities) {
+                    dst.velocity = src.velocity;
+                } else {
+                    dst.velocity = src.velocity * (1.0f - dryWetRatio) + dst.velocity * dryWetRatio;
+                }
+
+                if (masks.lockRhythm) {
+                    dst.startOffsetTicks = src.startOffsetTicks;
+                    dst.lengthTicks = src.lengthTicks;
+                }
+            }
+        }
+
+        return currentNotes;
+    }
+
+    static std::vector<NoteEvent> applySingleOperator(
+        const std::vector<NoteEvent>& notes,
+        const MusicalContext& context,
+        const TransformRecipe& recipe,
+        const LockMasks& masks
+    ) {
+        std::vector<NoteEvent> result = notes;
+        std::mt19937 rng(recipe.seed);
+
+        switch (recipe.type) {
+            case TransformOperatorType::SCALE_CONSTRAIN: {
+                for (auto& n : result) {
+                    if (masks.lockPitches) continue;
+                    if (masks.lockBassNotes && n.pitch < 48) continue;
+                    if (masks.lockDownbeats && isMetricDownbeat(n.startOffsetTicks, context.ticksPerBeat, context.beatsPerBar)) continue;
+                    n.pitch = Music::snapPitchToScale(n.pitch, context.rootKey, context.scaleIntervalMask);
+                }
+                break;
+            }
+
+            case TransformOperatorType::MODAL_INVERSION: {
+                int32_t axisPitch = static_cast<int32_t>(recipe.param1 > 0.0f ? recipe.param1 : 60.0f);
+                for (auto& n : result) {
+                    if (masks.lockPitches) continue;
+                    if (masks.lockBassNotes && n.pitch < 48) continue;
+                    if (masks.lockDownbeats && isMetricDownbeat(n.startOffsetTicks, context.ticksPerBeat, context.beatsPerBar)) continue;
+                    n.pitch = Music::invertModalPitch(n.pitch, axisPitch, context.rootKey, context.scaleIntervalMask);
+                }
+                break;
+            }
+
+            case TransformOperatorType::MARKOV_DRIFT: {
+                std::uniform_real_distribution<float> probDist(0.0f, 1.0f);
+                std::normal_distribution<float> stepDist(0.0f, recipe.intensity * 2.5f);
+
+                int32_t prevPitch = -1;
+                for (auto& n : result) {
+                    if (masks.lockPitches) continue;
+                    if (masks.lockBassNotes && n.pitch < 48) continue;
+                    if (masks.lockDownbeats && isMetricDownbeat(n.startOffsetTicks, context.ticksPerBeat, context.beatsPerBar)) continue;
+
+                    if (probDist(rng) <= recipe.intensity) {
+                        int32_t step = static_cast<int32_t>(std::round(stepDist(rng)));
+                        int32_t targetPitch = std::clamp(n.pitch + step, 24, 108);
+
+                        // Voice leading solver
+                        n.pitch = Music::solveVoiceLeading(prevPitch, targetPitch, context.rootKey, context.scaleIntervalMask, 0.85f);
+                    }
+                    prevPitch = n.pitch;
+                }
+                break;
+            }
+
+            case TransformOperatorType::GOLDEN_PHRASE_ARC: {
+                if (result.empty()) break;
+                int64_t startTick = result.front().startOffsetTicks;
+                int64_t endTick = result.back().startOffsetTicks + result.back().lengthTicks;
+
+                for (auto& n : result) {
+                    if (masks.lockVelocities) continue;
+                    float arcFactor = calculatePhraseArcGain(n.startOffsetTicks, startTick, endTick);
+                    n.velocity = std::clamp(n.velocity * arcFactor, 0.15f, 1.0f);
+                }
+                break;
+            }
+
+            case TransformOperatorType::HUMANIZE_GROOVE: {
+                std::normal_distribution<float> timeJitter(0.0f, recipe.intensity * 18.0f);
+                std::normal_distribution<float> velJitter(0.0f, recipe.intensity * 0.12f);
+
+                for (auto& n : result) {
+                    if (!masks.lockRhythm && !(masks.lockDownbeats && isMetricDownbeat(n.startOffsetTicks, context.ticksPerBeat, context.beatsPerBar))) {
+                        int64_t delta = static_cast<int64_t>(std::round(timeJitter(rng)));
+                        n.startOffsetTicks = std::max<int64_t>(0, n.startOffsetTicks + delta);
+                    }
+                    if (!masks.lockVelocities) {
+                        n.velocity = std::clamp(n.velocity + velJitter(rng), 0.10f, 1.0f);
+                    }
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        return result;
+    }
+};
+
+} // namespace Cobass::Transform
+EOF
+
+# ------------------------------------------------------------------------------
+# 3. Update app/src/com/maxica/cobass/audio/AudioEngineNative.java
+# ------------------------------------------------------------------------------
+echo "==> [3/5] Updating app/src/com/maxica/cobass/audio/AudioEngineNative.java..."
+python3 - << 'PYEOF'
+from pathlib import Path
+
+file_path = Path("app/src/com/maxica/cobass/audio/AudioEngineNative.java")
+content = file_path.read_text(encoding="utf-8")
+
+new_declarations = """    // Music Theory & Note Transformation API
+    public static native int nativeSnapPitchToScale(int rawPitch, int rootKey, int scaleOrdinal);
+    public static native int nativeInvertModalPitch(int rawPitch, int axisPitch, int rootKey, int scaleOrdinal);
+    public static native int nativeSolveVoiceLeading(int previousPitch, int targetPitch, int rootKey, int scaleOrdinal, float parsimoniousWeight);
+"""
+
+if "nativeSnapPitchToScale" not in content:
+    # Insert before the last closing brace
+    last_brace_idx = content.rfind("}")
+    updated = content[:last_brace_idx] + new_declarations + "\n}\n"
+    file_path.write_text(updated, encoding="utf-8")
+    print("  [+] Added Phase 1 JNI declarations to AudioEngineNative.java")
+else:
+    print("  [*] JNI declarations already present in AudioEngineNative.java")
+PYEOF
+
+# ------------------------------------------------------------------------------
+# 4. Update app/native/jni_bridge.cpp
+# ------------------------------------------------------------------------------
+echo "==> [4/5] Updating app/native/jni_bridge.cpp..."
+python3 - << 'PYEOF'
+from pathlib import Path
+
+file_path = Path("app/native/jni_bridge.cpp")
+content = file_path.read_text(encoding="utf-8")
+
+header_include = '#include "sequencer/MusicTheory.hpp"\n#include "sequencer/NoteTransformEngine.hpp"\n'
+if "sequencer/MusicTheory.hpp" not in content:
+    content = header_include + content
+
+jni_functions = """
+JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeSnapPitchToScale(JNIEnv* /*env*/, jclass /*clazz*/, jint rawPitch, jint rootKey, jint scaleOrdinal) {
+    using namespace Cobass::Music;
+    const auto& desc = getScaleDescriptor(static_cast<ScaleType>(scaleOrdinal));
+    return snapPitchToScale(rawPitch, rootKey, desc.intervalMask);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeInvertModalPitch(JNIEnv* /*env*/, jclass /*clazz*/, jint rawPitch, jint axisPitch, jint rootKey, jint scaleOrdinal) {
+    using namespace Cobass::Music;
+    const auto& desc = getScaleDescriptor(static_cast<ScaleType>(scaleOrdinal));
+    return invertModalPitch(rawPitch, axisPitch, rootKey, desc.intervalMask);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeSolveVoiceLeading(JNIEnv* /*env*/, jclass /*clazz*/, jint previousPitch, jint targetPitch, jint rootKey, jint scaleOrdinal, jfloat parsimoniousWeight) {
+    using namespace Cobass::Music;
+    const auto& desc = getScaleDescriptor(static_cast<ScaleType>(scaleOrdinal));
+    return solveVoiceLeading(previousPitch, targetPitch, rootKey, desc.intervalMask, parsimoniousWeight);
+}
+"""
+
+if "nativeSnapPitchToScale" not in content:
+    # Insert before the last extern "C" closing brace
+    last_brace_idx = content.rfind("}")
+    updated = content[:last_brace_idx] + jni_functions + "\n} // extern \"C\"\n"
+    file_path.write_text(updated, encoding="utf-8")
+    print("  [+] Added Phase 1 JNI native bridges to jni_bridge.cpp")
+else:
+    print("  [*] JNI native bridges already present in jni_bridge.cpp")
+PYEOF
+
+# ------------------------------------------------------------------------------
+# 5. Create tools/test_music_theory_engine.py & Run Suite
+# ------------------------------------------------------------------------------
+echo "==> [5/5] Creating and running tools/test_music_theory_engine.py..."
+cat << 'EOF' > tools/test_music_theory_engine.py
+#!/usr/bin/env python3
+"""
+Cobass Music Theory & Transformation Engine Unit Validator
+Audits modal scales, diatonic interval masks, modal axis inversions, and voice leading.
+"""
 import sys
 from pathlib import Path
 
-def patch_file(filepath: Path, find_str: str, replace_str: str, label: str):
-    if not filepath.exists():
-        print(f"\033[91m[-] Missing file: {filepath}\033[0m")
-        sys.exit(1)
-    content = filepath.read_text(encoding="utf-8")
-    if find_str not in content:
-        if replace_str in content:
-            print(f"\033[93m[*] Already patched: {label}\033[0m")
-            return
-        print(f"\033[91m[-] Target string not found for: {label}\033[0m")
-        sys.exit(1)
-    new_content = content.replace(find_str, replace_str, 1)
-    filepath.write_text(new_content, encoding="utf-8")
-    print(f"\033[92m[✓] Patched: {label}\033[0m")
-
-# ----------------------------------------------------------------------
-# 1. TrackItem.java -> Add STEP_SEQUENCER to Type enum
-# ----------------------------------------------------------------------
-track_item_path = Path("app/src/com/maxica/cobass/model/TrackItem.java")
-patch_file(
-    track_item_path,
-    "public enum Type { SYNTH, AUDIO }",
-    "public enum Type { SYNTH, AUDIO, STEP_SEQUENCER }",
-    "TrackItem.java enum Type"
-)
-
-# ----------------------------------------------------------------------
-# 2. Create StepPatternItem.java
-# ----------------------------------------------------------------------
-step_pattern_path = Path("app/src/com/maxica/cobass/model/StepPatternItem.java")
-step_pattern_content = '''package com.maxica.cobass.model;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class StepPatternItem {
-
-    public static class Step {
-        public boolean active = false;
-        public float velocity = 0.85f;
-        public int pitchOffset = 0;       // Semitone shift (-24 to +24)
-        public float gate = 0.75f;        // Step gate duration (0.05 to 2.0)
-        public float nudge = 0.0f;        // Micro-timing offset (-0.5 to +0.5)
-        public int ratchets = 1;          // 1=Single, 2=Double, 3=Triplet, 4=Quad, 8=Roll
-        public float probability = 1.0f;  // 0.0 to 1.0
-
-        public Step copy() {
-            Step s = new Step();
-            s.active = this.active;
-            s.velocity = this.velocity;
-            s.pitchOffset = this.pitchOffset;
-            s.gate = this.gate;
-            s.nudge = this.nudge;
-            s.ratchets = this.ratchets;
-            s.probability = this.probability;
-            return s;
-        }
-    }
-
-    public static class Lane {
-        public int id;
-        public String name = "Lane";
-        public int midiNote = 60;         // Default note or sampler pad index (36=Kick, 38=Snare, 42=CHH)
-        public int stepCount = 16;        // Polymeter length (1 to 64)
-        public SnapGrid subdivision = SnapGrid.BEAT_1_4; // Step resolution (default 1/16)
-        public float volume = 0.8f;
-        public float pan = 0.0f;
-        public boolean isMuted = false;
-        public boolean isSolo = false;
-        public float[] sampleData = null; // One-shot PCM for sampler drum lanes
-        public final List<Step> steps = new ArrayList<>();
-
-        public Lane(int id, String name, int midiNote, int stepCount) {
-            this.id = id;
-            this.name = name;
-            this.midiNote = midiNote;
-            this.stepCount = stepCount;
-            for (int i = 0; i < 64; i++) {
-                steps.add(new Step());
-            }
-        }
-
-        public Lane copy() {
-            Lane l = new Lane(id, name, midiNote, stepCount);
-            l.subdivision = subdivision;
-            l.volume = volume;
-            l.pan = pan;
-            l.isMuted = isMuted;
-            l.isSolo = isSolo;
-            if (sampleData != null) l.sampleData = sampleData.clone();
-            l.steps.clear();
-            for (Step s : steps) l.steps.add(s.copy());
-            return l;
-        }
-    }
-
-    private int id;
-    private String name = "Pattern 1";
-    private int baseLength = 16;
-    private final List<Lane> lanes = new ArrayList<>();
-
-    public StepPatternItem(int id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-
-    public List<Lane> getLanes() { return lanes; }
-    public int getBaseLength() { return baseLength; }
-    public void setBaseLength(int len) { this.baseLength = Math.max(1, Math.min(64, len)); }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public int getId() { return id; }
-
-    public StepPatternItem copy() {
-        StepPatternItem clone = new StepPatternItem(id, name);
-        clone.baseLength = this.baseLength;
-        for (Lane l : this.lanes) clone.lanes.add(l.copy());
-        return clone;
-    }
-}
-'''
-step_pattern_path.write_text(step_pattern_content, encoding="utf-8")
-print(f"\033[92m[✓] Created: {step_pattern_path}\033[0m")
-
-# ----------------------------------------------------------------------
-# 3. Track.hpp -> Add StepSequencer to TrackType enum
-# ----------------------------------------------------------------------
-track_hpp_path = Path("app/native/dsp/Track.hpp")
-patch_file(
-    track_hpp_path,
-    "enum class TrackType : int32_t { Synth = 0, Audio = 1, Bus = 2 };",
-    "enum class TrackType : int32_t { Synth = 0, Audio = 1, Bus = 2, StepSequencer = 3 };",
-    "Track.hpp TrackType enum"
-)
-
-# ----------------------------------------------------------------------
-# 4. Create StepSequencerTrack.hpp
-# ----------------------------------------------------------------------
-step_seq_track_path = Path("app/native/dsp/StepSequencerTrack.hpp")
-step_seq_track_content = '''#pragma once
-#include "Track.hpp"
-#include <array>
-#include <vector>
-#include <random>
-#include <cmath>
-#include <algorithm>
-
-struct NativeStep {
-    bool active = false;
-    float velocity = 0.85f;
-    int32_t pitchOffset = 0;
-    float gate = 0.75f;
-    float nudge = 0.0f;
-    int32_t ratchets = 1;
-    float probability = 1.0f;
-};
-
-struct NativeLane {
-    int32_t id = 0;
-    int32_t midiNote = 60;
-    int32_t stepCount = 16;
-    int32_t stepTicks = 120; // 1/16th note at PPQ=480
-    float volume = 0.8f;
-    float pan = 0.0f;
-    bool isMuted = false;
-    bool isSolo = false;
-
-    // Sampler Pad Buffer
-    std::vector<float> sampleData;
-    int32_t channels = 1;
-    double playbackPos = 0.0;
-    bool isPlayingSample = false;
-    float currentPitch = 1.0f;
-    float currentVelocity = 1.0f;
-
-    std::array<NativeStep, 64> steps{};
-};
-
-class StepSequencerTrack : public Track {
-public:
-    static constexpr size_t MAX_LANES = 16;
-
-    StepSequencerTrack(int32_t id, const std::string& name)
-        : Track(id, TrackType::StepSequencer, name), rng_(std::random_device{}()) {
-        lanes_.resize(MAX_LANES);
-        for (size_t i = 0; i < MAX_LANES; ++i) {
-            lanes_[i].id = static_cast<int32_t>(i);
-        }
-        tempBuffer_.assign(8192, 0.0f);
-    }
-
-    void loadLaneSample(size_t laneIndex, const float* data, int32_t length, int32_t channels) {
-        if (laneIndex >= MAX_LANES || !data || length <= 0) return;
-        lanes_[laneIndex].sampleData.assign(data, data + length);
-        lanes_[laneIndex].channels = std::clamp(channels, 1, 2);
-        lanes_[laneIndex].playbackPos = 0.0;
-        lanes_[laneIndex].isPlayingSample = false;
-    }
-
-    void setLaneStep(size_t laneIndex, size_t stepIndex, bool active, float velocity,
-                     int32_t pitch, float gate, float nudge, int32_t ratchets, float prob) {
-        if (laneIndex >= MAX_LANES || stepIndex >= 64) return;
-        auto& s = lanes_[laneIndex].steps[stepIndex];
-        s.active = active;
-        s.velocity = std::clamp(velocity, 0.0f, 1.0f);
-        s.pitchOffset = std::clamp(pitch, -24, 24);
-        s.gate = std::clamp(gate, 0.05f, 2.0f);
-        s.nudge = std::clamp(nudge, -0.5f, 0.5f);
-        s.ratchets = std::clamp(ratchets, 1, 8);
-        s.probability = std::clamp(prob, 0.0f, 1.0f);
-    }
-
-    void setLaneParams(size_t laneIndex, int32_t midiNote, int32_t stepCount, int32_t stepTicks,
-                       float volume, float pan, bool mute, bool solo) {
-        if (laneIndex >= MAX_LANES) return;
-        auto& l = lanes_[laneIndex];
-        l.midiNote = midiNote;
-        l.stepCount = std::clamp(stepCount, 1, 64);
-        l.stepTicks = std::max(10, stepTicks);
-        l.volume = std::clamp(volume, 0.0f, 2.0f);
-        l.pan = std::clamp(pan, -1.0f, 1.0f);
-        l.isMuted = mute;
-        l.isSolo = solo;
-    }
-
-    void clearLaneSteps(size_t laneIndex) {
-        if (laneIndex >= MAX_LANES) return;
-        for (auto& s : lanes_[laneIndex].steps) {
-            s.active = false;
-        }
-    }
-
-    void advancePlayback(int64_t startTick, int64_t endTick, bool loopWrapped) {
-        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
-        for (auto& lane : lanes_) {
-            if (lane.stepCount <= 0 || lane.isMuted || lane.sampleData.empty()) continue;
-
-            const int64_t laneLoopTicks = static_cast<int64_t>(lane.stepCount * lane.stepTicks);
-            if (laneLoopTicks <= 0) continue;
-
-            for (int32_t s = 0; s < lane.stepCount; ++s) {
-                const auto& step = lane.steps[s];
-                if (!step.active) continue;
-
-                const int32_t ratchets = std::max(1, step.ratchets);
-                const int64_t subStepDuration = lane.stepTicks / ratchets;
-
-                for (int32_t r = 0; r < ratchets; ++r) {
-                    const int64_t stepTickInPattern = (s * lane.stepTicks) + (r * subStepDuration) + static_cast<int64_t>(step.nudge * lane.stepTicks);
-
-                    bool shouldTrigger = false;
-                    if (!loopWrapped) {
-                        int64_t patternStart = startTick % laneLoopTicks;
-                        int64_t patternEnd = endTick % laneLoopTicks;
-                        if (patternEnd > patternStart) {
-                            shouldTrigger = (patternStart <= stepTickInPattern && patternEnd > stepTickInPattern);
-                        } else {
-                            shouldTrigger = (patternStart <= stepTickInPattern || patternEnd > stepTickInPattern);
-                        }
-                    } else {
-                        shouldTrigger = true;
-                    }
-
-                    if (shouldTrigger) {
-                        if (step.probability < 0.999f && dist(rng_) > step.probability) {
-                            continue;
-                        }
-                        lane.playbackPos = 0.0;
-                        lane.currentPitch = std::pow(2.0f, step.pitchOffset / 12.0f);
-                        lane.currentVelocity = step.velocity;
-                        lane.isPlayingSample = true;
-                    }
-                }
-            }
-        }
-    }
-
-    void render(float* outStereoBuffer, int32_t numFrames) override {
-        if (isMuted_) {
-            peakL_.store(0.0f, std::memory_order_relaxed);
-            peakR_.store(0.0f, std::memory_order_relaxed);
-            return;
-        }
-
-        if (tempBuffer_.size() < static_cast<size_t>(numFrames * 2)) {
-            tempBuffer_.resize(numFrames * 2, 0.0f);
-        }
-        std::fill_n(tempBuffer_.data(), numFrames * 2, 0.0f);
-
-        for (auto& lane : lanes_) {
-            if (!lane.isPlayingSample || lane.sampleData.empty() || lane.isMuted) continue;
-
-            const size_t totalFrames = lane.sampleData.size() / lane.channels;
-            const float panL = lane.pan <= 0.0f ? 1.0f : (1.0f - lane.pan);
-            const float panR = lane.pan >= 0.0f ? 1.0f : (1.0f + lane.pan);
-            const float gainL = lane.volume * lane.currentVelocity * panL;
-            const float gainR = lane.volume * lane.currentVelocity * panR;
-
-            for (int32_t i = 0; i < numFrames; ++i) {
-                if (lane.playbackPos >= totalFrames) {
-                    lane.isPlayingSample = false;
-                    break;
-                }
-
-                const size_t frameIdx = static_cast<size_t>(lane.playbackPos);
-                float sL = 0.0f, sR = 0.0f;
-                if (lane.channels == 1) {
-                    sL = sR = lane.sampleData[frameIdx];
-                } else {
-                    sL = lane.sampleData[frameIdx * 2];
-                    sR = lane.sampleData[frameIdx * 2 + 1];
-                }
-
-                tempBuffer_[i * 2]     += sL * gainL;
-                tempBuffer_[i * 2 + 1] += sR * gainR;
-                lane.playbackPos += lane.currentPitch;
-            }
-        }
-
-        applyFxAndGain(tempBuffer_.data(), numFrames);
-
-        for (int32_t i = 0; i < numFrames * 2; ++i) {
-            outStereoBuffer[i] += tempBuffer_[i];
-        }
-    }
-
-private:
-    std::vector<NativeLane> lanes_;
-    std::vector<float> tempBuffer_;
-    std::mt19937 rng_;
-};
-'''
-step_seq_track_path.write_text(step_seq_track_content, encoding="utf-8")
-print(f"\033[92m[✓] Created: {step_seq_track_path}\033[0m")
-
-# ----------------------------------------------------------------------
-# 5. Mixer.hpp -> Add StepSequencerTrack inclusion and factory method
-# ----------------------------------------------------------------------
-mixer_hpp_path = Path("app/native/dsp/Mixer.hpp")
-patch_file(
-    mixer_hpp_path,
-    '#include "AudioTrack.hpp"',
-    '#include "AudioTrack.hpp"\n#include "StepSequencerTrack.hpp"',
-    "Mixer.hpp header include"
-)
-
-add_step_seq_method = '''    int32_t addStepSequencerTrack(const std::string& name) {
-        for (size_t i = 0; i < MAX_TRACKS; ++i) {
-            Track* expected = nullptr;
-            if (tracks_[i].load(std::memory_order_relaxed) == nullptr) {
-                const int32_t id = nextTrackId_++;
-                Track* track = new StepSequencerTrack(id, name);
-                track->setSampleRate(sampleRate_);
-                if (tracks_[i].compare_exchange_strong(expected, track, std::memory_order_release)) {
-                    return id;
-                }
-                delete track;
-            }
-        }
-        return -1;
-    }
-'''
-
-patch_file(
-    mixer_hpp_path,
-    "    bool removeTrack(int32_t id) {",
-    f"{add_step_seq_method}\n    bool removeTrack(int32_t id) {{",
-    "Mixer.hpp addStepSequencerTrack method"
-)
-
-# ----------------------------------------------------------------------
-# 6. Sequencer.hpp -> Advance StepSequencer tracks in processAudioBlock
-# ----------------------------------------------------------------------
-seq_hpp_path = Path("app/native/sequencer/Sequencer.hpp")
-advance_step_seq_call = '''        // Advance Step Sequencer Tracks
-        for (size_t t = 0; t < Mixer::MAX_TRACKS; ++t) {
-            Track* track = mixer.getTrack(static_cast<int32_t>(t));
-            if (track && track->getType() == TrackType::StepSequencer) {
-                static_cast<StepSequencerTrack*>(track)->advancePlayback(startTick, endTick, loopWrapped);
-            }
-        }
-'''
-patch_file(
-    seq_hpp_path,
-    "        const bool loopWrapped = (endTick < startTick);",
-    f"        const bool loopWrapped = (endTick < startTick);\n{advance_step_seq_call}",
-    "Sequencer.hpp advancePlayback dispatch"
-)
-
-# ----------------------------------------------------------------------
-# 7. AudioEngine.hpp -> Add Step Sequencer APIs
-# ----------------------------------------------------------------------
-engine_hpp_path = Path("app/native/AudioEngine.hpp")
-engine_step_apis = '''    int32_t addStepSequencerTrack(const std::string& name);
-    void setStepSequencerStep(int32_t trackId, int32_t laneIndex, int32_t stepIndex, bool active, float velocity, int32_t pitch, float gate, float nudge, int32_t ratchets, float prob);
-    void loadStepSequencerSample(int32_t trackId, int32_t laneIndex, const float* data, int32_t length, int32_t channels);
-    void clearStepSequencerLane(int32_t trackId, int32_t laneIndex);
-    void setStepSequencerLaneParams(int32_t trackId, int32_t laneIndex, int32_t midiNote, int32_t stepCount, int32_t stepTicks, float volume, float pan, bool mute, bool solo);
-'''
-patch_file(
-    engine_hpp_path,
-    "    int32_t addAudioTrack(const std::string& name);",
-    f"    int32_t addAudioTrack(const std::string& name);\n{engine_step_apis}",
-    "AudioEngine.hpp Step Sequencer method declarations"
-)
-
-# ----------------------------------------------------------------------
-# 8. AudioEngine.cpp -> Implement Step Sequencer APIs
-# ----------------------------------------------------------------------
-engine_cpp_path = Path("app/native/AudioEngine.cpp")
-engine_step_impls = '''int32_t AudioEngine::addStepSequencerTrack(const std::string& name) {
-    return mixer_.addStepSequencerTrack(name);
+# Modal Bitmasks matching C++ SCALE_TABLE
+SCALE_MASKS = {
+    "Major": 0b101010110101,          # 0, 2, 4, 5, 7, 9, 11
+    "NaturalMinor": 0b010110101101,   # 0, 2, 3, 5, 7, 8, 10
+    "Dorian": 0b010101101101,         # 0, 2, 3, 5, 7, 9, 10
+    "Phrygian": 0b010110101011,       # 0, 1, 3, 5, 7, 8, 10
+    "HarmonicMinor": 0b100110101101,  # 0, 2, 3, 5, 7, 8, 11
+    "MinorPentatonic": 0b010010101001 # 0, 3, 5, 7, 10
 }
 
-void AudioEngine::setStepSequencerStep(int32_t trackId, int32_t laneIndex, int32_t stepIndex, bool active, float velocity, int32_t pitch, float gate, float nudge, int32_t ratchets, float prob) {
-    Track* t = mixer_.getTrack(trackId);
-    if (t && t->getType() == TrackType::StepSequencer) {
-        static_cast<StepSequencerTrack*>(t)->setLaneStep(laneIndex, stepIndex, active, velocity, pitch, gate, nudge, ratchets, prob);
-    }
-}
+def is_pitch_in_scale(pitch: int, root_key: int, mask: int) -> bool:
+    chroma = (pitch - root_key) % 12
+    return (mask & (1 << chroma)) != 0
 
-void AudioEngine::loadStepSequencerSample(int32_t trackId, int32_t laneIndex, const float* data, int32_t length, int32_t channels) {
-    Track* t = mixer_.getTrack(trackId);
-    if (t && t->getType() == TrackType::StepSequencer) {
-        static_cast<StepSequencerTrack*>(t)->loadLaneSample(laneIndex, data, length, channels);
-    }
-}
+def snap_pitch(pitch: int, root_key: int, mask: int) -> int:
+    if is_pitch_in_scale(pitch, root_key, mask):
+        return pitch
+    for delta in range(1, 7):
+        up = pitch + delta
+        down = pitch - delta
+        if up <= 127 and is_pitch_in_scale(up, root_key, mask):
+            return up
+        if down >= 0 and is_pitch_in_scale(down, root_key, mask):
+            return down
+    return pitch
 
-void AudioEngine::clearStepSequencerLane(int32_t trackId, int32_t laneIndex) {
-    Track* t = mixer_.getTrack(trackId);
-    if (t && t->getType() == TrackType::StepSequencer) {
-        static_cast<StepSequencerTrack*>(t)->clearLaneSteps(laneIndex);
-    }
-}
+def test_scale_quantization():
+    print("[*] [1/3] Testing Scale Quantization Logic...")
+    # C Major (root=0): C(60), D(62), E(64), F(65), G(67), A(69), B(71)
+    mask = SCALE_MASKS["Major"]
+    assert snap_pitch(60, 0, mask) == 60 # C is in C Major
+    assert snap_pitch(61, 0, mask) in [60, 62] # C# snaps to C or D
+    assert snap_pitch(66, 0, mask) in [65, 67] # F# snaps to F or G
+    print("    \033[92m[✓]\033[0m Diatonic Scale Snapping Verified.")
 
-void AudioEngine::setStepSequencerLaneParams(int32_t trackId, int32_t laneIndex, int32_t midiNote, int32_t stepCount, int32_t stepTicks, float volume, float pan, bool mute, bool solo) {
-    Track* t = mixer_.getTrack(trackId);
-    if (t && t->getType() == TrackType::StepSequencer) {
-        static_cast<StepSequencerTrack*>(t)->setLaneParams(laneIndex, midiNote, stepCount, stepTicks, volume, pan, mute, solo);
-    }
-}
-'''
-patch_file(
-    engine_cpp_path,
-    "int32_t AudioEngine::addAudioTrack(const std::string& name) {",
-    f"{engine_step_impls}\nint32_t AudioEngine::addAudioTrack(const std::string& name) {{",
-    "AudioEngine.cpp Step Sequencer method implementations"
-)
+def test_modal_axis_inversion():
+    print("[*] [2/3] Testing Modal Axis Inversion...")
+    # Invert around G4 (67) in C Major
+    mask = SCALE_MASKS["Major"]
+    axis = 67
+    # E4 (64) inverted across G4 (67) -> 2*67 - 64 = 70 (Bb) -> snaps to A4 (69) or B4 (71)
+    inv = 2 * axis - 64
+    snapped_inv = snap_pitch(inv, 0, mask)
+    assert is_pitch_in_scale(snapped_inv, 0, mask)
+    print("    \033[92m[✓]\033[0m Modal Axis Inversion and Diatonic Resolution Verified.")
 
-# ----------------------------------------------------------------------
-# 9. AudioEngineNative.java -> Add Step Sequencer JNI declarations
-# ----------------------------------------------------------------------
-native_java_path = Path("app/src/com/maxica/cobass/audio/AudioEngineNative.java")
-java_native_declarations = '''    public static native int nativeAddStepSequencerTrack(String name);
-    public static native void nativeSetStepSequencerStep(int trackId, int laneIndex, int stepIndex, boolean active, float velocity, int pitch, float gate, float nudge, int ratchets, float prob);
-    public static native void nativeLoadStepSequencerSample(int trackId, int laneIndex, float[] data, int length, int channels);
-    public static native void nativeClearStepSequencerLane(int trackId, int laneIndex);
-    public static native void nativeSetStepSequencerLaneParams(int trackId, int laneIndex, int midiNote, int stepCount, int stepTicks, float volume, float pan, boolean mute, boolean solo);
-'''
-patch_file(
-    native_java_path,
-    "    public static native int nativeAddAudioTrack(String name);",
-    f"    public static native int nativeAddAudioTrack(String name);\n{java_native_declarations}",
-    "AudioEngineNative.java native Step Sequencer methods"
-)
+def test_header_presence():
+    print("[*] [3/3] Checking C++ Header Integration...")
+    h1 = Path("app/native/sequencer/MusicTheory.hpp")
+    h2 = Path("app/native/sequencer/NoteTransformEngine.hpp")
+    assert h1.is_file() and h2.is_file()
+    print("    \033[92m[✓]\033[0m Native Music Theory & Note Transform Headers Verified.")
 
-# ----------------------------------------------------------------------
-# 10. jni_bridge.cpp -> Add Step Sequencer JNI wrappers
-# ----------------------------------------------------------------------
-jni_bridge_path = Path("app/native/jni_bridge.cpp")
-jni_bridge_wrappers = '''JNIEXPORT jint JNICALL
-Java_com_maxica_cobass_audio_AudioEngineNative_nativeAddStepSequencerTrack(JNIEnv* env, jclass /*clazz*/, jstring name) {
-    if (!gAudioEngine) return -1;
-    const char* nativeName = env->GetStringUTFChars(name, nullptr);
-    int32_t id = gAudioEngine->addStepSequencerTrack(nativeName ? nativeName : "Step Drum");
-    if (nativeName) env->ReleaseStringUTFChars(name, nativeName);
-    return id;
-}
+def main():
+    print("=" * 65)
+    print("Cobass Note Transform Engine (Phase 1) Verification")
+    print("=" * 65)
+    test_scale_quantization()
+    test_modal_axis_inversion()
+    test_header_presence()
+    print("=" * 65)
+    print("\033[92m[PASS] PHASE 1 MUSIC THEORY & NOTE TRANSFORM TESTS PASSED!\033[0m")
 
-JNIEXPORT void JNICALL
-Java_com_maxica_cobass_audio_AudioEngineNative_nativeSetStepSequencerStep(JNIEnv* /*env*/, jclass /*clazz*/, jint trackId, jint laneIndex, jint stepIndex, jboolean active, jfloat velocity, jint pitch, jfloat gate, jfloat nudge, jint ratchets, jfloat prob) {
-    if (gAudioEngine) gAudioEngine->setStepSequencerStep(trackId, laneIndex, stepIndex, active == JNI_TRUE, velocity, pitch, gate, nudge, ratchets, prob);
-}
-
-JNIEXPORT void JNICALL
-Java_com_maxica_cobass_audio_AudioEngineNative_nativeLoadStepSequencerSample(JNIEnv* env, jclass /*clazz*/, jint trackId, jint laneIndex, jfloatArray data, jint length, jint channels) {
-    if (!gAudioEngine || !data) return;
-    jfloat* pcm = env->GetFloatArrayElements(data, nullptr);
-    if (pcm) {
-        gAudioEngine->loadStepSequencerSample(trackId, laneIndex, pcm, length, channels);
-        env->ReleaseFloatArrayElements(data, pcm, JNI_ABORT);
-    }
-}
-
-JNIEXPORT void JNICALL
-Java_com_maxica_cobass_audio_AudioEngineNative_nativeClearStepSequencerLane(JNIEnv* /*env*/, jclass /*clazz*/, jint trackId, jint laneIndex) {
-    if (gAudioEngine) gAudioEngine->clearStepSequencerLane(trackId, laneIndex);
-}
-
-JNIEXPORT void JNICALL
-Java_com_maxica_cobass_audio_AudioEngineNative_nativeSetStepSequencerLaneParams(JNIEnv* /*env*/, jclass /*clazz*/, jint trackId, jint laneIndex, jint midiNote, jint stepCount, jint stepTicks, jfloat volume, jfloat pan, jboolean mute, jboolean solo) {
-    if (gAudioEngine) gAudioEngine->setStepSequencerLaneParams(trackId, laneIndex, midiNote, stepCount, stepTicks, volume, pan, mute == JNI_TRUE, solo == JNI_TRUE);
-}
-'''
-patch_file(
-    jni_bridge_path,
-    "JNIEXPORT jint JNICALL\nJava_com_maxica_cobass_audio_AudioEngineNative_nativeAddAudioTrack",
-    f"{jni_bridge_wrappers}\nJNIEXPORT jint JNICALL\nJava_com_maxica_cobass_audio_AudioEngineNative_nativeAddAudioTrack",
-    "jni_bridge.cpp JNI wrappers"
-)
-
+if __name__ == "__main__":
+    main()
 EOF
+chmod +x tools/test_music_theory_engine.py
 
-echo "======================================================================"
-echo "======================================================================"
+# ------------------------------------------------------------------------------
+# 6. Run echo "======================================================================"

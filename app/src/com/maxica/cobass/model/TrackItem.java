@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TrackItem {
-    public enum Type { SYNTH, AUDIO }
+    public enum Type { SYNTH, AUDIO, STEP_SEQUENCER }
 
     public static class PluginSlotState {
         public int slotIndex;
@@ -44,6 +44,7 @@ public class TrackItem {
     private String instrumentPluginId = "";
     private String instrumentPluginStateJson = "{}";
     private final List<PluginSlotState> insertFxSlots = new ArrayList<>();
+    private StepPatternItem stepPattern = null;
 
     // Persistent Core Utility FX Rack Parameters
     private float eqLow = 0.0f;        // -18.0 to +18.0 dB
@@ -97,6 +98,10 @@ public class TrackItem {
     public void setInstrumentPluginStateJson(String json) { this.instrumentPluginStateJson = json != null ? json : "{}"; }
 
     public List<PluginSlotState> getInsertFxSlots() { return insertFxSlots; }
+
+    public StepPatternItem getStepPattern() { return stepPattern; }
+    public void setStepPattern(StepPatternItem stepPattern) { this.stepPattern = stepPattern; }
+
 
     // Core Utility FX Getters & Setters
     public float getEqLow() { return eqLow; }

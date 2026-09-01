@@ -266,6 +266,15 @@
                     android:textSize="10sp" />
 
                 <Button
+                    android:id="@+id/btnAddStepSeq"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="2dp"
+                    android:text="+ Step"
+                    android:textSize="10sp"
+                    android:backgroundTint="#9333EA" />
+
+                <Button
                     android:id="@+id/btnAddAudio"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"

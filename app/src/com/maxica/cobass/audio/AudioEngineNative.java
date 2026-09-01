@@ -31,6 +31,12 @@ public final class AudioEngineNative {
     // Multi-track Dynamic API
     public static native int nativeAddSynthTrack(String name);
     public static native int nativeAddAudioTrack(String name);
+    public static native int nativeAddStepSequencerTrack(String name);
+    public static native void nativeSetStepSequencerStep(int trackId, int laneIndex, int stepIndex, boolean active, float velocity, int pitch, float gate, float nudge, int ratchets, float prob);
+    public static native void nativeLoadStepSequencerSample(int trackId, int laneIndex, float[] data, int length, int channels);
+    public static native void nativeClearStepSequencerLane(int trackId, int laneIndex);
+    public static native void nativeSetStepSequencerLaneParams(int trackId, int laneIndex, int midiNote, int stepCount, int stepTicks, float volume, float pan, boolean mute, boolean solo);
+
     public static native void nativeRemoveTrack(int trackId);
 
     public static native void nativeNoteOn(int trackId, int note, float velocity);

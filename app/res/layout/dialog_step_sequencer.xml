@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Top Action & Transport Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#161820"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:id="@+id/txtStepClipTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Step Sequencer"
+            android:textColor="@color/cubase_blue"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:layout_marginEnd="6dp" />
+
+        <!-- Undo & Redo -->
+        <Button
+            android:id="@+id/btnStepUndo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:text="↶"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <Button
+            android:id="@+id/btnStepRedo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="2dp"
+            android:text="↷"
+            android:textColor="#C7C7CC"
+            android:textSize="15sp"
+            android:backgroundTint="#242734"
+            android:padding="0dp" />
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Transport Group -->
+                <Button
+                    android:id="@+id/btnStepPlay"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:text="▶"
+                    android:textColor="#30D158"
+                    android:textSize="13sp"
+                    android:backgroundTint="#163824"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnStepStop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="■"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:backgroundTint="#242734"
+                    android:padding="0dp" />
+
+                <Button
+                    android:id="@+id/btnStepLoop"
+                    android:layout_width="38dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="2dp"
+                    android:text="🔁"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1C385C"
+                    android:padding="0dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Pattern Presets & Cobalt Drum Synth Editor -->
+                <Button
+                    android:id="@+id/btnStepPresets"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="📁 PRESETS ▾"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#16385C"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnStepSynthParams"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="⚡ DRUM SYNTH"
+                    android:textColor="#30D158"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#163824"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnStepLength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="16 Steps"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#242734"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnStepEuclidean"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="🎲 EUCLIDEAN"
+                    android:textColor="#FFD60A"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#3D3216"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnStepRandomize"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="🎲 HUMANIZE"
+                    android:textColor="#30D158"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#163824"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnStepClear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="3dp"
+                    android:text="CLEAR"
+                    android:textColor="#FF453A"
+                    android:textSize="10sp"
+                    android:backgroundTint="#3D1C22"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="22dp"
+                    android:background="#2E3242"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Bake to Arranger Clip -->
+                <Button
+                    android:id="@+id/btnStepBake"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:text="⚡ BAKE TO CLIP"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#9333EA"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnStepClose"
+            android:layout_width="36dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:text="✕"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:backgroundTint="#FF453A"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <!-- Center Step Matrix Viewport -->
+    <com.maxica.cobass.ui.StepMatrixCanvasView
+        android:id="@+id/stepMatrixCanvas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Bottom Per-Step Parameter Lock Drawer -->
+    <LinearLayout
+        android:id="@+id/layoutParamLockDrawer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#161822"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <!-- Drawer Header Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtParamLockTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Step 1 Parameter Lock"
+                android:textColor="#FFD60A"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnStepDeselect"
+                android:layout_width="60dp"
+                android:layout_height="28dp"
+                android:text="DONE"
+                android:textSize="10sp"
+                android:backgroundTint="#2C2F3C"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+        </LinearLayout>
+
+        <!-- Sliders Matrix Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <!-- Velocity -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/txtStepVelocityVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vel: 85%"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp" />
+                <SeekBar
+                    android:id="@+id/seekStepVelocity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:progress="85" />
+            </LinearLayout>
+
+            <!-- Pitch Transpose -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="6dp">
+                <TextView
+                    android:id="@+id/txtStepPitchVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pitch: +0st"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp" />
+                <SeekBar
+                    android:id="@+id/seekStepPitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="48"
+                    android:progress="24" />
+            </LinearLayout>
+
+            <!-- Ratchet Rolls -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:orientation="vertical"
+                android:layout_marginStart="6dp"
+                android:gravity="center_horizontal">
+                <TextView
+                    android:id="@+id/txtStepRatchetVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Roll: 1x"
+                    android:textColor="#FFD60A"
+                    android:textSize="10sp" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="2dp">
+                    <Button
+                        android:id="@+id/btnStepRatchetPrev"
+                        android:layout_width="32dp"
+                        android:layout_height="28dp"
+                        android:text="◀"
+                        android:textSize="10sp"
+                        android:backgroundTint="#242734"
+                        android:padding="0dp" />
+                    <Button
+                        android:id="@+id/btnStepRatchetNext"
+                        android:layout_width="32dp"
+                        android:layout_height="28dp"
+                        android:layout_marginStart="3dp"
+                        android:text="▶"
+                        android:textSize="10sp"
+                        android:backgroundTint="#242734"
+                        android:padding="0dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Probability -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="6dp">
+                <TextView
+                    android:id="@+id/txtStepProbVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Prob: 100%"
+                    android:textColor="#8E8E93"
+                    android:textSize="10sp" />
+                <SeekBar
+                    android:id="@+id/seekStepProb"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:progress="100" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
