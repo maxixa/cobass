@@ -239,6 +239,40 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
             });
         }
 
+        Button btnArrTransform = findViewById(R.id.btnArrTransform);
+        if (btnArrTransform != null) {
+            btnArrTransform.setOnClickListener(v -> {
+                if (arrangerView == null) return;
+                List<ClipItem> selected = arrangerView.getSelectedClips();
+                if (selected.isEmpty() && arrangerView.getSelectedClip() != null) {
+                    selected.add(arrangerView.getSelectedClip());
+                }
+                if (selected.isEmpty()) {
+                    selected = arrangerView.getClips();
+                }
+
+                if (!selected.isEmpty()) {
+                    arrangerView.captureUndoPoint();
+                    new MidiTransformStudioDialog(
+                        this,
+                        selected,
+                        com.maxica.cobass.model.MusicalScale.MAJOR,
+                        0,
+                        () -> {
+                            arrangerView.clearGhostClips();
+                            syncAllClipsToNative();
+                            arrangerView.invalidate();
+                            updateUndoRedoUI();
+                        }
+                    ).setLivePreviewListener(previewNotes -> {
+                        arrangerView.invalidate();
+                    }).show();
+                } else {
+                    Toast.makeText(this, "No clips available to transform", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         if (btnSnapGrid != null) {
             btnSnapGrid.setOnClickListener(v -> {
                 new SnapStudioDialog(this, arrangerView.getSnapGrid(), sg -> {

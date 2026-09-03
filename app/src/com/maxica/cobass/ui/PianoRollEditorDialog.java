@@ -223,6 +223,8 @@ public class PianoRollEditorDialog extends Dialog {
                 }
             });
         }
+                Button btnWand = findViewById(R.id.btnPrToolWand);
+        if (btnWand != null) btnWand.setOnClickListener(v -> setToolMode(ToolMode.WAND));
         if (btnChop != null) {
             btnChop.setOnClickListener(v -> {
                 setToolMode(ToolMode.CHOP);
@@ -344,18 +346,20 @@ public class PianoRollEditorDialog extends Dialog {
         // 7. MIDI Transform Studio
         Button btnTransform = findViewById(R.id.btnPrTransform);
         btnTransform.setOnClickListener(v -> {
-            new MidiTransformDialog(getContext(), clip, pianoRollCanvas.getSnapGrid(), new MidiTransformDialog.OnTransformListener() {
-                @Override
-                public void onTransformApplied() {
+            historyManager.captureUndoPoint(clip);
+            new MidiTransformStudioDialog(
+                getContext(),
+                clip,
+                pianoRollCanvas.getMusicalScale(),
+                pianoRollCanvas.getRootKey(),
+                () -> {
+                    pianoRollCanvas.clearGhostNotes();
                     syncClipNotesToNative();
                     pianoRollCanvas.invalidate();
                     updateUndoRedoButtonStates();
                 }
-
-                @Override
-                public void onCaptureUndo() {
-                    historyManager.captureUndoPoint(clip);
-                }
+            ).setLivePreviewListener(previewNotes -> {
+                pianoRollCanvas.setGhostNotes(previewNotes);
             }).show();
         });
 
@@ -461,6 +465,11 @@ public class PianoRollEditorDialog extends Dialog {
         if (btnSelect != null) {
             btnSelect.setBackgroundColor(mode == ToolMode.SELECT ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
             btnSelect.setTextColor(mode == ToolMode.SELECT ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
+        }
+                Button btnWandBtn = findViewById(R.id.btnPrToolWand);
+        if (btnWandBtn != null) {
+            btnWandBtn.setBackgroundColor(mode == ToolMode.WAND ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
+            btnWandBtn.setTextColor(mode == ToolMode.WAND ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
         }
         if (btnErase != null) {
             btnErase.setBackgroundColor(mode == ToolMode.ERASER ? Color.parseColor("#4D1C1E") : COLOR_BG_IDLE);

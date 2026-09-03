@@ -8,5 +8,6 @@ public enum ToolMode {
     GLUE,
     CHOP,
     SLIP,
-    ERASER
+    ERASER,
+    WAND
 }

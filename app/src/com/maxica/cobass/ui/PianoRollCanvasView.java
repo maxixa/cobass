@@ -123,7 +123,12 @@ public class PianoRollCanvasView extends View {
 
     private int activeAuditionPitch = -1;
 
-    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        // Live Transformation Ghost Notes Overlay
+    private final List<ClipItem.Note> ghostNotes = new ArrayList<>();
+    private boolean isGhostPreviewEnabled = true;
+    private final Paint ghostNotePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint marqueePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rampPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
@@ -158,7 +163,30 @@ public class PianoRollCanvasView extends View {
         invalidate();
     }
 
-    public void setEventListener(OnPianoRollEventListener listener) { this.listener = listener; }
+        public void setGhostNotes(List<ClipItem.Note> previewNotes) {
+        ghostNotes.clear();
+        if (previewNotes != null && isGhostPreviewEnabled) {
+            for (ClipItem.Note n : previewNotes) {
+                ghostNotes.add(n.copy());
+            }
+        }
+        invalidate();
+    }
+
+    public void clearGhostNotes() {
+        ghostNotes.clear();
+        invalidate();
+    }
+
+    public void setGhostPreviewEnabled(boolean enabled) {
+        this.isGhostPreviewEnabled = enabled;
+        if (!enabled) ghostNotes.clear();
+        invalidate();
+    }
+
+    public boolean isGhostPreviewEnabled() { return isGhostPreviewEnabled; }
+
+public void setEventListener(OnPianoRollEventListener listener) { this.listener = listener; }
 
     public void setToolMode(ToolMode mode) {
         stopAudition();
@@ -481,7 +509,35 @@ public class PianoRollCanvasView extends View {
             }
         }
 
-        // 5. Marquee Box
+                // 4b. Render Transformation Ghost Notes Overlay
+        if (isGhostPreviewEnabled && !ghostNotes.isEmpty()) {
+            for (ClipItem.Note gNote : ghostNotes) {
+                if (isScaleFolded && !scale.isNoteInScale(gNote.note, rootKey)) continue;
+
+                int gIndex = getRowIndexForMidiNote(gNote.note);
+                float gx = keyWidth + (gNote.startOffsetTicks * pixelsPerTick) - scrollX;
+                float gw = Math.max(8f, gNote.lengthTicks * pixelsPerTick);
+                float gy = rulerHeaderHeight + (gIndex * noteRowHeight) + 4f - scrollY;
+                float gh = noteRowHeight - 8f;
+
+                if (gx + gw < keyWidth || gx > width || gy + gh < rulerHeaderHeight || gy > gridBottom) continue;
+
+                rectF.set(gx, gy, gx + gw, gy + gh);
+
+                // Glowing Translucent Cyan Ghost Body
+                ghostNotePaint.setStyle(Paint.Style.FILL);
+                ghostNotePaint.setColor(Color.argb(140, 100, 210, 255));
+                canvas.drawRoundRect(rectF, 4f, 4f, ghostNotePaint);
+
+                // Cyan Border
+                ghostNotePaint.setStyle(Paint.Style.STROKE);
+                ghostNotePaint.setStrokeWidth(2.0f);
+                ghostNotePaint.setColor(Color.parseColor("#64D2FF"));
+                canvas.drawRoundRect(rectF, 4f, 4f, ghostNotePaint);
+            }
+        }
+
+// 5. Marquee Box
         if (isMarqueeActive) {
             marqueePaint.setStyle(Paint.Style.FILL);
             marqueePaint.setColor(Color.parseColor("#250A84FF"));
@@ -933,7 +989,21 @@ public class PianoRollCanvasView extends View {
                             invalidate();
                             return true;
                         }
-                    } else if (toolMode == ToolMode.BRUSH) {
+                    } else                 if (toolMode == ToolMode.WAND && x > keyWidth && y > rulerHeaderHeight && y < gridBottom) {
+                    ClipItem.Note wandHit = findNoteAt(x, y);
+                    if (wandHit != null && wandHit.note != activeAuditionPitch) {
+                        wandHit.velocity = Math.max(0.15f, Math.min(1.0f, wandHit.velocity + (float)((Math.random() * 0.20) - 0.10)));
+                        long timeJitter = (long)((Math.random() * 30.0) - 15.0);
+                        wandHit.startOffsetTicks = Math.max(0, wandHit.startOffsetTicks + timeJitter);
+                        hasModifiedNotesInGesture = true;
+                        playAudition(wandHit.note, wandHit.velocity);
+                        if (listener != null) listener.onNotesChanged();
+                        invalidate();
+                    }
+                    return true;
+                }
+
+                if (toolMode == ToolMode.BRUSH) {
                         long len = Math.max(60, snapGrid.getTicks());
                         clip.addNote(midiNote, 0.85f, touchTick, len);
                         lastBrushTick = touchTick;
@@ -943,6 +1013,18 @@ public class PianoRollCanvasView extends View {
                         if (listener != null) listener.onNotesChanged();
                         invalidate();
                         return true;
+                                        } else if (toolMode == ToolMode.WAND) {
+                        if (hit != null) {
+                            // Touch Wand: Instantly apply humanize micro-jitter and dynamic swell to touched note
+                            hit.velocity = Math.max(0.15f, Math.min(1.0f, hit.velocity + (float)((Math.random() * 0.20) - 0.10)));
+                            long timeJitter = (long)((Math.random() * 30.0) - 15.0);
+                            hit.startOffsetTicks = Math.max(0, hit.startOffsetTicks + timeJitter);
+                            hasModifiedNotesInGesture = true;
+                            playAudition(hit.note, hit.velocity);
+                            if (listener != null) listener.onNotesChanged();
+                            invalidate();
+                            return true;
+                        }
                     } else if (toolMode == ToolMode.PENCIL) {
                         if (activeChordIntervals != null && hit == null) {
                             long chordLen = Math.max(snapGrid.getTicks() * 2, PPQ);

@@ -142,7 +142,11 @@ public class ArrangerTimelineView extends View {
     // Undo / Redo Transaction Stack
     private final ArrangerHistoryManager historyManager = new ArrangerHistoryManager();
 
-    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        // Live Transformation Ghost Clips Overlay
+    private final List<ClipItem> ghostClips = new ArrayList<>();
+    private boolean isGhostClipsEnabled = true;
+
+private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint marqueePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ghostPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint handlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -206,7 +210,28 @@ public class ArrangerTimelineView extends View {
         this.trackHeight = BASE_TRACK_HEIGHT * uiScale;
     }
 
-    public void setArrangerListener(OnArrangerListener listener) { this.listener = listener; }
+        public void setGhostClips(List<ClipItem> previewClips) {
+        ghostClips.clear();
+        if (previewClips != null && isGhostClipsEnabled) {
+            for (ClipItem c : previewClips) {
+                ghostClips.add(c.copy());
+            }
+        }
+        invalidate();
+    }
+
+    public void clearGhostClips() {
+        ghostClips.clear();
+        invalidate();
+    }
+
+    public void setGhostClipsEnabled(boolean enabled) {
+        this.isGhostClipsEnabled = enabled;
+        if (!enabled) ghostClips.clear();
+        invalidate();
+    }
+
+public void setArrangerListener(OnArrangerListener listener) { this.listener = listener; }
     public void setToolMode(ToolMode mode) {
         this.toolMode = mode;
         this.isMarqueeActive = false;
@@ -651,7 +676,33 @@ public class ArrangerTimelineView extends View {
             }
         }
 
-        // 6. Real-Time Ghost Previews for 2D Dragging & Slip Indicator
+                // 5b. Render Transformation Ghost Clips Overlay
+        if (isGhostClipsEnabled && !ghostClips.isEmpty()) {
+            for (ClipItem gClip : ghostClips) {
+                int trackIndex = getTrackIndex(gClip.getTrackId());
+                if (trackIndex < 0) continue;
+
+                float gx = headerWidth + (gClip.getStartTick() * pixelsPerTick) - scrollX;
+                float gw = gClip.getLengthTicks() * pixelsPerTick;
+                float gy = rulerHeight + (trackIndex * trackHeight) + (6f * uiScale) - scrollY;
+                float gh = trackHeight - (12f * uiScale);
+
+                if (gx + gw < headerWidth || gx > width) continue;
+
+                rectF.set(gx, gy, gx + gw, gy + gh);
+
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(Color.argb(120, 10, 132, 255));
+                canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
+
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(2.5f * uiScale);
+                paint.setColor(Color.parseColor("#64D2FF"));
+                canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
+            }
+        }
+
+// 6. Real-Time Ghost Previews for 2D Dragging & Slip Indicator
         if (isDraggingClipsActive && !dragAnchors.isEmpty()) {
             for (ClipAnchor anchor : dragAnchors) {
                 int targetTrackIdx = anchor.currentPreviewTrackIndex;

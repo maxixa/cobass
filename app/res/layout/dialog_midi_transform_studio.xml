@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Top Header Strip -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⚡ MIDI Transform Studio"
+                android:textColor="@color/cubase_blue"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnMacroPresets"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="📁 MACROS ▾"
+                android:textColor="#FFD60A"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#3D3216"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnCloseStudio"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:backgroundTint="#3A3A3C"
+                android:padding="0dp" />
+        </LinearLayout>
+
+        <!-- Scope & Tonality Info Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
+            android:background="#14161E"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtStudioScope"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Scope: 8 Selected Notes"
+                android:textColor="@color/accent_green"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtStudioScale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎹 C Major"
+                android:textColor="@color/cubase_text_dim"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 1. MULTI-PASS RECIPE PIPELINE STACK CONTAINER -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtStackHeader"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="RECIPE PIPELINE STACK (1 PASS)"
+                android:textColor="@color/cubase_text_dim"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnAddPass"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="➕ ADD PASS"
+                android:textColor="#30D158"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#163824"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp" />
+        </LinearLayout>
+
+        <!-- Horizontal Scrollable Pass Selector Cards -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/stackCardsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2E313E"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="6dp" />
+
+        <!-- 2. Tool Category Ribbon for Active Pass -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OPERATOR CATEGORY FOR ACTIVE PASS"
+            android:textColor="@color/cubase_text_dim"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <Button
+                android:id="@+id/btnCatRhythm"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="🎲 RHYTHM"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#16385C"
+                android:textColor="#0A84FF"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnCatMelodic"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="🎹 MELODIC"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnCatHarmony"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="🎸 HARMONY"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnCatGroove"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="⚡ GROOVE"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+        </LinearLayout>
+
+        <!-- 3. Selected Operator Selector -->
+        <TextView
+            android:id="@+id/txtSelectedOperator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pass 1: Euclidean Rhythmic Slicer"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+
+        <LinearLayout
+            android:id="@+id/operatorButtonsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp" />
+
+        <!-- 4. Pass Intensity Slider & PRNG Seed Generator -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtIntensityLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pass Intensity: 50%"
+                android:textColor="@color/accent_green"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnNewSeed"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="🎲 SEED: #12345"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#3D3216"
+                android:textColor="#FFD60A"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/seekIntensity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:max="100"
+            android:progress="50" />
+
+        <!-- 5. Dynamic Parameter Controls (Param 1 & Param 2) -->
+        <LinearLayout
+            android:id="@+id/layoutDynamicParams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="6dp">
+
+            <TextView
+                android:id="@+id/txtParam1Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Steps (N): 8"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp" />
+
+            <SeekBar
+                android:id="@+id/seekParam1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="16"
+                android:progress="8" />
+
+            <TextView
+                android:id="@+id/txtParam2Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pulses (K): 5"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp" />
+
+            <SeekBar
+                android:id="@+id/seekParam2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="16"
+                android:progress="5" />
+        </LinearLayout>
+
+        <!-- 6. Preservation Lock Masks -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PRESERVATION LOCK MASKS"
+            android:textColor="@color/cubase_text_dim"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <Button
+                android:id="@+id/btnLockDownbeats"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:text="🔒 Downbeat"
+                android:textSize="9sp"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnLockPitches"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:text="🔒 Pitch"
+                android:textSize="9sp"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnLockRhythm"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:text="🔒 Rhythm"
+                android:textSize="9sp"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnLockVelocities"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:text="🔒 Velocity"
+                android:textSize="9sp"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnLockBass"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:text="🔒 Bass"
+                android:textSize="9sp"
+                android:backgroundTint="#242734"
+                android:textColor="#8E8E93"
+                android:padding="0dp" />
+        </LinearLayout>
+
+        <!-- 7. Global Dry / Wet Morph Ratio -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Global Pipeline Dry/Wet Morph"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtDryWetLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100% Wet"
+                android:textColor="@color/cubase_blue"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/seekDryWet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:max="100"
+            android:progress="100" />
+
+        <!-- 8. Action Bar (Ghost Overlay, A/B Compare, Audition, Commit) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <Button
+                android:id="@+id/btnToggleGhost"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="👁 GHOST: ON"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#163824"
+                android:textColor="#30D158"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnAbCompare"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="0.8"
+                android:layout_marginStart="4dp"
+                android:text="A / B"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#242734"
+                android:textColor="#0A84FF"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnAuditionPreview"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1.1"
+                android:layout_marginStart="4dp"
+                android:text="▶ AUDITION"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#163824"
+                android:textColor="#30D158"
+                android:padding="0dp" />
+
+            <Button
+                android:id="@+id/btnCommitTransform"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1.4"
+                android:layout_marginStart="4dp"
+                android:text="💾 COMMIT"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:backgroundTint="#0A84FF"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

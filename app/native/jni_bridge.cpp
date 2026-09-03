@@ -1,3 +1,5 @@
+#include "sequencer/MusicTheory.hpp"
+#include "sequencer/NoteTransformEngine.hpp"
 #include <jni.h>
 #include <memory>
 #include <string>
@@ -488,6 +490,113 @@ Java_com_maxica_cobass_audio_AudioEngineNative_nativeIsLowLatency(JNIEnv* /*env*
 JNIEXPORT jint JNICALL
 Java_com_maxica_cobass_audio_AudioEngineNative_nativeGetTrackCount(JNIEnv* /*env*/, jclass /*clazz*/) {
     return gAudioEngine ? gAudioEngine->getTrackCount() : 0;
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeSnapPitchToScale(JNIEnv* /*env*/, jclass /*clazz*/, jint rawPitch, jint rootKey, jint scaleOrdinal) {
+    using namespace Cobass::Music;
+    const auto& desc = getScaleDescriptor(static_cast<ScaleType>(scaleOrdinal));
+    return snapPitchToScale(rawPitch, rootKey, desc.intervalMask);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeInvertModalPitch(JNIEnv* /*env*/, jclass /*clazz*/, jint rawPitch, jint axisPitch, jint rootKey, jint scaleOrdinal) {
+    using namespace Cobass::Music;
+    const auto& desc = getScaleDescriptor(static_cast<ScaleType>(scaleOrdinal));
+    return invertModalPitch(rawPitch, axisPitch, rootKey, desc.intervalMask);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeSolveVoiceLeading(JNIEnv* /*env*/, jclass /*clazz*/, jint previousPitch, jint targetPitch, jint rootKey, jint scaleOrdinal, jfloat parsimoniousWeight) {
+    using namespace Cobass::Music;
+    const auto& desc = getScaleDescriptor(static_cast<ScaleType>(scaleOrdinal));
+    return solveVoiceLeading(previousPitch, targetPitch, rootKey, desc.intervalMask, parsimoniousWeight);
+}
+
+
+JNIEXPORT jlongArray JNICALL
+Java_com_maxica_cobass_audio_AudioEngineNative_nativeExecuteTransformPipeline(
+    JNIEnv* env, jclass /*clazz*/,
+    jlongArray packedInputNotes,
+    jint rootKey, jint scaleMask,
+    jint ticksPerBeat, jint beatsPerBar,
+    jint operatorType, jfloat intensity, jint seed,
+    jfloat param1, jfloat param2,
+    jboolean lockDownbeats, jboolean lockPitches, jboolean lockRhythm,
+    jboolean lockVelocities, jboolean lockBassNotes,
+    jfloat dryWetRatio
+) {
+    using namespace Cobass::Transform;
+
+    if (!packedInputNotes) return nullptr;
+    jsize len = env->GetArrayLength(packedInputNotes);
+    if (len % 6 != 0) return nullptr;
+
+    jlong* rawData = env->GetLongArrayElements(packedInputNotes, nullptr);
+    if (!rawData) return nullptr;
+
+    size_t noteCount = len / 6;
+    std::vector<NoteEvent> inputEvents;
+    inputEvents.reserve(noteCount);
+
+    for (size_t i = 0; i < noteCount; ++i) {
+        NoteEvent ev;
+        ev.pitch = static_cast<int32_t>(rawData[i * 6]);
+        uint32_t velBits = static_cast<uint32_t>(rawData[i * 6 + 1]);
+        std::memcpy(&ev.velocity, &velBits, sizeof(float));
+        ev.startOffsetTicks = rawData[i * 6 + 2];
+        ev.lengthTicks = rawData[i * 6 + 3];
+        ev.isMuted = (rawData[i * 6 + 4] != 0);
+        ev.isSelected = (rawData[i * 6 + 5] != 0);
+        inputEvents.push_back(ev);
+    }
+    env->ReleaseLongArrayElements(packedInputNotes, rawData, JNI_ABORT);
+
+    MusicalContext ctx;
+    ctx.rootKey = rootKey;
+    ctx.scaleIntervalMask = static_cast<uint32_t>(scaleMask);
+    ctx.ticksPerBeat = ticksPerBeat;
+    ctx.beatsPerBar = beatsPerBar;
+
+    TransformRecipe recipe;
+    recipe.type = static_cast<TransformOperatorType>(operatorType);
+    recipe.intensity = intensity;
+    recipe.seed = static_cast<uint32_t>(seed);
+    recipe.param1 = param1;
+    recipe.param2 = param2;
+    recipe.enabled = true;
+
+    LockMasks masks;
+    masks.lockDownbeats = (lockDownbeats == JNI_TRUE);
+    masks.lockPitches = (lockPitches == JNI_TRUE);
+    masks.lockRhythm = (lockRhythm == JNI_TRUE);
+    masks.lockVelocities = (lockVelocities == JNI_TRUE);
+    masks.lockBassNotes = (lockBassNotes == JNI_TRUE);
+
+    std::vector<NoteEvent> outputEvents = NoteTransformEngine::process(
+        inputEvents, ctx, {recipe}, masks, dryWetRatio
+    );
+
+    jsize outSize = static_cast<jsize>(outputEvents.size() * 6);
+    jlongArray outArray = env->NewLongArray(outSize);
+    if (!outArray) return nullptr;
+
+    std::vector<jlong> outBuffer(outSize);
+    for (size_t i = 0; i < outputEvents.size(); ++i) {
+        const auto& ev = outputEvents[i];
+        outBuffer[i * 6] = ev.pitch;
+        uint32_t velBits = 0;
+        std::memcpy(&velBits, &ev.velocity, sizeof(float));
+        outBuffer[i * 6 + 1] = static_cast<jlong>(velBits);
+        outBuffer[i * 6 + 2] = ev.startOffsetTicks;
+        outBuffer[i * 6 + 3] = ev.lengthTicks;
+        outBuffer[i * 6 + 4] = ev.isMuted ? 1 : 0;
+        outBuffer[i * 6 + 5] = ev.isSelected ? 1 : 0;
+    }
+
+    env->SetLongArrayRegion(outArray, 0, outSize, outBuffer.data());
+    return outArray;
 }
 
 } // extern "C"

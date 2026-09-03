@@ -930,7 +930,419 @@ These advanced contour engines can be chained to produce specific genre styles:
 
 
 
+# Advanced Melodic & Harmonic Transformation Subsystem
+## Next-Generation Algorithmic Architecture & Music Theory Blueprint
 
+---
+
+# 1. Executive Vision & Next-Gen Capabilities
+
+Building upon the established foundational operators in `NoteTransformEngine`, this plan specifies the **Next-Generation Advanced Melodic Transformation Suite**. It introduces higher-order generative grammars, geometric music theory, strict counterpoint solvers, and continuous melodic cross-morphing into the Cobass DAW ecosystem.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              NEXT-GEN ADVANCED MELODY TRANSFORMATION SUITE                             │
+├───────────────────────────────────┬────────────────────────────────────┬───────────────────────────────┤
+│ 1. GENERATIVE GRAMMARS & FRACTALS │ 2. TONNETZ & NEO-RIEMANNIAN TONALITY│ 3. MELODIC MORPH INTERPOLATION│
+├───────────────────────────────────┼────────────────────────────────────┼───────────────────────────────┤
+│ • L-System Melodic Branching      │ • Tonnetz 2D Torus Traversal       │ • Melody A ➔ Melody B Morph   │
+│ • Wolfram 1D Cellular Automata    │ • P, L, R Chordal Transformations  │ • Spline Vector Trajectory    │
+│ • Brownian Fractional Drift (1/f) │ • Dynamic Harmonic Tension Curves  │ • Continuous Latent Warping   │
+├───────────────────────────────────┼────────────────────────────────────┼───────────────────────────────┤
+│ 4. SPECIES COUNTERPOINT & CANON   │ 5. METRIC MODULATION & PHASING     │ 6. DYNAMIC XENHARMONICS       │
+├───────────────────────────────────┼────────────────────────────────────┼───────────────────────────────┤
+│ • Strict Fuxian Counterpoint (1st │ • Reichian Minimalist Phase Shift  │ • Scala (.scl) Tuning Engine  │
+│   & 2nd Species)                  │ • Nested Polyrhythmic Phasing      │ • Bohlen-Pierce / 19-EDO      │
+│ • Crab Canon / Cancrizans Mirror  │ • Golden Ratio Metric Dilation     │ • Dynamic Microtonal Bending  │
+└───────────────────────────────────┴────────────────────────────────────┴───────────────────────────────┘
+```
+
+---
+
+# 2. Mathematical & Music Theory Foundations
+
+## 2.1 Neo-Riemannian Tonnetz & Harmonic Gravity Fields
+
+### A. The 2D Tonnetz Torus
+Traditional tonal analysis operates within scalar degree constraints. Advanced harmonic transformation maps melodies and chords onto the **Euler-Riemann Tonnetz** (a 2D geometric simplicial complex where vertices are pitch classes, edges are consonant intervals: Minor 3rd, Major 3rd, and Perfect 5th):
+
+```
+       (Ab) ──── (C) ──── (E) ──── (G#)
+        /  \     /  \     /  \     /  \
+      (F) ── (A) ── (C#) ── (F) ── (A)
+      /  \   /  \   /  \   /  \   /  \
+    (D) ── (F#) ── (Bb) ── (D) ── (F#)
+```
+
+Every melodic triad or line is transformed via three fundamental involutions:
+1. **Parallel ($P$)**: Inverts the mode between Major and Minor while keeping the root and fifth stationary:
+   $$P(\langle R, R+4, R+7 \rangle) = \langle R, R+3, R+7 \rangle$$
+2. **Leading-Tone Exchange ($L$)**: Inverts a Major triad across its major third, moving the root down a semitone to become the third of a Minor triad:
+   $$L(\langle R, R+4, R+7 \rangle) = \langle R+4, R+7, R+11 \rangle$$
+3. **Relative ($R$)**: Swaps a triad with its relative minor/major by shifting the fifth up two semitones:
+   $$R(\langle R, R+4, R+7 \rangle) = \langle R+9, R, R+4 \rangle$$
+
+### B. Continuous Harmonic Tension & Resolution Vector Field
+A phrase's harmonic trajectory is evaluated as a continuous scalar potential $T(t) \in [0.0, 1.0]$. The engine adjusts pitch gravity dynamically according to a user-drawn or mathematically computed **Tension Arc**:
+- **High Tension Zone ($T(t) \to 1.0$)**: Favors tritones, sharp elevenths, minor ninths, and whole-tone clusters.
+- **Resolution Cadence ($T(t) \to 0.0$)**: Strongly pulls all active voices into root-position tonic or octave-fifth unisons.
+
+---
+
+## 2.2 Lindenmayer Systems (L-Systems) & Generative Melodic Grammar
+
+L-Systems generate organic, self-similar, fractal melodic lines through iterative string rewriting over a musical alphabet:
+
+$$\Sigma = \{ F, +, -, [, ] \}$$
+
+- **$F$**: Generate a note event (length $\Delta t$).
+- **$+$**: Shift scale degree $+1$ (diatonic step up).
+- **$-$**: Shift scale degree $-1$ (diatonic step down).
+- **$[$**: Push current pitch, velocity, and time state onto branch stack.
+- **$]$**: Pop state from branch stack (creates musical motif echoes / call-and-response).
+
+### Production Rule Example (Fibonacci Melodic Tree):
+- **Axiom (Seed)**: $\omega = F$
+- **Rule 1**: $F \to F[+F][-F]F$
+- **Iteration 1**: $F[+F][-F]F$
+- **Iteration 2**: $F[+F][-F]F[+F[+F][-F]F][-F[+F][-F]F]F[+F][-F]F$
+
+This formal grammar guarantees melodic self-similarity across measures while maintaining thematic unity.
+
+---
+
+## 2.3 1D Cellular Automata (Wolfram Rules for Rhythmic & Pitch Grids)
+
+Melodies and rhythmic slices are seeded using elementary 1D Cellular Automata over $N$ metric steps. Given a state cell $c_i^{(t)} \in \{0, 1\}$, the next generation is determined by rule function $f$:
+
+$$c_i^{(t+1)} = f\left(c_{i-1}^{(t)}, c_i^{(t)}, c_{i+1}^{(t)}\right)$$
+
+- **Rule 30 (Aperiodic Chaos)**: Produces complex, non-repeating syncopations and stochastic pitch deviations.
+- **Rule 110 (Turing-Complete Self-Organization)**: Creates evolving melodic motifs that balance structure with unexpected variation.
+- **Rule 90 (Sierpiński Fractal)**: Yields symmetrically self-similar rhythmic rolls and hockets.
+
+---
+
+## 2.4 Continuous Melodic Morphing & Vector Spline Interpolation
+
+Given two musical phrases—**Source Melody $\mathcal{A}$** and **Target Melody $\mathcal{B}$**—the engine computes a continuous parametric morph path $\mathcal{M}(\alpha)$ for $\alpha \in [0.0, 1.0]$:
+
+```
+Melody A (Input Lead):   [ C4 ─── E4 ─── G4 ─────────── C5 ] (Bar 1)
+                                  │ (α = 0.5 Morph)
+Intermediate State:      [ C4 ─ D4 ─ E4 ─ F#4 ─ G4 ─ B4 ─ C5 ]
+                                  │ (α = 1.0)
+Melody B (Target Theme): [ G4 ─────── F#4 ────── D4 ─── B3 ] (Bar 4)
+```
+
+### Optimal Transport & Wasserstein Metric Pitch-Time Alignment:
+1. **Time Warping**: Computes Dynamic Time Warping (DTW) to establish correspondence between onsets in $\mathcal{A}$ and $\mathcal{B}$.
+2. **Pitch Path Interpolation**: Linear or cubic Bézier interpolation in scale-degree space:
+   $$P_{\text{morph}}(\alpha) = \text{Snap}_{\mathcal{S}}\Big((1 - \alpha) \cdot P_{\mathcal{A}} + \alpha \cdot P_{\mathcal{B}}\Big)$$
+3. **Rhythmic Subdivision Morphing**: Uses Björklund Euclidean density crossfades to morph note densities smoothly across bars.
+
+---
+
+## 2.5 Strict Fuxian Species Counterpoint Solver
+
+When generating secondary voices or harmonies, the engine implements a rule-based constraint satisfaction solver based on Johann Joseph Fux’s *Gradus ad Parnassum*:
+
+```
+Rule Set:
+├── 1. Motion Law: Avoid parallel 5ths and parallel octaves (Cost = ∞).
+├── 2. Voice Independence: Maximize contrary and oblique motion (Cost = 0).
+├── 3. Stepwise Dominance: Disallow consecutive leaps in the same direction (Cost = 50).
+├── 4. Consonance Grid: Downbeats strictly restricted to 3rds, 6ths, 5ths, 8ves (No 2nds, 7ths, or Tritones).
+└── 5. Cadential Resolution: Penultimate note must be a leading tone resolving by half-step to the tonic.
+```
+
+---
+
+# 3. Next-Gen Transformation Tool Catalog
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        NEXT-GENERATION ADVANCED OPERATOR SUITE                         │
+├──────────────────────────┬──────────────────────────┬──────────────────────────────────┤
+│ 1. GENERATIVE GRAMMARS   │ 2. TONNETZ & HARMONICS   │ 3. COUNTERPOINT & CANONS         │
+├──────────────────────────┼──────────────────────────┼──────────────────────────────────┤
+│ • L-System Branching     │ • Neo-Riemannian (P,L,R) │ • Species Counterpoint Solver    │
+│ • Wolfram Rule Automata  │ • Harmonic Tension Field │ • Crab Canon (Cancrizans)        │
+│ • 1/f Pink Noise Drift   │ • Tonnetz Torus Wander   │ • Mensuration / Proportion Canon │
+├──────────────────────────┼──────────────────────────┼──────────────────────────────────┤
+│ 4. MORPHING & WARPING    │ 5. REICHIAN MINIMALISM   │ 6. XENHARMONICS & SCALA          │
+├──────────────────────────┼──────────────────────────┼──────────────────────────────────┤
+│ • Melody A ➔ B Cross-Morph│ • Reich Phase Shifting   │ • Scala Microtonal Retuning      │
+│ • Spline Vector Warp     │ • Metric Modulation Phasing│ • Bohlen-Pierce & 19-EDO       │
+│ • Brownian Fractal Fill  │ • Fibonacci Time Dilation│ • Dynamic Micro-Pitch Sweeps     │
+└──────────────────────────┴──────────────────────────┴──────────────────────────────────┘
+```
+
+---
+
+## Group 1: Generative Grammars & Fractals
+
+### 1.1 L-System Melodic Tree Branching (`L_SYSTEM_BRANCH`)
+* **Behavior**: Takes a simple motif and applies an L-System production rule recursively, generating recursive musical ornaments, fractal arpeggios, and melodic offshoots.
+* **Parameters**:
+  - `Axiom Type`: Linear, Binary Branch, Fractal Tree
+  - `Recursion Depth`: $1\dots 4$ iterations
+  - `Scale Degree Step`: $\pm 1, \pm 2, \pm 3$ diatonic steps
+
+### 1.2 Wolfram Cellular Automata Sequence (`WOLFRAM_AUTOMATA`)
+* **Behavior**: Generates syncopated rhythms, note densities, and pitch sequences using 1D Cellular Automata evolution.
+* **Parameters**:
+  - `Wolfram Rule`: Rule 30 (Chaos), Rule 90 (Sierpiński), Rule 110 (Complex Evolving)
+  - `Step Resolution`: $1/16, 1/32, \text{Triplets}$
+  - `Target Metric`: Trigger Mask, Pitch Offset, or Velocity Map
+
+### 1.3 1/f Pink Noise Fractal Drift (`PINK_NOISE_WALK`)
+* **Behavior**: Simulates natural, organic musical phrasing using a Voss-McCartney $1/f$ pink noise generator (the mathematical signature of natural speech, classical melodies, and ocean waves).
+
+---
+
+## Group 2: Tonnetz & Neo-Riemannian Harmonic Engines
+
+### 2.1 Neo-Riemannian P-L-R Torus Wander (`NEO_RIEMANNIAN_PLR`)
+* **Behavior**: Shifts multi-note chord progressions or melodic arpeggios through continuous geometric cycles on the Tonnetz torus ($P \to L \to R \to P$).
+* **Parameters**:
+  - `Cycle Sequence`: $PL, PR, LR, PLR$ Hexatonic cycles
+  - `Voice Leading Constraint`: Maximum parsimony (minimal semitone displacement)
+
+### 2.2 Harmonic Tension & Gravity Warper (`HARMONIC_TENSION_WARP`)
+* **Behavior**: Modulates note pitches according to a configurable tension curve across the measure or phrase.
+* **Parameters**:
+  - `Tension Curve`: Exponential Build, Parabolic Peak, Sawtooth Drop
+  - `Consonance Anchor`: Root Key vs Modal Mediant
+
+---
+
+## Group 3: Melodic Cross-Morphing & Spline Vectors
+
+### 3.1 Melody A ➔ Melody B Vector Morph (`MELODY_CROSS_MORPH`)
+* **Behavior**: Takes the notes of the active clip (Melody A) and seamlessly interpolates pitch, rhythm, gate, and dynamics towards a secondary reference phrase (Melody B) across a continuous slider ($\alpha: 0\% \to 100\%$).
+* **Parameters**:
+  - `Target Reference Clip`: Selection from any other Synth/MIDI track
+  - `Morph Mode`: Optimal Transport (Wasserstein), Pitch Dominant, Rhythm Dominant
+
+### 3.2 Spline Vector Contour Warper (`SPLINE_CONTOUR_WARP`)
+* **Behavior**: Warps a melody’s overall trajectory using an interactive 4-point Cubic Bézier curve without destroying its underlying micro-rhythms.
+
+---
+
+## Group 4: Species Counterpoint & Symmetrical Canons
+
+### 4.1 Automated Species Counterpoint Generator (`SPECIES_COUNTERPOINT`)
+* **Behavior**: Takes an existing monophonic melody (the *Cantus Firmus*) and composes a complementary counter-melody in 1st Species ($1:1$ note-for-note) or 2nd Species ($2:1$ two notes per beat), strictly enforcing Fuxian voice-leading laws.
+
+### 4.2 Crab Canon & Mirror Symmetries (`CRAB_CANON_MIRROR`)
+* **Behavior**: Composes an interlocking Bach-style crab canon (*Canon Cancrizans*) where Voice 2 plays the exact retrograde-inversion of Voice 1 simultaneously, engineered so that vertical harmonies remain consonant.
+
+### 4.3 Mensuration & Proportion Canon (`PROPORTION_CANON`)
+* **Behavior**: Clones the melody into a secondary voice playing at a proportional speed ratio ($3:2$ Augmentation, $4:3$ Polyrhythm) while transposing pitches to consonant interval relations.
+
+---
+
+## Group 5: Reichian Minimalism & Metric Phase-Shifting
+
+### 5.1 Steve Reich Minimalist Phase Shifter (`REICH_PHASE_SHIFT`)
+* **Behavior**: Takes a repetitive melodic motif (e.g., *Clapping Music* / *Piano Phase*) and applies incremental micro-subdivision shifts ($\Delta t = 1/16\text{th}$ per $N$ bars) to generate shifting polyrhythmic phase patterns.
+
+### 5.2 Fibonacci Golden-Ratio Time Dilation (`FIBONACCI_TIME_DILATION`)
+* **Behavior**: Expands or compresses note durations and interval distances along the Fibonacci sequence ($1, 1, 2, 3, 5, 8, 13, \dots$), creating organic acceleration/deceleration sweeps.
+
+---
+
+## Group 6: Scala Microtonal & Xenharmonic Engines
+
+### 6.1 Scala (.scl) Tuning Engine (`SCALA_MICROTONAL_RETUNE`)
+* **Behavior**: Retunes all pitches to historical, non-Western, or experimental xenharmonic temperaments using standard Scala `.scl` tuning definitions (e.g., Werckmeister III, 19-EDO, 31-EDO, Slendro/Pelog, Harry Partch 43-tone).
+* **Parameters**:
+  - `Tuning Definition`: Scala `.scl` bitmask / frequency cents table
+  - `Root Pitch Reference`: A4 = 440 Hz (or custom 432 Hz / 442 Hz)
+
+---
+
+# 4. Native C++20 Header Specification (`AdvancedMelodyEngine.hpp`)
+
+```cpp
+#pragma once
+#include <cstdint>
+#include <vector>
+#include <string>
+#include <array>
+#include <memory>
+#include "MusicTheory.hpp"
+#include "NoteTransformEngine.hpp"
+
+namespace Cobass::Transform::Advanced {
+
+enum class NextGenOperatorType : uint32_t {
+    // Generative Grammars
+    L_SYSTEM_BRANCH         = 100,
+    WOLFRAM_AUTOMATA        = 101,
+    PINK_NOISE_WALK         = 102,
+
+    // Neo-Riemannian & Tonnetz
+    NEO_RIEMANNIAN_PLR      = 103,
+    HARMONIC_TENSION_WARP   = 104,
+
+    // Melodic Morphing
+    MELODY_CROSS_MORPH      = 105,
+    SPLINE_CONTOUR_WARP     = 106,
+
+    // Counterpoint & Canons
+    SPECIES_COUNTERPOINT    = 107,
+    CRAB_CANON_MIRROR       = 108,
+    PROPORTION_CANON        = 109,
+
+    // Reichian Phasing
+    REICH_PHASE_SHIFT       = 110,
+    FIBONACCI_TIME_DILATION = 111,
+
+    // Microtonal Tuning
+    SCALA_MICROTONAL_RETUNE = 112
+};
+
+struct TonnetzVertex {
+    int32_t pitchClass; // 0..11
+    int32_t x;          // Horizontal coordinate on Tonnetz plane
+    int32_t y;          // Vertical coordinate on Tonnetz plane
+};
+
+struct SpeciesCounterpointRuleSet {
+    bool allowParallelFifths = false;   // Strict Fux rule
+    bool allowParallelOctaves = false;  // Strict Fux rule
+    bool preferContraryMotion = true;
+    int32_t maxConsecutiveLeaps = 1;
+    float dissonanceWeight = 1.0f;
+};
+
+struct AdvancedTransformContext {
+    MusicalContext baseContext;
+    std::vector<NoteEvent> targetReferenceMelody; // For Cross-Morphing
+    std::string scalaTuningDefinition;            // For Microtonal Retuning
+    SpeciesCounterpointRuleSet counterpointRules;
+    float tensionMultiplier = 1.0f;
+};
+
+class AdvancedMelodyEngine {
+public:
+    /**
+     * Executes advanced generative and counterpoint transformations.
+     */
+    static std::vector<NoteEvent> processAdvanced(
+        const std::vector<NoteEvent>& sourceNotes,
+        const AdvancedTransformContext& context,
+        const TransformRecipe& recipe,
+        const LockMasks& masks
+    );
+
+    // Theoretical Operator Implementations
+    static std::vector<NoteEvent> generateLSystem(const std::vector<NoteEvent>& notes, const AdvancedTransformContext& ctx, const TransformRecipe& recipe);
+    static std::vector<NoteEvent> applyWolframAutomata(const std::vector<NoteEvent>& notes, const AdvancedTransformContext& ctx, const TransformRecipe& recipe);
+    static std::vector<NoteEvent> applyNeoRiemannianPLR(const std::vector<NoteEvent>& notes, const AdvancedTransformContext& ctx, const TransformRecipe& recipe);
+    static std::vector<NoteEvent> applyHarmonicTensionWarp(const std::vector<NoteEvent>& notes, const AdvancedTransformContext& ctx, const TransformRecipe& recipe);
+    static std::vector<NoteEvent> morphMelodies(const std::vector<NoteEvent>& sourceA, const std::vector<NoteEvent>& targetB, float alpha, const AdvancedTransformContext& ctx);
+    static std::vector<NoteEvent> generateSpeciesCounterpoint(const std::vector<NoteEvent>& cantusFirmus, const AdvancedTransformContext& ctx, const TransformRecipe& recipe);
+    static std::vector<NoteEvent> applyReichianPhase(const std::vector<NoteEvent>& notes, const AdvancedTransformContext& ctx, const TransformRecipe& recipe);
+};
+
+} // namespace Cobass::Transform::Advanced
+```
+
+---
+
+# 5. UI & Workflow Design: Advanced Transform Canvas Studio
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  ⚡ ADVANCED MELODY & COUNTERPOINT STUDIO                                                      [✕ Close] │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  CATEGORY: [🧬 GENERATIVE L-SYSTEM]  [🌀 NEO-RIEMANNIAN]  [🔀 A➔B MORPH]  [🎼 COUNTERPOINT]  [🎛 PHASING] │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  OPERATOR: [ 🎼 Johann Joseph Fux: 2nd Species Counterpoint Generator ▾ ]                                │
+│                                                                                                          │
+│  COUNTERPOINT RULE MATRIX:                                                                               │
+│  [✓] Disallow Parallel 5ths/8ves  [✓] Prefer Contrary Motion  [✓] Max 1 Consecutive Leap                │
+│  • Voice Separation: [ Lower Register (Octave -1) ▾ ]  • Motion Density: [ 2:1 (Two Notes Per Beat) ▾ ]   │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  DYNAMIC HARMONIC TENSION CURVE:                                                                         │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ Tension: 1.0 │                     /\                                                              │  │
+│  │              │                    /  \               /\                                            │  │
+│  │              │                   /    \             /  \                                           │  │
+│  │ Tension: 0.0 │───●──────────────/──────\───────────/────\──────────●───────────────────────────────│  │
+│  │              │  Bar 1          Bar 2 (Build)     Bar 3 (Apex)    Bar 4 (Cadential Resolution)      │  │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  PRESERVATION LOCKS:                                                                                     │
+│  [🔒 Downbeats]  [🔒 Pitches]  [🔒 Rhythm]  [🔒 Velocities]  [🔒 Sub/Bass]  [🔒 Scale Degree Guard]       │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  [👁 LIVE GHOST VIEWPORT: ON]  [▶ AUDITION]  [■ STOP]  [A / B COMPARE]  |  [↶ UNDO]  [💾 COMMIT TO TRACK]│
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 6. Implementation Phasing & Milestone Roadmap
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                   ADVANCED MELODY TRANSFORMATION IMPLEMENTATION ROADMAP                │
+├──────────┬───────────────────────────────────────────┬─────────────────────────────────┤
+│ Phase    │ Description                               │ Deliverables / Key Milestones   │
+├──────────┼───────────────────────────────────────────┼─────────────────────────────────┤
+│ PHASE 1  │ Generative Grammars Core                  │ L-System melodic trees,         │
+│          │ (L-Systems, Wolfram Automata, 1/f Pink)   │ Wolfram Rules (30, 90, 110).    │
+├──────────┼───────────────────────────────────────────┼─────────────────────────────────┤
+│ PHASE 2  │ Neo-Riemannian Tonnetz & Harmonic Tension │ Tonnetz 2D complex, P/L/R       │
+│          │                                           │ cycles, dynamic tension spline. │
+├──────────┼───────────────────────────────────────────┼─────────────────────────────────┤
+│ PHASE 3  │ Melodic Cross-Morphing Engine             │ Melody A ➔ B interpolation,     │
+│          │ (Optimal Transport / Wasserstein DTW)     │ Bézier vector trajectory warp.  │
+├──────────┼───────────────────────────────────────────┼─────────────────────────────────┤
+│ PHASE 4  │ Species Counterpoint & Canon Solver       │ 1st/2nd Species Fuxian solver,  │
+│          │                                           │ Crab canon mirror generator.    │
+├──────────┼───────────────────────────────────────────┼─────────────────────────────────┤
+│ PHASE 5  │ Reichian Phase & Minimalist Modulation    │ Step-phase delay generator,     │
+│          │                                           │ Fibonacci time dilation.        │
+├──────────┼───────────────────────────────────────────┼─────────────────────────────────┤
+│ PHASE 6  │ Scala (.scl) Microtonal Tuning & UI       │ Full Scala parser, advanced     │
+│          │ Interactive Studio Dialog Integration     │ studio dialog, APK release.     │
+└──────────┴───────────────────────────────────────────┴─────────────────────────────────┘
+```
+
+---
+
+## Phase 1: Generative Grammars Core (L-Systems & Automata)
+- Implement `LSystemGenerator` supporting recursive grammatical expansions over musical alphabets.
+- Implement `WolframAutomata` generating deterministic 1D cellular automata grids for rhythmic and pitch sequences.
+- Implement Voss-McCartney $1/f$ Pink Noise stochastic walk.
+
+## Phase 2: Neo-Riemannian Tonnetz & Tension Field
+- Implement 2D Tonnetz simplicial complex mapping pitch classes into geometric coordinates.
+- Implement Paralog ($P$), Leittonwechsel ($L$), and Relative ($R$) geometric chord transformations.
+- Implement continuous mathematical tension field curves $T(t)$ driving voice attraction.
+
+## Phase 3: Continuous Melodic Cross-Morphing
+- Implement Dynamic Time Warping (DTW) and Wasserstein optimal transport between two musical clips.
+- Implement continuous parameter $\alpha \in [0, 1]$ morphing pitch, timing, and dynamics.
+- Implement 4-point Cubic Bézier contour sculpting.
+
+## Phase 4: Fuxian Species Counterpoint & Canon Solvers
+- Implement constraint satisfaction solver for 1st Species ($1:1$) and 2nd Species ($2:1$) counterpoint.
+- Implement Crab Canon (*Cancrizans*) generator producing symmetrical two-voice contrapuntal themes.
+- Implement Mensuration / Proportion Canon generator with metric ratios ($3:2, 4:3$).
+
+## Phase 5: Reichian Minimalism & Phasing
+- Implement Steve Reich phase-shifting algorithms ($N$-bar progressive subdivision slip).
+- Implement Fibonacci time dilation and contraction operators.
+
+## Phase 6: Scala Microtonal Engine & Studio UI Integration
+- Implement Scala `.scl` file parser computing custom frequency cents tables in pure C++20.
+- Create `AdvancedMelodyStudioDialog.java` with interactive tension spline canvas and rule matrices.
+- Validate build via `./build.sh` under `NO_GRADLE_POLICY.md` and verify zero-allocation real-time safety.
 
 
 

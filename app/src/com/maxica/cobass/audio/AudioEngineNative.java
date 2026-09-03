@@ -116,4 +116,29 @@ public final class AudioEngineNative {
     public static native int nativeGetFramesPerBurst();
     public static native boolean nativeIsLowLatency();
     public static native int nativeGetTrackCount();
+    // Music Theory & Note Transformation API
+    public static native int nativeSnapPitchToScale(int rawPitch, int rootKey, int scaleOrdinal);
+    public static native int nativeInvertModalPitch(int rawPitch, int axisPitch, int rootKey, int scaleOrdinal);
+    public static native int nativeSolveVoiceLeading(int previousPitch, int targetPitch, int rootKey, int scaleOrdinal, float parsimoniousWeight);
+
+    // Packed High-Performance Note Transformation Pipeline
+    public static native long[] nativeExecuteTransformPipeline(
+        long[] packedInputNotes,
+        int rootKey,
+        int scaleMask,
+        int ticksPerBeat,
+        int beatsPerBar,
+        int operatorType,
+        float intensity,
+        int seed,
+        float param1,
+        float param2,
+        boolean lockDownbeats,
+        boolean lockPitches,
+        boolean lockRhythm,
+        boolean lockVelocities,
+        boolean lockBassNotes,
+        float dryWetRatio
+    );
+
 }

@@ -36,7 +36,7 @@ public final class EuclideanGenerator {
         int countZeros = steps - k;
         int countOnes = k;
 
-        while (countZeros > 1 && countOnes > 0) {
+        while (countZeros > 1 && countOnes > 1) {
             int numMerges = Math.min(countOnes, countZeros);
             for (int i = 0; i < numMerges; i++) {
                 groups.get(i).addAll(groups.get(groups.size() - 1 - i));
@@ -44,11 +44,11 @@ public final class EuclideanGenerator {
             for (int i = 0; i < numMerges; i++) {
                 groups.remove(groups.size() - 1);
             }
-            if (countOnes <= countZeros) {
-                countZeros -= countOnes;
-            } else {
-                countOnes -= countZeros;
-            }
+
+            int nextZeros = Math.abs(countZeros - countOnes);
+            int nextOnes = numMerges;
+            countZeros = nextZeros;
+            countOnes = nextOnes;
         }
 
         int idx = 0;
@@ -58,7 +58,6 @@ public final class EuclideanGenerator {
             }
         }
 
-        // Apply rotation shift
         if (rotation != 0) {
             boolean[] rotated = new boolean[steps];
             for (int i = 0; i < steps; i++) {

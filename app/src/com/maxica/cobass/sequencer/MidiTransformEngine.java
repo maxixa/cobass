@@ -1,6 +1,10 @@
 package com.maxica.cobass.sequencer;
 
 import com.maxica.cobass.model.ClipItem;
+import com.maxica.cobass.model.MusicalScale;
+import com.maxica.cobass.model.SnapGrid;
+import com.maxica.cobass.model.TransformLockMasks;
+import com.maxica.cobass.model.TransformRecipeItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +14,224 @@ import java.util.List;
 public final class MidiTransformEngine {
 
     private MidiTransformEngine() {}
+
+        // =========================================================================
+    // FACTORY MACRO GENRE PRODUCTION PRESETS (MULTI-PASS RECIPE STACKS)
+    // =========================================================================
+
+    public static List<TransformRecipeItem> getMacroPreset(String presetName, int baseSeed) {
+        List<TransformRecipeItem> stack = new ArrayList<>();
+        int seed1 = baseSeed;
+        int seed2 = baseSeed + 101;
+        int seed3 = baseSeed + 202;
+
+        if ("Future Bass Chords".equalsIgnoreCase(presetName)) {
+            stack.add(createDiatonicVoicingRecipe(2, 1, 0.85f, seed1)); // Diatonic 3rds (Drop-2)
+            stack.add(createEuclideanSliceRecipe(8, 5, 0.65f, seed2));  // 5/8 Euclidean syncopation
+            stack.add(createPhraseArcRecipe());                         // Golden Ratio dynamics
+        } else if ("Trap Lead Evolution".equalsIgnoreCase(presetName)) {
+            stack.add(createMarkovDriftRecipe(0.40f, seed1));           // Markov Melodic Drift
+            stack.add(createRatchetBurstRecipe(4, true, 0.55f, seed2)); // Accelerating 4x ratchets
+            stack.add(createEnclosureRecipe(0.60f, seed3));             // Chromatic Bebop Enclosure
+        } else if ("Liquid DnB Roller".equalsIgnoreCase(presetName)) {
+            stack.add(createEuclideanSliceRecipe(16, 7, 0.70f, seed1)); // 7/16 rolling rhythm
+            stack.add(createClaveSlipRecipe(0.50f, seed2));             // Syncopated displacement
+            stack.add(createPhraseArcRecipe());                         // Phrasing arc
+        } else if ("Neo-Classical Motif".equalsIgnoreCase(presetName)) {
+            stack.add(createPalindromeRecipe(seed1));                   // Palindrome reflection
+            stack.add(createDiatonicVoicingRecipe(2, 0, 0.75f, seed2)); // Close 3rds harmony
+            stack.add(createEnclosureRecipe(0.45f, seed3));             // Grace ornamentation
+        } else if ("Human Soul Groove".equalsIgnoreCase(presetName)) {
+            stack.add(createHumanizeRecipe(0.30f, seed1));              // Natural timing & velocity jitter
+            stack.add(createClaveSlipRecipe(0.35f, seed2));             // Laid-back pocket slip
+            stack.add(createPhraseArcRecipe());                         // Dynamics swell
+        } else if ("Cyberpunk Industrial Arp".equalsIgnoreCase(presetName)) {
+            stack.add(createRatchetBurstRecipe(3, false, 0.65f, seed1));// Decelerating rolls
+            stack.add(new TransformRecipeItem(TransformRecipeItem.OperatorType.MODAL_INVERSION, 0.8f, seed2, 60f, 0f));
+            stack.add(createScaleConstrainRecipe());                    // Diatonic lock
+        } else {
+            // Default single-pass pass
+            stack.add(createEuclideanSliceRecipe(8, 5, 0.50f, seed1));
+        }
+
+        return stack;
+    }
+
+// =========================================================================
+    // NATIVE C++20 NOTE TRANSFORM ENGINE PIPELINE INTEGRATION
+    // =========================================================================
+
+    /**
+     * Executes a stack of transformation recipes non-destructively on a preview note list.
+     */
+    public static List<ClipItem.Note> previewPipeline(
+        List<ClipItem.Note> inputNotes,
+        MusicalScale scale,
+        int rootKey,
+        List<TransformRecipeItem> recipeStack,
+        TransformLockMasks masks,
+        float dryWetRatio
+    ) {
+        return NoteTransformPipeline.execute(inputNotes, scale, rootKey, recipeStack, masks, dryWetRatio);
+    }
+
+    /**
+     * Applies the transformation pipeline directly to a ClipItem in-place.
+     * Supports targeting selected notes only or the entire clip.
+     */
+    public static boolean applyPipeline(
+        ClipItem clip,
+        MusicalScale scale,
+        int rootKey,
+        List<TransformRecipeItem> recipeStack,
+        TransformLockMasks masks,
+        float dryWetRatio,
+        boolean applyToSelectionOnly
+    ) {
+        if (clip == null || clip.getNotes().isEmpty()) return false;
+
+        List<ClipItem.Note> targetNotes;
+        if (applyToSelectionOnly && !clip.getSelectedNotes().isEmpty()) {
+            targetNotes = clip.getSelectedNotes();
+        } else {
+            targetNotes = clip.getNotes();
+        }
+
+        List<ClipItem.Note> transformed = NoteTransformPipeline.execute(
+            targetNotes, scale, rootKey, recipeStack, masks, dryWetRatio
+        );
+
+        if (transformed == null || transformed.isEmpty()) return false;
+
+        if (applyToSelectionOnly && !clip.getSelectedNotes().isEmpty()) {
+            // Remove previous selected notes and insert transformed notes
+            clip.getNotes().removeIf(n -> n.isSelected);
+            for (ClipItem.Note tn : transformed) {
+                tn.isSelected = true;
+                clip.addNote(tn);
+            }
+        } else {
+            clip.restoreNotesList(transformed);
+        }
+
+        return true;
+    }
+
+    /**
+     * Applies the transformation pipeline in batch across multiple clips (e.g. from the Arranger).
+     */
+    public static int applyPipelineBatch(
+        List<ClipItem> clips,
+        MusicalScale scale,
+        int rootKey,
+        List<TransformRecipeItem> recipeStack,
+        TransformLockMasks masks,
+        float dryWetRatio
+    ) {
+        if (clips == null || clips.isEmpty()) return 0;
+        int modifiedCount = 0;
+
+        for (ClipItem clip : clips) {
+            if (clip.getType() == com.maxica.cobass.model.TrackItem.Type.SYNTH) {
+                if (applyPipeline(clip, scale, rootKey, recipeStack, masks, dryWetRatio, false)) {
+                    modifiedCount++;
+                }
+            }
+        }
+        return modifiedCount;
+    }
+
+    // =========================================================================
+    // RECIPE FACTORY BUILDERS
+    // =========================================================================
+
+                public static TransformRecipeItem createGuitarStrumRecipe(boolean downStrum, int spreadTicks, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.GUITAR_STRUM_PHYSICS, intensity, seed, downStrum ? 1.0f : -1.0f, spreadTicks);
+    }
+
+    public static TransformRecipeItem createMaqamInflectorRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.MAQAM_MICROTONAL_BEND, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createParabolicSwellRecipe(float minVelPct, float maxVelPct, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.PARABOLIC_VELOCITY_DOME, intensity, seed, minVelPct, maxVelPct);
+    }
+
+public static TransformRecipeItem createChordDropVoicingRecipe(int style, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.CHORD_DROP_VOICING, intensity, seed, style, 0.0f);
+    }
+
+    public static TransformRecipeItem createContraryCounterpointRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.CONTRARY_COUNTERPOINT, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createSubBassExtractorRecipe(int style, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.SUB_BASS_EXTRACTOR, intensity, seed, style, 0.0f);
+    }
+
+public static TransformRecipeItem createSchenkerLeadRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.SCHENKER_LEAD_TOWARD, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createBartokWedgeRecipe(int axisPitch, boolean expanding, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.BARTOK_PITCH_WEDGE, intensity, seed, axisPitch, expanding ? 1.0f : -1.0f);
+    }
+
+    public static TransformRecipeItem createCompoundPolyphonyRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.COMPOUND_POLY_WEAVE, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createDiatonicCascadeRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.DIATONIC_CASCADE_RUN, intensity, seed, 0.0f, 0.0f);
+    }
+
+public static TransformRecipeItem createEuclideanSliceRecipe(int steps, int pulses, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.EUCLIDEAN_SLICE, intensity, seed, steps, pulses);
+    }
+
+    public static TransformRecipeItem createRatchetBurstRecipe(int subdivisions, boolean accelerating, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.RATCHET_BURST, intensity, seed, subdivisions, accelerating ? 1.0f : -1.0f);
+    }
+
+    public static TransformRecipeItem createMarkovDriftRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.MARKOV_DRIFT, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createEnclosureRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.ENCLOSURE_DECORATE, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createDiatonicVoicingRecipe(int degreeShift, int style, float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.DIATONIC_VOICING, intensity, seed, degreeShift, style);
+    }
+
+    public static TransformRecipeItem createCallResponseRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.CALL_RESPONSE_INFILL, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createClaveSlipRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.CLAVE_SLIP, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createPalindromeRecipe(int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.PALINDROME_MIRROR, 1.0f, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createPhraseArcRecipe() {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.GOLDEN_PHRASE_ARC, 1.0f, 12345, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createHumanizeRecipe(float intensity, int seed) {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.HUMANIZE_GROOVE, intensity, seed, 0.0f, 0.0f);
+    }
+
+    public static TransformRecipeItem createScaleConstrainRecipe() {
+        return new TransformRecipeItem(TransformRecipeItem.OperatorType.SCALE_CONSTRAIN, 1.0f, 12345, 0.0f, 0.0f);
+    }
+
+    // =========================================================================
+    // LEGACY & INTERACTIVE EDITING HELPERS
+    // =========================================================================
 
     public static boolean splitNoteAt(ClipItem clip, ClipItem.Note target, long splitOffsetTicks) {
         if (clip == null || target == null) return false;
