@@ -269,11 +269,7 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 68, 1.0f);
         lp.setMargins(0, 0, 4, 0);
         btn.setLayoutParams(lp);
-        btn.setOnClickListener(v -> {
-            if (AudioEngineNative.isLoaded()) {
-                AudioEngineNative.nativeNoteOn(trackId, midiNote, 1.0f);
-            }
-        });
+        CobassInteraction.attachAuditionTouch(btn, trackId, midiNote, 1.0f);
         parent.addView(btn);
     }
 

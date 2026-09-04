@@ -2,15 +2,11 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 import com.maxica.cobass.model.PluginDescriptorItem;
 import com.maxica.cobass.plugin.PluginHostManager;
@@ -36,59 +32,47 @@ public class InstrumentBrowserDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
+        float density = getContext().getResources().getDisplayMetrics().density;
 
-        TextView title = new TextView(getContext());
-        title.setText("Choose Instrument Engine");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
         Button btnDefault = new Button(getContext());
         btnDefault.setText("Cobass PolySynth (Internal Default)");
-        btnDefault.setTextSize(11f);
-        btnDefault.setTextColor(Color.WHITE);
-        btnDefault.setBackgroundColor(Color.parseColor("#16385C"));
+        CobassButton.apply(btnDefault, CobassButton.Variant.PRIMARY, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams dfLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dfLp.setMargins(0, 0, 0, Math.round(CobassSpacing.SPACE_SM * density));
+        btnDefault.setLayoutParams(dfLp);
         btnDefault.setOnClickListener(v -> {
             if (listener != null) listener.onDefaultInstrumentSelected();
             dismiss();
         });
-        layout.addView(btnDefault);
+        content.addView(btnDefault);
 
         List<PluginDescriptorItem> synths = PluginHostManager.getInstance().getSynthPlugins();
         for (PluginDescriptorItem synth : synths) {
             Button btn = new Button(getContext());
             btn.setText(synth.getName() + " (" + synth.getVendor() + ")");
-            btn.setTextSize(11f);
-            btn.setTextColor(Color.WHITE);
-            btn.setBackgroundColor(Color.parseColor("#242734"));
+            CobassButton.apply(btn, CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(0, 6, 0, 0);
+            lp.setMargins(0, Math.round(2 * density), 0, Math.round(2 * density));
             btn.setLayoutParams(lp);
             btn.setOnClickListener(v -> {
                 if (listener != null) listener.onPluginInstrumentSelected(synth);
                 dismiss();
             });
-            layout.addView(btn);
+            content.addView(btn);
         }
 
-        Button btnCancel = new Button(getContext());
-        btnCancel.setText("Cancel");
-        btnCancel.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnCancel.setTextColor(Color.WHITE);
-        btnCancel.setOnClickListener(v -> dismiss());
-        layout.addView(btnCancel);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🎹 Choose Instrument Engine",
+            "Select internal synth or modular plugin for track",
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 }

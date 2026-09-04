@@ -132,6 +132,8 @@ private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint marqueePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rampPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
+    private final Path lMarkerPath = new Path();
+    private final Path rMarkerPath = new Path();
     private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
     public PianoRollCanvasView(Context context) {
@@ -294,7 +296,7 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
                 }
             }
         }
-        invalidate();
+        if (isPlaying) postInvalidateOnAnimation(); else invalidate();
     }
 
     public void stopAudition() {
@@ -374,23 +376,7 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
     }
 
     public static int getVelocityHeatmapColor(float vel, boolean isSelected, boolean isMuted) {
-        if (isMuted) return Color.argb(90, 110, 115, 130);
-        if (isSelected) return Color.parseColor("#FFD60A");
-
-        float v = Math.max(0.0f, Math.min(1.0f, vel));
-        if (v <= 0.5f) {
-            float t = v / 0.5f;
-            int r = (int) (50 + t * (10 - 50));
-            int g = (int) (173 + t * (132 - 173));
-            int b = (int) (230 + t * (255 - 230));
-            return Color.rgb(Math.max(0, Math.min(255, r)), Math.max(0, Math.min(255, g)), Math.max(0, Math.min(255, b)));
-        } else {
-            float t = (v - 0.5f) / 0.5f;
-            int r = (int) (10 + t * (255 - 10));
-            int g = (int) (132 + t * (69 - 132));
-            int b = (int) (255 + t * (58 - 255));
-            return Color.rgb(Math.max(0, Math.min(255, r)), Math.max(0, Math.min(255, g)), Math.max(0, Math.min(255, b)));
-        }
+        return CobassTheme.getVelocityHeatmapColor(vel, isSelected, isMuted);
     }
 
     @Override
@@ -404,8 +390,7 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
         final List<Integer> displayedNotes = getActiveMidiNotes();
         final int totalRows = displayedNotes.size();
 
-        paint.setColor(Color.parseColor("#121316"));
-        canvas.drawRect(0, 0, width, height, paint);
+        canvas.drawRect(0, 0, width, height, CobassCanvasTheme.PAINT_CANVAS_BG);
 
         canvas.save();
         canvas.clipRect(keyWidth, rulerHeaderHeight, width, gridBottom);
@@ -420,13 +405,13 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
             boolean inScale = scale.isNoteInScale(midiNote, rootKey);
 
             if (isBlackKey) {
-                paint.setColor(inScale ? Color.parseColor("#171922") : Color.parseColor("#13141A"));
+                paint.setColor(inScale ? 0xFF171922 : 0xFF13141A);
             } else {
-                paint.setColor(inScale ? Color.parseColor("#1E212C") : Color.parseColor("#181A22"));
+                paint.setColor(inScale ? 0xFF1E212C : 0xFF181A22);
             }
             canvas.drawRect(keyWidth, y, width, y + noteRowHeight, paint);
 
-            paint.setColor(Color.parseColor("#262936"));
+            paint.setColor(0xFF262936);
             paint.setStrokeWidth(1f);
             canvas.drawLine(keyWidth, y + noteRowHeight, width, y + noteRowHeight, paint);
         }
@@ -440,18 +425,14 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
 
             boolean isBar = (t % (PPQ * 4) == 0);
             boolean isBeat = (t % PPQ == 0);
-
-            paint.setColor(isBar ? Color.parseColor("#3B4052") : (isBeat ? Color.parseColor("#272A36") : Color.parseColor("#1C1E26")));
-            paint.setStrokeWidth(isBar ? 2f : 1f);
-            canvas.drawLine(x, rulerHeaderHeight, x, gridBottom, paint);
+            CobassCanvasTheme.drawGridLine(canvas, x, rulerHeaderHeight, gridBottom, isBar, isBeat, 1.0f);
         }
 
         // 3. Loop Region Highlight
         if (isLoopEnabled) {
             float loopX1 = keyWidth + (loopStartTick * pixelsPerTick) - scrollX;
             float loopX2 = keyWidth + (loopEndTick * pixelsPerTick) - scrollX;
-            paint.setColor(Color.parseColor("#180A84FF"));
-            canvas.drawRect(Math.max(keyWidth, loopX1), rulerHeaderHeight, Math.min(width, loopX2), gridBottom, paint);
+            CobassCanvasTheme.drawLoopOverlay(canvas, Math.max(keyWidth, loopX1), Math.min(width, loopX2), rulerHeaderHeight, gridBottom);
         }
 
         // 4. Render Notes
@@ -474,11 +455,11 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
 
             paint.setStyle(Paint.Style.STROKE);
             if (note.isSelected) {
-                paint.setStrokeWidth(3.5f);
-                paint.setColor(Color.parseColor("#FFFFFF"));
+                paint.setStrokeWidth(CobassTheme.BORDER_SELECTION);
+                paint.setColor(CobassTheme.SELECTION_BORDER);
             } else {
                 paint.setStrokeWidth(1.2f);
-                paint.setColor(note.isMuted ? Color.parseColor("#44FFFFFF") : Color.parseColor("#99FFFFFF"));
+                paint.setColor(note.isMuted ? 0x44FFFFFF : 0x99FFFFFF);
             }
             canvas.drawRoundRect(rectF, 6f, 6f, paint);
 
@@ -490,14 +471,14 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
             }
 
             if (note.isMuted) {
-                paint.setColor(Color.parseColor("#AAFF453A"));
+                paint.setColor(0xAAFF453A);
                 paint.setStrokeWidth(2f);
                 canvas.drawLine(nx + 4f, ny + nh / 2f, nx + nw - 4f, ny + nh / 2f, paint);
             }
 
             if (noteRowHeight >= 24f) {
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(note.isMuted ? Color.parseColor("#8E8E93") : Color.WHITE);
+                paint.setColor(note.isMuted ? 0xFF8E8E93 : Color.WHITE);
                 paint.setTextSize(Math.max(11f, noteRowHeight * 0.42f));
                 paint.setFakeBoldText(true);
 
@@ -532,21 +513,14 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
                 // Cyan Border
                 ghostNotePaint.setStyle(Paint.Style.STROKE);
                 ghostNotePaint.setStrokeWidth(2.0f);
-                ghostNotePaint.setColor(Color.parseColor("#64D2FF"));
+                ghostNotePaint.setColor(0xFF64D2FF);
                 canvas.drawRoundRect(rectF, 4f, 4f, ghostNotePaint);
             }
         }
 
 // 5. Marquee Box
         if (isMarqueeActive) {
-            marqueePaint.setStyle(Paint.Style.FILL);
-            marqueePaint.setColor(Color.parseColor("#250A84FF"));
-            canvas.drawRect(marqueeRect, marqueePaint);
-
-            marqueePaint.setStyle(Paint.Style.STROKE);
-            marqueePaint.setStrokeWidth(2f);
-            marqueePaint.setColor(Color.parseColor("#0A84FF"));
-            canvas.drawRect(marqueeRect, marqueePaint);
+            CobassCanvasTheme.drawMarquee(canvas, marqueeRect);
         }
 
         // 6. Live Playhead Needle
@@ -554,18 +528,7 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
         if (clipRelTick >= 0 && clipRelTick <= clip.getLengthTicks()) {
             float playheadX = keyWidth + (clipRelTick * pixelsPerTick) - scrollX;
             if (playheadX >= keyWidth && playheadX <= width) {
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setColor(Color.parseColor("#FF453A"));
-                paint.setStrokeWidth(2.5f);
-                canvas.drawLine(playheadX, rulerHeaderHeight, playheadX, gridBottom, paint);
-
-                paint.setStyle(Paint.Style.FILL);
-                Path triangle = new Path();
-                triangle.moveTo(playheadX - 8f, rulerHeaderHeight);
-                triangle.lineTo(playheadX + 8f, rulerHeaderHeight);
-                triangle.lineTo(playheadX, rulerHeaderHeight + 12f);
-                triangle.close();
-                canvas.drawPath(triangle, paint);
+                CobassCanvasTheme.drawPlayheadNeedle(canvas, playheadX, rulerHeaderHeight, gridBottom, 1.0f);
             }
         }
 
@@ -573,22 +536,22 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
 
         // 7. Top Ruler Strip
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#181A24"));
+        paint.setColor(0xFF181A24);
         canvas.drawRect(keyWidth, 0, width, rulerHeaderHeight, paint);
-        paint.setColor(Color.parseColor("#2C3040"));
+        paint.setColor(0xFF2C3040);
         canvas.drawLine(keyWidth, rulerHeaderHeight, width, rulerHeaderHeight, paint);
 
         if (isLoopEnabled) {
             float loopX1 = keyWidth + (loopStartTick * pixelsPerTick) - scrollX;
             float loopX2 = keyWidth + (loopEndTick * pixelsPerTick) - scrollX;
 
-            paint.setColor(Color.parseColor("#440A84FF"));
+            paint.setColor(0x440A84FF);
             canvas.drawRect(Math.max(keyWidth, loopX1), 0, Math.min(width, loopX2), rulerHeaderHeight, paint);
 
             if (loopX1 >= keyWidth - 16 && loopX1 <= width) {
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(Color.parseColor("#0A84FF"));
-                Path lMarker = new Path();
+                paint.setColor(0xFF0A84FF);
+                lMarkerPath.reset(); Path lMarker = lMarkerPath;
                 lMarker.moveTo(loopX1, 0);
                 lMarker.lineTo(loopX1 + 16f, 0);
                 lMarker.lineTo(loopX1 + 16f, 16f);
@@ -602,8 +565,8 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
 
             if (loopX2 >= keyWidth - 16 && loopX2 <= width) {
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(Color.parseColor("#0A84FF"));
-                Path rMarker = new Path();
+                paint.setColor(0xFF0A84FF);
+                rMarkerPath.reset(); Path rMarker = rMarkerPath;
                 rMarker.moveTo(loopX2 - 16f, 0);
                 rMarker.lineTo(loopX2, 0);
                 rMarker.lineTo(loopX2, 24f);
@@ -618,7 +581,7 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
 
         // 8. Left Keybed Column
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#181A22"));
+        paint.setColor(0xFF181A22);
         canvas.drawRect(0, 0, keyWidth, gridBottom, paint);
 
         for (int i = 0; i < totalRows; i++) {
@@ -627,20 +590,20 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
             if (y + noteRowHeight < rulerHeaderHeight || y > gridBottom) continue;
 
             boolean isBlackKey = isBlackKey(midiNote);
-            paint.setColor(isBlackKey ? Color.parseColor("#14151B") : Color.parseColor("#D1D5DB"));
+            paint.setColor(isBlackKey ? 0xFF14151B : 0xFFD1D5DB);
 
             if (activeAuditionPitch == midiNote) {
-                paint.setColor(Color.parseColor("#0A84FF"));
+                paint.setColor(0xFF0A84FF);
             }
 
             canvas.drawRect(0, y, keyWidth, y + noteRowHeight, paint);
-            paint.setColor(isBlackKey ? Color.parseColor("#262934") : Color.parseColor("#9CA3AF"));
+            paint.setColor(isBlackKey ? 0xFF262934 : 0xFF9CA3AF);
             paint.setStrokeWidth(1f);
             canvas.drawLine(0, y + noteRowHeight, keyWidth, y + noteRowHeight, paint);
 
             boolean isRoot = ((midiNote % 12) == rootKey);
             if (isRoot || midiNote % 12 == 0 || isScaleFolded || noteRowHeight >= 34f) {
-                paint.setColor((activeAuditionPitch == midiNote || isBlackKey) ? Color.WHITE : Color.parseColor("#111827"));
+                paint.setColor((activeAuditionPitch == midiNote || isBlackKey) ? Color.WHITE : 0xFF111827);
                 paint.setTextSize(Math.max(11f, noteRowHeight * 0.40f));
                 paint.setFakeBoldText(true);
                 String label = getNoteLabel(midiNote);
@@ -651,27 +614,27 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
             }
         }
 
-        paint.setColor(Color.parseColor("#343848"));
+        paint.setColor(0xFF343848);
         paint.setStrokeWidth(2f);
         canvas.drawLine(keyWidth, 0, keyWidth, gridBottom, paint);
 
         // 9. Velocity Lane Drawer with Studio Guidelines & Stalks
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#14151B"));
+        paint.setColor(0xFF14151B);
         canvas.drawRect(0, gridBottom, width, height, paint);
-        paint.setColor(Color.parseColor("#262936"));
+        paint.setColor(0xFF262936);
         canvas.drawLine(0, gridBottom, width, gridBottom, paint);
 
         float maxStalkH = velocityLaneHeight - 40f;
 
-        paint.setColor(Color.parseColor("#1D202A"));
+        paint.setColor(0xFF1D202A);
         paint.setStrokeWidth(1f);
         for (float pct : new float[]{0.25f, 0.50f, 0.75f, 1.00f}) {
             float guideY = height - 8f - (pct * maxStalkH);
             canvas.drawLine(keyWidth, guideY, width, guideY, paint);
         }
 
-        paint.setColor(Color.parseColor("#8E8E93"));
+        paint.setColor(0xFF8E8E93);
         paint.setTextSize(12f);
         paint.setFakeBoldText(true);
         canvas.drawText("VELOCITY", 14f, gridBottom + 20f, paint);
@@ -692,7 +655,7 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
             paint.setStyle(Paint.Style.FILL);
             canvas.drawCircle(vx, vy, (activeVelocityDragNote == note) ? 7f : 5f, paint);
 
-            paint.setColor(Color.parseColor("#C7C7CC"));
+            paint.setColor(0xFFC7C7CC);
             paint.setTextSize(10f);
             paint.setFakeBoldText(false);
             canvas.drawText(String.valueOf(note.getMidiVelocity()), vx - 7f, vy - 6f, paint);
@@ -702,11 +665,11 @@ public void setEventListener(OnPianoRollEventListener listener) { this.listener 
             canvas.drawPath(velocityRampPath, rampPaint);
 
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.parseColor("#DD000000"));
+            paint.setColor(0xDD000000);
             rectF.set(lastVelocityTouchX - 50f, lastVelocityTouchY - 40f, lastVelocityTouchX + 50f, lastVelocityTouchY - 10f);
             canvas.drawRoundRect(rectF, 6f, 6f, paint);
 
-            paint.setColor(Color.parseColor("#FFD60A"));
+            paint.setColor(0xFFFFD60A);
             paint.setTextSize(12f);
             paint.setFakeBoldText(true);
             int midiVal = Math.round(currentHoverVelocity * 127f);

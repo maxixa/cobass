@@ -427,10 +427,7 @@ public class StepSequencerDialog extends Dialog {
         layout.addView(btnCancel);
 
         dialog.setContentView(scroll);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(dialog);
         dialog.show();
     }
 
@@ -537,21 +534,14 @@ public class StepSequencerDialog extends Dialog {
     }
 
     private void updateUndoRedoUI() {
-        if (btnUndo != null) {
-            btnUndo.setEnabled(!undoStack.isEmpty());
-            btnUndo.setAlpha(!undoStack.isEmpty() ? 1.0f : 0.35f);
-        }
-        if (btnRedo != null) {
-            btnRedo.setEnabled(!redoStack.isEmpty());
-            btnRedo.setAlpha(!redoStack.isEmpty() ? 1.0f : 0.35f);
-        }
+        CobassInteraction.applyUndoRedoState(btnUndo, !undoStack.isEmpty());
+        CobassInteraction.applyUndoRedoState(btnRedo, !redoStack.isEmpty());
     }
 
     private void updateTransportUI() {
         if (btnPlay == null) return;
         boolean playing = AudioEngineNative.isLoaded() && AudioEngineNative.nativeIsPlaying();
-        btnPlay.setText(playing ? "⏸" : "▶");
-        btnPlay.setBackgroundColor(playing ? Color.parseColor("#1B4D2E") : Color.parseColor("#163824"));
+        CobassInteraction.applyPlayState(btnPlay, playing);
     }
 
     private void syncStepToNative(int laneIndex, int stepIndex) {
@@ -662,10 +652,7 @@ public class StepSequencerDialog extends Dialog {
         layout.addView(btnCancel);
 
         presetDialog.setContentView(scroll);
-        if (presetDialog.getWindow() != null) {
-            presetDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            presetDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(presetDialog);
         presetDialog.show();
     }
 

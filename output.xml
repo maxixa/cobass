@@ -1,0 +1,2281 @@
+<context>
+  <metadata>
+    <generated_at>Fri Sep  4 03:14:20 WIB 2026</generated_at>
+    <root_directory>.</root_directory>
+  </metadata>
+  <directory_structure>
+.
+ |-- NO_GRADLE_POLICY.md
+ |-- README.md
+ |-- addons
+ | |-- fx-ott-compressor
+ | | |-- src
+ | | | |-- OttCompressorPlugin.cpp
+ | |-- fx-sidechain-pump
+ | | |-- src
+ | | | |-- SidechainPumpPlugin.cpp
+ | |-- fx-tape-saturation
+ | | |-- src
+ | | | |-- TapeSaturationPlugin.cpp
+ | |-- fx-vintage-chorus
+ | | |-- src
+ | | | |-- VintageChorusPlugin.cpp
+ | |-- fx-wavefolder-crush
+ | | |-- src
+ | | | |-- WavefolderCrushPlugin.cpp
+ | |-- synth-cobalt-drums
+ | | |-- src
+ | | | |-- ClapVoice.hpp
+ | | | |-- CobaltDrumsPlugin.cpp
+ | | | |-- HiHatVoice.hpp
+ | | | |-- KickVoice.hpp
+ | | | |-- PercVoice.hpp
+ | | | |-- SnareVoice.hpp
+ | | | |-- TomVoice.hpp
+ | |-- synth-hyperion
+ | | |-- src
+ | | | |-- HyperionSynthPlugin.cpp
+ |-- app
+ | |-- AndroidManifest.xml
+ | |-- lib
+ | | |-- arm64-v8a
+ | | | |-- libc++_shared.so
+ | | | |-- libcobass_audio.so
+ | | | |-- libcobass_plugin_fx_ott_compressor.so
+ | | | |-- libcobass_plugin_fx_sidechain_pump.so
+ | | | |-- libcobass_plugin_fx_tape_saturation.so
+ | | | |-- libcobass_plugin_fx_vintage_chorus.so
+ | | | |-- libcobass_plugin_fx_wavefolder_crush.so
+ | | | |-- libcobass_plugin_synth_cobalt_drums.so
+ | | | |-- libcobass_plugin_synth_hyperion.so
+ | |-- native
+ | | |-- AudioEngine.cpp
+ | | |-- AudioEngine.hpp
+ | | |-- LockFreeQueue.hpp
+ | | |-- dsp
+ | | | |-- ADSR.hpp
+ | | | |-- AudioNode.hpp
+ | | | |-- AudioTrack.hpp
+ | | | |-- BiquadFilter.hpp
+ | | | |-- CombFilter.hpp
+ | | | |-- Compressor.hpp
+ | | | |-- DelayEffect.hpp
+ | | | |-- FormantFilter.hpp
+ | | | |-- LFO.hpp
+ | | | |-- Mixer.hpp
+ | | | |-- ParametricEQ.hpp
+ | | | |-- PolyBlepOscillator.hpp
+ | | | |-- ReverbEffect.hpp
+ | | | |-- StepSequencerTrack.hpp
+ | | | |-- SynthTrack.hpp
+ | | | |-- SynthVoice.hpp
+ | | | |-- Track.hpp
+ | | | |-- Wavefolder.hpp
+ | | | |-- ZdfFilter.hpp
+ | | |-- export
+ | | | |-- WavExporter.hpp
+ | | |-- include
+ | | | |-- CobassPluginABI.h
+ | | |-- jni_bridge.cpp
+ | | |-- plugin
+ | | | |-- PluginChain.hpp
+ | | | |-- PluginDescriptor.hpp
+ | | | |-- PluginInstance.hpp
+ | | | |-- PluginLoader.hpp
+ | | |-- sequencer
+ | | | |-- Clip.hpp
+ | | | |-- MusicTheory.hpp
+ | | | |-- NoteTransformEngine.hpp
+ | | | |-- Sequencer.hpp
+ | | | |-- Transport.hpp
+ | |-- res
+ | | |-- drawable
+ | | |-- layout
+ | | | |-- activity_crash.xml
+ | | | |-- activity_main.xml
+ | | | |-- dialog_fx_rack.xml
+ | | | |-- dialog_midi_transform_studio.xml
+ | | | |-- dialog_mixer_console.xml
+ | | | |-- dialog_piano_roll.xml
+ | | | |-- dialog_plugin_host.xml
+ | | | |-- dialog_preferences.xml
+ | | | |-- dialog_project_manager.xml
+ | | | |-- dialog_step_sequencer.xml
+ | | | |-- dialog_track_inspector.xml
+ | | | |-- dialog_wave_editor.xml
+ | | | |-- item_mixer_strip.xml
+ | | | |-- item_track.xml
+ | | |-- values
+ | | | |-- colors.xml
+ | | | |-- strings.xml
+ | | | |-- styles.xml
+ | | |-- xml
+ | | | |-- file_paths.xml
+ | |-- src
+ | | |-- com
+ | | | |-- maxica
+ | | | | |-- cobass
+ | | | | | |-- audio
+ | | | | | | |-- AudioEngineNative.java
+ | | | | | |-- core
+ | | | | | | |-- CobassApplication.java
+ | | | | | | |-- Constants.java
+ | | | | | |-- model
+ | | | | | | |-- ClipItem.java
+ | | | | | | |-- MusicalScale.java
+ | | | | | | |-- PluginDescriptorItem.java
+ | | | | | | |-- PluginParamItem.java
+ | | | | | | |-- PluginSlotItem.java
+ | | | | | | |-- SnapGrid.java
+ | | | | | | |-- StepPatternItem.java
+ | | | | | | |-- ToolMode.java
+ | | | | | | |-- TrackItem.java
+ | | | | | | |-- TransformLockMasks.java
+ | | | | | | |-- TransformRecipeItem.java
+ | | | | | | |-- TransformRecipeSerializer.java
+ | | | | | |-- plugin
+ | | | | | | |-- PatchVariationEngine.java
+ | | | | | | |-- PluginApkInstaller.java
+ | | | | | | |-- PluginHostManager.java
+ | | | | | |-- project
+ | | | | | | |-- PresetUnpacker.java
+ | | | | | | |-- ProjectData.java
+ | | | | | | |-- ProjectSerializer.java
+ | | | | | |-- sequencer
+ | | | | | | |-- ArrangerHistoryManager.java
+ | | | | | | |-- ArrangerSnapEngine.java
+ | | | | | | |-- EuclideanGenerator.java
+ | | | | | | |-- MidiTransformEngine.java
+ | | | | | | |-- NoteTransformPipeline.java
+ | | | | | | |-- PianoRollHistoryManager.java
+ | | | | | | |-- StepPatternBaker.java
+ | | | | | | |-- StepPatternTransformEngine.java
+ | | | | | | |-- StepPatternVariationEngine.java
+ | | | | | |-- ui
+ | | | | | | |-- ArrangerTimelineView.java
+ | | | | | | |-- ChordStudioDialog.java
+ | | | | | | |-- CobassButton.java
+ | | | | | | |-- CobassCanvasTheme.java
+ | | | | | | |-- CobassDialogShell.java
+ | | | | | | |-- CobassInteraction.java
+ | | | | | | |-- CobassSlider.java
+ | | | | | | |-- CobassSpacing.java
+ | | | | | | |-- CobassTheme.java
+ | | | | | | |-- CobassTypography.java
+ | | | | | | |-- CrashActivity.java
+ | | | | | | |-- EuclideanStudioDialog.java
+ | | | | | | |-- FxPluginBrowserDialog.java
+ | | | | | | |-- FxRackDialog.java
+ | | | | | | |-- InstrumentBrowserDialog.java
+ | | | | | | |-- MainActivity.java
+ | | | | | | |-- MidiTransformDialog.java
+ | | | | | | |-- MidiTransformStudioDialog.java
+ | | | | | | |-- MixerConsoleDialog.java
+ | | | | | | |-- PianoRollCanvasView.java
+ | | | | | | |-- PianoRollEditorDialog.java
+ | | | | | | |-- PianoRollZoomDialog.java
+ | | | | | | |-- PluginControlFactory.java
+ | | | | | | |-- PluginPresetDialog.java
+ | | | | | | |-- PluginUiDialog.java
+ | | | | | | |-- ProjectDialog.java
+ | | | | | | |-- RotaryKnobView.java
+ | | | | | | |-- ScaleStudioDialog.java
+ | | | | | | |-- SnapStudioDialog.java
+ | | | | | | |-- StepLaneInspectorDialog.java
+ | | | | | | |-- StepMatrixCanvasView.java
+ | | | | | | |-- StepSequencerDialog.java
+ | | | | | | |-- SynthVisualizerView.java
+ | | | | | | |-- TrackAdapter.java
+ | | | | | | |-- TrackInspectorDialog.java
+ | | | | | | |-- VariationStudioDialog.java
+ | | | | | | |-- WaveEditorCanvasView.java
+ | | | | | | |-- WaveEditorDialog.java
+ |-- backup.sh
+ |-- backups
+ | |-- beatforge_backup_20260831_135458.tar.gz
+ | |-- beatforge_backup_20260831_140940.tar.gz
+ | |-- beatforge_backup_20260901_084724.tar.gz
+ | |-- beatforge_backup_20260903_131159.tar.gz
+ | |-- perf_patch_20260903_135946
+ | | |-- addons
+ | | | |-- synth-hyperion
+ | | | | |-- src
+ | | | | | |-- HyperionSynthPlugin.cpp
+ | | |-- app
+ | | | |-- native
+ | | | | |-- dsp
+ | | | | | |-- ReverbEffect.hpp
+ | | | | | |-- StepSequencerTrack.hpp
+ | | | |-- src
+ | | | | |-- com
+ | | | | | |-- maxica
+ | | | | | | |-- cobass
+ | | | | | | | |-- ui
+ | | | | | | | | |-- ArrangerTimelineView.java
+ | | | | | | | | |-- PianoRollCanvasView.java
+ | | | | | | | | |-- WaveEditorCanvasView.java
+ | | | | | | | | |-- WaveEditorDialog.java
+ | |-- perf_patch_20260903_140334
+ | | |-- addons
+ | | | |-- synth-hyperion
+ | | | | |-- src
+ | | | | | |-- HyperionSynthPlugin.cpp
+ | | |-- app
+ | | | |-- native
+ | | | | |-- dsp
+ | | | | | |-- ReverbEffect.hpp
+ | | | | | |-- StepSequencerTrack.hpp
+ | | | |-- src
+ | | | | |-- com
+ | | | | | |-- maxica
+ | | | | | | |-- cobass
+ | | | | | | | |-- ui
+ | | | | | | | | |-- ArrangerTimelineView.java
+ | | | | | | | | |-- PianoRollCanvasView.java
+ | | | | | | | | |-- WaveEditorCanvasView.java
+ | | | | | | | | |-- WaveEditorDialog.java
+ |-- build.sh
+ |-- buildfull.sh
+ |-- bundle.sh
+ |-- bundle2.sh
+ |-- bundlemin.sh
+ |-- config
+ | |-- debug.keystore
+ | |-- deps.toml
+ | |-- presets
+ | | |-- com.maxica.cobass.plugins.cobalt_drums
+ | | | |-- 808_Atlanta_Trap_Kit.cobasspatch
+ | | | |-- 909_Berlin_Techno_Kit.cobasspatch
+ | | | |-- Cyberpunk_Industrial_Kit.cobasspatch
+ | | | |-- DnB_Liquid_Jungle_Break_Kit.cobasspatch
+ | | | |-- Dubstep_Heavy_Riddim_Kit.cobasspatch
+ | | | |-- EDM_Mainstage_House_Kit.cobasspatch
+ | | | |-- Future_Bass_Organic_Kit.cobasspatch
+ | | | |-- Hardstyle_Raw_Distorted_Kit.cobasspatch
+ | | | |-- Hyperpop_Glitch_Pop_Kit.cobasspatch
+ | | | |-- LoFi_Vinyl_Warm_Kit.cobasspatch
+ | | | |-- Synthwave_80s_Electro_Kit.cobasspatch
+ | | | |-- UK_Drill_Slide_Kit.cobasspatch
+ | | |-- com.maxica.cobass.plugins.hyperion
+ | | | |-- 808_Deep_Sub_Bass.cobasspatch
+ | | | |-- 808_Sub_Long_Slide_Glider.cobasspatch
+ | | | |-- Acid_303_Screamer.cobasspatch
+ | | | |-- Ambient_Cloud_Texture.cobasspatch
+ | | | |-- Anjunabeats_Progressive_Pad.cobasspatch
+ | | | |-- Blade_Runner_Vangelis_Brass.cobasspatch
+ | | | |-- Chill_LoFi_Sine_Pluck.cobasspatch
+ | | | |-- Cyber_Pizzicato_Pluck.cobasspatch
+ | | | |-- Cyberpunk_1984_Arp_Bass.cobasspatch
+ | | | |-- Cyberpunk_Dark_Dystopia_Pad.cobasspatch
+ | | | |-- Dark_Trap_Bell_Arp.cobasspatch
+ | | | |-- Dream_Keys_Chime.cobasspatch
+ | | | |-- Dutch_House_Dirty_Lead.cobasspatch
+ | | | |-- EDM_Mainstage_Supersaw_Lead.cobasspatch
+ | | | |-- Eurodance_Anthem_Lead.cobasspatch
+ | | | |-- Festival_Anthem_Chords.cobasspatch
+ | | | |-- Future_Bounce_Punch_Pluck.cobasspatch
+ | | | |-- Future_Rave_Acid_Lead.cobasspatch
+ | | | |-- Hardstyle_Raw_Screech_Lead.cobasspatch
+ | | | |-- Laser_Pew_Pew_Zap.cobasspatch
+ | | | |-- Lush_Supersaw_Pad.cobasspatch
+ | | | |-- Melodic_Techno_Pluck.cobasspatch
+ | | | |-- Miami_Vice_Sunset_Lead.cobasspatch
+ | | | |-- Phonk_Memphis_Cowbell_Lead.cobasspatch
+ | | | |-- Reese_Neuro_Sub_Bass.cobasspatch
+ | | | |-- Screamer_CrossFM_Lead.cobasspatch
+ | | | |-- Slap_House_Donk_Bass.cobasspatch
+ | | | |-- Synthwave_Sunset_Brass.cobasspatch
+ | | | |-- UK_Bassline_Wobble_Growl.cobasspatch
+ | | | |-- Uplifting_Trance_Pluck.cobasspatch
+ | | |-- com.maxica.cobass.plugins.ott_compressor
+ | | | |-- Drum_Bus_Parallel_Crush.cobasspatch
+ | | | |-- EDM_Master_Sausage_Glue.cobasspatch
+ | | | |-- Synth_Lead_Aggressive_Lift.cobasspatch
+ | | | |-- Vocal_Air_Presence_OTT.cobasspatch
+ | | |-- com.maxica.cobass.plugins.sidechain_pump
+ | | | |-- Fast_Trap_808_Kick_Ducking.cobasspatch
+ | | | |-- Four_On_The_Floor_Club_Pump.cobasspatch
+ | | | |-- Half_Time_Dubstep_Sidechain.cobasspatch
+ | | | |-- Low_End_Only_Sub_Ducker.cobasspatch
+ | | |-- com.maxica.cobass.plugins.tape_saturation
+ | | | |-- LoFi_Cassette_Distortion.cobasspatch
+ | | | |-- Master_Tape_Analog_Warmth.cobasspatch
+ | | | |-- Tube_Triode_Drive_Punch.cobasspatch
+ | | |-- com.maxica.cobass.plugins.vintage_chorus
+ | | | |-- Deep_Rotary_Vibrato_Chorus.cobasspatch
+ | | | |-- Dimension_Stereo_Widener.cobasspatch
+ | | | |-- Juno_106_Classic_Chorus_I.cobasspatch
+ | | |-- com.maxica.cobass.plugins.wavefolder_crush
+ | | | |-- 8Bit_Chiptune_Crusher.cobasspatch
+ | | | |-- Acid_Diode_Warm_Overdrive.cobasspatch
+ | | | |-- Heavy_Dubstep_Wavefolder.cobasspatch
+ | | | |-- Industrial_Bit_Destroyer.cobasspatch
+ |-- docs
+ | |-- CHANGELOG.md
+ | |-- bundle_doc.md
+ | |-- plugin-synth-fx_doc.md
+ | |-- synth-V2.md
+ |-- libs
+ | |-- cache
+ | | |-- activity-1.8.2.aar
+ | | |-- annotation-1.7.0.jar
+ | | |-- annotation-experimental-1.3.0.aar
+ | | |-- annotation-jvm-1.7.0.jar
+ | | |-- annotations-13.0.jar
+ | | |-- appcompat-1.6.1.aar
+ | | |-- appcompat-resources-1.6.1.aar
+ | | |-- collection-1.1.0.jar
+ | | |-- concurrent-futures-1.1.0.jar
+ | | |-- core-1.12.0.aar
+ | | |-- core-common-2.2.0.jar
+ | | |-- core-ktx-1.8.0.aar
+ | | |-- core-runtime-2.2.0.aar
+ | | |-- cursoradapter-1.0.0.aar
+ | | |-- customview-1.0.0.aar
+ | | |-- customview-poolingcontainer-1.0.0.aar
+ | | |-- drawerlayout-1.0.0.aar
+ | | |-- emoji2-1.2.0.aar
+ | | |-- emoji2-views-helper-1.2.0.aar
+ | | |-- fragment-1.3.6.aar
+ | | |-- interpolator-1.0.0.aar
+ | | |-- kotlin-stdlib-1.8.22.jar
+ | | |-- kotlin-stdlib-common-1.8.22.jar
+ | | |-- kotlinx-coroutines-android-1.6.4.jar
+ | | |-- kotlinx-coroutines-core-jvm-1.6.4.jar
+ | | |-- lifecycle-common-2.6.1.jar
+ | | |-- lifecycle-livedata-2.0.0.aar
+ | | |-- lifecycle-livedata-core-2.6.1.aar
+ | | |-- lifecycle-process-2.4.1.aar
+ | | |-- lifecycle-runtime-2.6.1.aar
+ | | |-- lifecycle-viewmodel-2.6.1.aar
+ | | |-- lifecycle-viewmodel-savedstate-2.6.1.aar
+ | | |-- listenablefuture-1.0.jar
+ | | |-- loader-1.0.0.aar
+ | | |-- profileinstaller-1.3.0.aar
+ | | |-- recyclerview-1.3.2.aar
+ | | |-- resourceinspection-annotation-1.0.1.jar
+ | | |-- savedstate-1.2.1.aar
+ | | |-- startup-runtime-1.1.1.aar
+ | | |-- tracing-1.0.0.aar
+ | | |-- vectordrawable-1.1.0.aar
+ | | |-- vectordrawable-animated-1.1.0.aar
+ | | |-- versionedparcelable-1.1.1.aar
+ | | |-- viewpager-1.0.0.aar
+ | |-- downloaded
+ | | |-- activity-1.8.2.aar
+ | | |-- annotation-1.7.0.jar
+ | | |-- annotation-experimental-1.3.0.aar
+ | | |-- annotation-jvm-1.7.0.jar
+ | | |-- annotations-13.0.jar
+ | | |-- appcompat-1.6.1.aar
+ | | |-- appcompat-resources-1.6.1.aar
+ | | |-- collection-1.1.0.jar
+ | | |-- concurrent-futures-1.1.0.jar
+ | | |-- core-1.12.0.aar
+ | | |-- core-common-2.2.0.jar
+ | | |-- core-ktx-1.8.0.aar
+ | | |-- core-runtime-2.2.0.aar
+ | | |-- cursoradapter-1.0.0.aar
+ | | |-- customview-1.0.0.aar
+ | | |-- customview-poolingcontainer-1.0.0.aar
+ | | |-- drawerlayout-1.0.0.aar
+ | | |-- emoji2-1.2.0.aar
+ | | |-- emoji2-views-helper-1.2.0.aar
+ | | |-- fragment-1.3.6.aar
+ | | |-- interpolator-1.0.0.aar
+ | | |-- kotlin-stdlib-1.8.22.jar
+ | | |-- kotlin-stdlib-common-1.8.22.jar
+ | | |-- kotlinx-coroutines-android-1.6.4.jar
+ | | |-- kotlinx-coroutines-core-jvm-1.6.4.jar
+ | | |-- lifecycle-common-2.6.1.jar
+ | | |-- lifecycle-livedata-2.0.0.aar
+ | | |-- lifecycle-livedata-core-2.6.1.aar
+ | | |-- lifecycle-process-2.4.1.aar
+ | | |-- lifecycle-runtime-2.6.1.aar
+ | | |-- lifecycle-viewmodel-2.6.1.aar
+ | | |-- lifecycle-viewmodel-savedstate-2.6.1.aar
+ | | |-- listenablefuture-1.0.jar
+ | | |-- loader-1.0.0.aar
+ | | |-- profileinstaller-1.3.0.aar
+ | | |-- recyclerview-1.3.2.aar
+ | | |-- resourceinspection-annotation-1.0.1.jar
+ | | |-- savedstate-1.2.1.aar
+ | | |-- startup-runtime-1.1.1.aar
+ | | |-- tracing-1.0.0.aar
+ | | |-- vectordrawable-1.1.0.aar
+ | | |-- vectordrawable-animated-1.1.0.aar
+ | | |-- versionedparcelable-1.1.1.aar
+ | | |-- viewpager-1.0.0.aar
+ | |-- exploded
+ | | |-- activity-1.8.2
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- lint.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- annotation-experimental-1.3.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- lint.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- appcompat-1.6.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- annotations.zip
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- lint.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- anim
+ | | | | | |-- abc_fade_in.xml
+ | | | | | |-- abc_fade_out.xml
+ | | | | | |-- abc_grow_fade_in_from_bottom.xml
+ | | | | | |-- abc_popup_enter.xml
+ | | | | | |-- abc_popup_exit.xml
+ | | | | | |-- abc_shrink_fade_out_from_bottom.xml
+ | | | | | |-- abc_slide_in_bottom.xml
+ | | | | | |-- abc_slide_in_top.xml
+ | | | | | |-- abc_slide_out_bottom.xml
+ | | | | | |-- abc_slide_out_top.xml
+ | | | | | |-- abc_tooltip_enter.xml
+ | | | | | |-- abc_tooltip_exit.xml
+ | | | | | |-- btn_checkbox_to_checked_box_inner_merged_animation.xml
+ | | | | | |-- btn_checkbox_to_checked_box_outer_merged_animation.xml
+ | | | | | |-- btn_checkbox_to_checked_icon_null_animation.xml
+ | | | | | |-- btn_checkbox_to_unchecked_box_inner_merged_animation.xml
+ | | | | | |-- btn_checkbox_to_unchecked_check_path_merged_animation.xml
+ | | | | | |-- btn_checkbox_to_unchecked_icon_null_animation.xml
+ | | | | | |-- btn_radio_to_off_mtrl_dot_group_animation.xml
+ | | | | | |-- btn_radio_to_off_mtrl_ring_outer_animation.xml
+ | | | | | |-- btn_radio_to_off_mtrl_ring_outer_path_animation.xml
+ | | | | | |-- btn_radio_to_on_mtrl_dot_group_animation.xml
+ | | | | | |-- btn_radio_to_on_mtrl_ring_outer_animation.xml
+ | | | | | |-- btn_radio_to_on_mtrl_ring_outer_path_animation.xml
+ | | | | |-- color
+ | | | | |-- color-v21
+ | | | | | |-- abc_btn_colored_borderless_text_material.xml
+ | | | | |-- color-v23
+ | | | | | |-- abc_btn_colored_borderless_text_material.xml
+ | | | | | |-- abc_btn_colored_text_material.xml
+ | | | | | |-- abc_color_highlight_material.xml
+ | | | | | |-- abc_tint_btn_checkable.xml
+ | | | | | |-- abc_tint_default.xml
+ | | | | | |-- abc_tint_edittext.xml
+ | | | | | |-- abc_tint_seek_thumb.xml
+ | | | | | |-- abc_tint_spinner.xml
+ | | | | | |-- abc_tint_switch_track.xml
+ | | | | | |-- abc_background_cache_hint_selector_material_dark.xml
+ | | | | | |-- abc_background_cache_hint_selector_material_light.xml
+ | | | | | |-- abc_btn_colored_borderless_text_material.xml
+ | | | | | |-- abc_btn_colored_text_material.xml
+ | | | | | |-- abc_hint_foreground_material_dark.xml
+ | | | | | |-- abc_hint_foreground_material_light.xml
+ | | | | | |-- abc_primary_text_disable_only_material_dark.xml
+ | | | | | |-- abc_primary_text_disable_only_material_light.xml
+ | | | | | |-- abc_primary_text_material_dark.xml
+ | | | | | |-- abc_primary_text_material_light.xml
+ | | | | | |-- abc_search_url_text.xml
+ | | | | | |-- abc_secondary_text_material_dark.xml
+ | | | | | |-- abc_secondary_text_material_light.xml
+ | | | | | |-- abc_tint_btn_checkable.xml
+ | | | | | |-- abc_tint_default.xml
+ | | | | | |-- abc_tint_edittext.xml
+ | | | | | |-- abc_tint_seek_thumb.xml
+ | | | | | |-- abc_tint_spinner.xml
+ | | | | | |-- abc_tint_switch_track.xml
+ | | | | | |-- switch_thumb_material_dark.xml
+ | | | | | |-- switch_thumb_material_light.xml
+ | | | | |-- drawable
+ | | | | |-- drawable-hdpi-v4
+ | | | | | |-- abc_ab_share_pack_mtrl_alpha.9.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00001.9.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00012.9.png
+ | | | | | |-- abc_cab_background_top_mtrl_alpha.9.png
+ | | | | | |-- abc_ic_commit_search_api_mtrl_alpha.png
+ | | | | | |-- abc_list_divider_mtrl_alpha.9.png
+ | | | | | |-- abc_list_focused_holo.9.png
+ | | | | | |-- abc_list_longpressed_holo.9.png
+ | | | | | |-- abc_list_pressed_holo_dark.9.png
+ | | | | | |-- abc_list_pressed_holo_light.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_dark.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_light.9.png
+ | | | | | |-- abc_menu_hardkey_panel_mtrl_mult.9.png
+ | | | | | |-- abc_popup_background_mtrl_mult.9.png
+ | | | | | |-- abc_scrubber_control_off_mtrl_alpha.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_000.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_005.png
+ | | | | | |-- abc_scrubber_primary_mtrl_alpha.9.png
+ | | | | | |-- abc_scrubber_track_mtrl_alpha.9.png
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | | |-- abc_switch_track_mtrl_alpha.9.png
+ | | | | | |-- abc_tab_indicator_mtrl_alpha.9.png
+ | | | | | |-- abc_text_select_handle_left_mtrl.png
+ | | | | | |-- abc_text_select_handle_middle_mtrl.png
+ | | | | | |-- abc_text_select_handle_right_mtrl.png
+ | | | | | |-- abc_textfield_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_default_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_default_mtrl_alpha.9.png
+ | | | | |-- drawable-ldrtl-hdpi-v17
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | |-- drawable-ldrtl-mdpi-v17
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | |-- drawable-ldrtl-xhdpi-v17
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | |-- drawable-ldrtl-xxhdpi-v17
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | |-- drawable-ldrtl-xxxhdpi-v17
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | |-- drawable-mdpi-v4
+ | | | | | |-- abc_ab_share_pack_mtrl_alpha.9.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00001.9.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00012.9.png
+ | | | | | |-- abc_cab_background_top_mtrl_alpha.9.png
+ | | | | | |-- abc_ic_commit_search_api_mtrl_alpha.png
+ | | | | | |-- abc_list_divider_mtrl_alpha.9.png
+ | | | | | |-- abc_list_focused_holo.9.png
+ | | | | | |-- abc_list_longpressed_holo.9.png
+ | | | | | |-- abc_list_pressed_holo_dark.9.png
+ | | | | | |-- abc_list_pressed_holo_light.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_dark.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_light.9.png
+ | | | | | |-- abc_menu_hardkey_panel_mtrl_mult.9.png
+ | | | | | |-- abc_popup_background_mtrl_mult.9.png
+ | | | | | |-- abc_scrubber_control_off_mtrl_alpha.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_000.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_005.png
+ | | | | | |-- abc_scrubber_primary_mtrl_alpha.9.png
+ | | | | | |-- abc_scrubber_track_mtrl_alpha.9.png
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | | |-- abc_switch_track_mtrl_alpha.9.png
+ | | | | | |-- abc_tab_indicator_mtrl_alpha.9.png
+ | | | | | |-- abc_text_select_handle_left_mtrl.png
+ | | | | | |-- abc_text_select_handle_middle_mtrl.png
+ | | | | | |-- abc_text_select_handle_right_mtrl.png
+ | | | | | |-- abc_textfield_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_default_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_default_mtrl_alpha.9.png
+ | | | | |-- drawable-v21
+ | | | | | |-- abc_action_bar_item_background_material.xml
+ | | | | | |-- abc_btn_colored_material.xml
+ | | | | | |-- abc_dialog_material_background.xml
+ | | | | | |-- abc_edit_text_material.xml
+ | | | | | |-- abc_list_divider_material.xml
+ | | | | |-- drawable-v23
+ | | | | | |-- abc_control_background_material.xml
+ | | | | |-- drawable-watch-v20
+ | | | | | |-- abc_dialog_material_background.xml
+ | | | | |-- drawable-xhdpi-v4
+ | | | | | |-- abc_ab_share_pack_mtrl_alpha.9.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00001.9.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00012.9.png
+ | | | | | |-- abc_cab_background_top_mtrl_alpha.9.png
+ | | | | | |-- abc_ic_commit_search_api_mtrl_alpha.png
+ | | | | | |-- abc_list_divider_mtrl_alpha.9.png
+ | | | | | |-- abc_list_focused_holo.9.png
+ | | | | | |-- abc_list_longpressed_holo.9.png
+ | | | | | |-- abc_list_pressed_holo_dark.9.png
+ | | | | | |-- abc_list_pressed_holo_light.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_dark.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_light.9.png
+ | | | | | |-- abc_menu_hardkey_panel_mtrl_mult.9.png
+ | | | | | |-- abc_popup_background_mtrl_mult.9.png
+ | | | | | |-- abc_scrubber_control_off_mtrl_alpha.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_000.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_005.png
+ | | | | | |-- abc_scrubber_primary_mtrl_alpha.9.png
+ | | | | | |-- abc_scrubber_track_mtrl_alpha.9.png
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | | |-- abc_switch_track_mtrl_alpha.9.png
+ | | | | | |-- abc_tab_indicator_mtrl_alpha.9.png
+ | | | | | |-- abc_text_select_handle_left_mtrl.png
+ | | | | | |-- abc_text_select_handle_middle_mtrl.png
+ | | | | | |-- abc_text_select_handle_right_mtrl.png
+ | | | | | |-- abc_textfield_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_default_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_default_mtrl_alpha.9.png
+ | | | | |-- drawable-xxhdpi-v4
+ | | | | | |-- abc_ab_share_pack_mtrl_alpha.9.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00001.9.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00012.9.png
+ | | | | | |-- abc_cab_background_top_mtrl_alpha.9.png
+ | | | | | |-- abc_ic_commit_search_api_mtrl_alpha.png
+ | | | | | |-- abc_list_divider_mtrl_alpha.9.png
+ | | | | | |-- abc_list_focused_holo.9.png
+ | | | | | |-- abc_list_longpressed_holo.9.png
+ | | | | | |-- abc_list_pressed_holo_dark.9.png
+ | | | | | |-- abc_list_pressed_holo_light.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_dark.9.png
+ | | | | | |-- abc_list_selector_disabled_holo_light.9.png
+ | | | | | |-- abc_menu_hardkey_panel_mtrl_mult.9.png
+ | | | | | |-- abc_popup_background_mtrl_mult.9.png
+ | | | | | |-- abc_scrubber_control_off_mtrl_alpha.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_000.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_005.png
+ | | | | | |-- abc_scrubber_primary_mtrl_alpha.9.png
+ | | | | | |-- abc_scrubber_track_mtrl_alpha.9.png
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | | |-- abc_switch_track_mtrl_alpha.9.png
+ | | | | | |-- abc_tab_indicator_mtrl_alpha.9.png
+ | | | | | |-- abc_text_select_handle_left_mtrl.png
+ | | | | | |-- abc_text_select_handle_middle_mtrl.png
+ | | | | | |-- abc_text_select_handle_right_mtrl.png
+ | | | | | |-- abc_textfield_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_default_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_activated_mtrl_alpha.9.png
+ | | | | | |-- abc_textfield_search_default_mtrl_alpha.9.png
+ | | | | |-- drawable-xxxhdpi-v4
+ | | | | | |-- abc_btn_check_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_check_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_000.png
+ | | | | | |-- abc_btn_radio_to_on_mtrl_015.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00001.9.png
+ | | | | | |-- abc_btn_switch_to_on_mtrl_00012.9.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_000.png
+ | | | | | |-- abc_scrubber_control_to_pressed_mtrl_005.png
+ | | | | | |-- abc_spinner_mtrl_am_alpha.9.png
+ | | | | | |-- abc_switch_track_mtrl_alpha.9.png
+ | | | | | |-- abc_tab_indicator_mtrl_alpha.9.png
+ | | | | | |-- abc_text_select_handle_left_mtrl.png
+ | | | | | |-- abc_text_select_handle_right_mtrl.png
+ | | | | | |-- abc_btn_borderless_material.xml
+ | | | | | |-- abc_btn_check_material.xml
+ | | | | | |-- abc_btn_check_material_anim.xml
+ | | | | | |-- abc_btn_colored_material.xml
+ | | | | | |-- abc_btn_default_mtrl_shape.xml
+ | | | | | |-- abc_btn_radio_material.xml
+ | | | | | |-- abc_btn_radio_material_anim.xml
+ | | | | | |-- abc_cab_background_internal_bg.xml
+ | | | | | |-- abc_cab_background_top_material.xml
+ | | | | | |-- abc_dialog_material_background.xml
+ | | | | | |-- abc_edit_text_material.xml
+ | | | | | |-- abc_ic_ab_back_material.xml
+ | | | | | |-- abc_ic_arrow_drop_right_black_24dp.xml
+ | | | | | |-- abc_ic_clear_material.xml
+ | | | | | |-- abc_ic_go_search_api_material.xml
+ | | | | | |-- abc_ic_menu_copy_mtrl_am_alpha.xml
+ | | | | | |-- abc_ic_menu_cut_mtrl_alpha.xml
+ | | | | | |-- abc_ic_menu_overflow_material.xml
+ | | | | | |-- abc_ic_menu_paste_mtrl_am_alpha.xml
+ | | | | | |-- abc_ic_menu_selectall_mtrl_alpha.xml
+ | | | | | |-- abc_ic_menu_share_mtrl_alpha.xml
+ | | | | | |-- abc_ic_search_api_material.xml
+ | | | | | |-- abc_ic_voice_search_api_material.xml
+ | | | | | |-- abc_item_background_holo_dark.xml
+ | | | | | |-- abc_item_background_holo_light.xml
+ | | | | | |-- abc_list_divider_material.xml
+ | | | | | |-- abc_list_selector_background_transition_holo_dark.xml
+ | | | | | |-- abc_list_selector_background_transition_holo_light.xml
+ | | | | | |-- abc_list_selector_holo_dark.xml
+ | | | | | |-- abc_list_selector_holo_light.xml
+ | | | | | |-- abc_ratingbar_indicator_material.xml
+ | | | | | |-- abc_ratingbar_material.xml
+ | | | | | |-- abc_ratingbar_small_material.xml
+ | | | | | |-- abc_seekbar_thumb_material.xml
+ | | | | | |-- abc_seekbar_tick_mark_material.xml
+ | | | | | |-- abc_seekbar_track_material.xml
+ | | | | | |-- abc_spinner_textfield_background_material.xml
+ | | | | | |-- abc_star_black_48dp.xml
+ | | | | | |-- abc_star_half_black_48dp.xml
+ | | | | | |-- abc_switch_thumb_material.xml
+ | | | | | |-- abc_tab_indicator_material.xml
+ | | | | | |-- abc_text_cursor_material.xml
+ | | | | | |-- abc_textfield_search_material.xml
+ | | | | | |-- btn_checkbox_checked_mtrl.xml
+ | | | | | |-- btn_checkbox_checked_to_unchecked_mtrl_animation.xml
+ | | | | | |-- btn_checkbox_unchecked_mtrl.xml
+ | | | | | |-- btn_checkbox_unchecked_to_checked_mtrl_animation.xml
+ | | | | | |-- btn_radio_off_mtrl.xml
+ | | | | | |-- btn_radio_off_to_on_mtrl_animation.xml
+ | | | | | |-- btn_radio_on_mtrl.xml
+ | | | | | |-- btn_radio_on_to_off_mtrl_animation.xml
+ | | | | | |-- test_level_drawable.xml
+ | | | | | |-- tooltip_frame_dark.xml
+ | | | | | |-- tooltip_frame_light.xml
+ | | | | |-- interpolator
+ | | | | | |-- btn_checkbox_checked_mtrl_animation_interpolator_0.xml
+ | | | | | |-- btn_checkbox_checked_mtrl_animation_interpolator_1.xml
+ | | | | | |-- btn_checkbox_unchecked_mtrl_animation_interpolator_0.xml
+ | | | | | |-- btn_checkbox_unchecked_mtrl_animation_interpolator_1.xml
+ | | | | | |-- btn_radio_to_off_mtrl_animation_interpolator_0.xml
+ | | | | | |-- btn_radio_to_on_mtrl_animation_interpolator_0.xml
+ | | | | | |-- fast_out_slow_in.xml
+ | | | | |-- layout
+ | | | | |-- layout-v26
+ | | | | | |-- abc_screen_toolbar.xml
+ | | | | |-- layout-watch-v20
+ | | | | | |-- abc_alert_dialog_button_bar_material.xml
+ | | | | | |-- abc_alert_dialog_title_material.xml
+ | | | | | |-- abc_action_bar_title_item.xml
+ | | | | | |-- abc_action_bar_up_container.xml
+ | | | | | |-- abc_action_menu_item_layout.xml
+ | | | | | |-- abc_action_menu_layout.xml
+ | | | | | |-- abc_action_mode_bar.xml
+ | | | | | |-- abc_action_mode_close_item_material.xml
+ | | | | | |-- abc_activity_chooser_view.xml
+ | | | | | |-- abc_activity_chooser_view_list_item.xml
+ | | | | | |-- abc_alert_dialog_button_bar_material.xml
+ | | | | | |-- abc_alert_dialog_material.xml
+ | | | | | |-- abc_alert_dialog_title_material.xml
+ | | | | | |-- abc_cascading_menu_item_layout.xml
+ | | | | | |-- abc_dialog_title_material.xml
+ | | | | | |-- abc_expanded_menu_layout.xml
+ | | | | | |-- abc_list_menu_item_checkbox.xml
+ | | | | | |-- abc_list_menu_item_icon.xml
+ | | | | | |-- abc_list_menu_item_layout.xml
+ | | | | | |-- abc_list_menu_item_radio.xml
+ | | | | | |-- abc_popup_menu_header_item_layout.xml
+ | | | | | |-- abc_popup_menu_item_layout.xml
+ | | | | | |-- abc_screen_content_include.xml
+ | | | | | |-- abc_screen_simple.xml
+ | | | | | |-- abc_screen_simple_overlay_action_mode.xml
+ | | | | | |-- abc_screen_toolbar.xml
+ | | | | | |-- abc_search_dropdown_item_icons_2line.xml
+ | | | | | |-- abc_search_view.xml
+ | | | | | |-- abc_select_dialog_material.xml
+ | | | | | |-- abc_tooltip.xml
+ | | | | | |-- select_dialog_item_material.xml
+ | | | | | |-- select_dialog_multichoice_material.xml
+ | | | | | |-- select_dialog_singlechoice_material.xml
+ | | | | | |-- support_simple_spinner_dropdown_item.xml
+ | | | | |-- values
+ | | | | |-- values-af
+ | | | | | |-- values-af.xml
+ | | | | |-- values-am
+ | | | | | |-- values-am.xml
+ | | | | |-- values-ar
+ | | | | | |-- values-ar.xml
+ | | | | |-- values-as
+ | | | | | |-- values-as.xml
+ | | | | |-- values-az
+ | | | | | |-- values-az.xml
+ | | | | |-- values-b+sr+Latn
+ | | | | | |-- values-b+sr+Latn.xml
+ | | | | |-- values-be
+ | | | | | |-- values-be.xml
+ | | | | |-- values-bg
+ | | | | | |-- values-bg.xml
+ | | | | |-- values-bn
+ | | | | | |-- values-bn.xml
+ | | | | |-- values-bs
+ | | | | | |-- values-bs.xml
+ | | | | |-- values-ca
+ | | | | | |-- values-ca.xml
+ | | | | |-- values-cs
+ | | | | | |-- values-cs.xml
+ | | | | |-- values-da
+ | | | | | |-- values-da.xml
+ | | | | |-- values-de
+ | | | | | |-- values-de.xml
+ | | | | |-- values-el
+ | | | | | |-- values-el.xml
+ | | | | |-- values-en-rAU
+ | | | | | |-- values-en-rAU.xml
+ | | | | |-- values-en-rCA
+ | | | | | |-- values-en-rCA.xml
+ | | | | |-- values-en-rGB
+ | | | | | |-- values-en-rGB.xml
+ | | | | |-- values-en-rIN
+ | | | | | |-- values-en-rIN.xml
+ | | | | |-- values-en-rXC
+ | | | | | |-- values-en-rXC.xml
+ | | | | |-- values-es
+ | | | | |-- values-es-rUS
+ | | | | | |-- values-es-rUS.xml
+ | | | | | |-- values-es.xml
+ | | | | |-- values-et
+ | | | | | |-- values-et.xml
+ | | | | |-- values-eu
+ | | | | | |-- values-eu.xml
+ | | | | |-- values-fa
+ | | | | | |-- values-fa.xml
+ | | | | |-- values-fi
+ | | | | | |-- values-fi.xml
+ | | | | |-- values-fr
+ | | | | |-- values-fr-rCA
+ | | | | | |-- values-fr-rCA.xml
+ | | | | | |-- values-fr.xml
+ | | | | |-- values-gl
+ | | | | | |-- values-gl.xml
+ | | | | |-- values-gu
+ | | | | | |-- values-gu.xml
+ | | | | |-- values-h720dp-v13
+ | | | | | |-- values-h720dp-v13.xml
+ | | | | |-- values-hdpi-v4
+ | | | | | |-- values-hdpi-v4.xml
+ | | | | |-- values-hi
+ | | | | | |-- values-hi.xml
+ | | | | |-- values-hr
+ | | | | | |-- values-hr.xml
+ | | | | |-- values-hu
+ | | | | | |-- values-hu.xml
+ | | | | |-- values-hy
+ | | | | | |-- values-hy.xml
+ | | | | |-- values-in
+ | | | | | |-- values-in.xml
+ | | | | |-- values-is
+ | | | | | |-- values-is.xml
+ | | | | |-- values-it
+ | | | | | |-- values-it.xml
+ | | | | |-- values-iw
+ | | | | | |-- values-iw.xml
+ | | | | |-- values-ja
+ | | | | | |-- values-ja.xml
+ | | | | |-- values-ka
+ | | | | | |-- values-ka.xml
+ | | | | |-- values-kk
+ | | | | | |-- values-kk.xml
+ | | | | |-- values-km
+ | | | | | |-- values-km.xml
+ | | | | |-- values-kn
+ | | | | | |-- values-kn.xml
+ | | | | |-- values-ko
+ | | | | | |-- values-ko.xml
+ | | | | |-- values-ky
+ | | | | | |-- values-ky.xml
+ | | | | |-- values-land
+ | | | | | |-- values-land.xml
+ | | | | |-- values-large-v4
+ | | | | | |-- values-large-v4.xml
+ | | | | |-- values-ldltr-v21
+ | | | | | |-- values-ldltr-v21.xml
+ | | | | |-- values-lo
+ | | | | | |-- values-lo.xml
+ | | | | |-- values-lt
+ | | | | | |-- values-lt.xml
+ | | | | |-- values-lv
+ | | | | | |-- values-lv.xml
+ | | | | |-- values-mk
+ | | | | | |-- values-mk.xml
+ | | | | |-- values-ml
+ | | | | | |-- values-ml.xml
+ | | | | |-- values-mn
+ | | | | | |-- values-mn.xml
+ | | | | |-- values-mr
+ | | | | | |-- values-mr.xml
+ | | | | |-- values-ms
+ | | | | | |-- values-ms.xml
+ | | | | |-- values-my
+ | | | | | |-- values-my.xml
+ | | | | |-- values-nb
+ | | | | | |-- values-nb.xml
+ | | | | |-- values-ne
+ | | | | | |-- values-ne.xml
+ | | | | |-- values-night-v8
+ | | | | | |-- values-night-v8.xml
+ | | | | |-- values-nl
+ | | | | | |-- values-nl.xml
+ | | | | |-- values-or
+ | | | | | |-- values-or.xml
+ | | | | |-- values-pa
+ | | | | | |-- values-pa.xml
+ | | | | |-- values-pl
+ | | | | | |-- values-pl.xml
+ | | | | |-- values-port
+ | | | | | |-- values-port.xml
+ | | | | |-- values-pt
+ | | | | |-- values-pt-rBR
+ | | | | | |-- values-pt-rBR.xml
+ | | | | |-- values-pt-rPT
+ | | | | | |-- values-pt-rPT.xml
+ | | | | | |-- values-pt.xml
+ | | | | |-- values-ro
+ | | | | | |-- values-ro.xml
+ | | | | |-- values-ru
+ | | | | | |-- values-ru.xml
+ | | | | |-- values-si
+ | | | | | |-- values-si.xml
+ | | | | |-- values-sk
+ | | | | | |-- values-sk.xml
+ | | | | |-- values-sl
+ | | | | | |-- values-sl.xml
+ | | | | |-- values-sq
+ | | | | | |-- values-sq.xml
+ | | | | |-- values-sr
+ | | | | | |-- values-sr.xml
+ | | | | |-- values-sv
+ | | | | | |-- values-sv.xml
+ | | | | |-- values-sw
+ | | | | | |-- values-sw.xml
+ | | | | |-- values-sw600dp-v13
+ | | | | | |-- values-sw600dp-v13.xml
+ | | | | |-- values-ta
+ | | | | | |-- values-ta.xml
+ | | | | |-- values-te
+ | | | | | |-- values-te.xml
+ | | | | |-- values-th
+ | | | | | |-- values-th.xml
+ | | | | |-- values-tl
+ | | | | | |-- values-tl.xml
+ | | | | |-- values-tr
+ | | | | | |-- values-tr.xml
+ | | | | |-- values-uk
+ | | | | | |-- values-uk.xml
+ | | | | |-- values-ur
+ | | | | | |-- values-ur.xml
+ | | | | |-- values-uz
+ | | | | | |-- values-uz.xml
+ | | | | |-- values-v16
+ | | | | | |-- values-v16.xml
+ | | | | |-- values-v17
+ | | | | | |-- values-v17.xml
+ | | | | |-- values-v18
+ | | | | | |-- values-v18.xml
+ | | | | |-- values-v21
+ | | | | | |-- values-v21.xml
+ | | | | |-- values-v22
+ | | | | | |-- values-v22.xml
+ | | | | |-- values-v23
+ | | | | | |-- values-v23.xml
+ | | | | |-- values-v24
+ | | | | | |-- values-v24.xml
+ | | | | |-- values-v25
+ | | | | | |-- values-v25.xml
+ | | | | |-- values-v26
+ | | | | | |-- values-v26.xml
+ | | | | |-- values-v28
+ | | | | | |-- values-v28.xml
+ | | | | |-- values-vi
+ | | | | | |-- values-vi.xml
+ | | | | |-- values-watch-v20
+ | | | | | |-- values-watch-v20.xml
+ | | | | |-- values-watch-v21
+ | | | | | |-- values-watch-v21.xml
+ | | | | |-- values-xlarge-v4
+ | | | | | |-- values-xlarge-v4.xml
+ | | | | |-- values-zh-rCN
+ | | | | | |-- values-zh-rCN.xml
+ | | | | |-- values-zh-rHK
+ | | | | | |-- values-zh-rHK.xml
+ | | | | |-- values-zh-rTW
+ | | | | | |-- values-zh-rTW.xml
+ | | | | |-- values-zu
+ | | | | | |-- values-zu.xml
+ | | | | | |-- values.xml
+ | | |-- appcompat-resources-1.6.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- drawable
+ | | | | | |-- abc_vector_test.xml
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- core-1.12.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- aidl
+ | | | | |-- android
+ | | | | | |-- support
+ | | | | | | |-- v4
+ | | | | | | | |-- os
+ | | | | | | | | |-- ResultReceiver.aidl
+ | | | |-- annotations.zip
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- drawable
+ | | | | |-- drawable-anydpi-v21
+ | | | | | |-- ic_call_answer.xml
+ | | | | | |-- ic_call_answer_low.xml
+ | | | | | |-- ic_call_answer_video.xml
+ | | | | | |-- ic_call_answer_video_low.xml
+ | | | | | |-- ic_call_decline.xml
+ | | | | | |-- ic_call_decline_low.xml
+ | | | | |-- drawable-hdpi-v4
+ | | | | | |-- ic_call_answer.png
+ | | | | | |-- ic_call_answer_low.png
+ | | | | | |-- ic_call_answer_video.png
+ | | | | | |-- ic_call_answer_video_low.png
+ | | | | | |-- ic_call_decline.png
+ | | | | | |-- ic_call_decline_low.png
+ | | | | | |-- notification_bg_low_normal.9.png
+ | | | | | |-- notification_bg_low_pressed.9.png
+ | | | | | |-- notification_bg_normal.9.png
+ | | | | | |-- notification_bg_normal_pressed.9.png
+ | | | | | |-- notification_oversize_large_icon_bg.png
+ | | | | | |-- notify_panel_notification_icon_bg.png
+ | | | | |-- drawable-ldpi-v4
+ | | | | | |-- ic_call_answer.png
+ | | | | | |-- ic_call_answer_low.png
+ | | | | | |-- ic_call_answer_video.png
+ | | | | | |-- ic_call_answer_video_low.png
+ | | | | | |-- ic_call_decline.png
+ | | | | | |-- ic_call_decline_low.png
+ | | | | |-- drawable-mdpi-v4
+ | | | | | |-- ic_call_answer.png
+ | | | | | |-- ic_call_answer_low.png
+ | | | | | |-- ic_call_answer_video.png
+ | | | | | |-- ic_call_answer_video_low.png
+ | | | | | |-- ic_call_decline.png
+ | | | | | |-- ic_call_decline_low.png
+ | | | | | |-- notification_bg_low_normal.9.png
+ | | | | | |-- notification_bg_low_pressed.9.png
+ | | | | | |-- notification_bg_normal.9.png
+ | | | | | |-- notification_bg_normal_pressed.9.png
+ | | | | | |-- notify_panel_notification_icon_bg.png
+ | | | | |-- drawable-v21
+ | | | | | |-- notification_action_background.xml
+ | | | | |-- drawable-xhdpi-v4
+ | | | | | |-- ic_call_answer.png
+ | | | | | |-- ic_call_answer_low.png
+ | | | | | |-- ic_call_answer_video.png
+ | | | | | |-- ic_call_answer_video_low.png
+ | | | | | |-- ic_call_decline.png
+ | | | | | |-- ic_call_decline_low.png
+ | | | | | |-- notification_bg_low_normal.9.png
+ | | | | | |-- notification_bg_low_pressed.9.png
+ | | | | | |-- notification_bg_normal.9.png
+ | | | | | |-- notification_bg_normal_pressed.9.png
+ | | | | | |-- notify_panel_notification_icon_bg.png
+ | | | | |-- drawable-xxhdpi-v4
+ | | | | | |-- ic_call_answer.png
+ | | | | | |-- ic_call_answer_low.png
+ | | | | | |-- ic_call_answer_video.png
+ | | | | | |-- ic_call_answer_video_low.png
+ | | | | | |-- ic_call_decline.png
+ | | | | | |-- ic_call_decline_low.png
+ | | | | |-- drawable-xxxhdpi-v4
+ | | | | | |-- ic_call_answer.png
+ | | | | | |-- ic_call_answer_low.png
+ | | | | | |-- ic_call_answer_video.png
+ | | | | | |-- ic_call_answer_video_low.png
+ | | | | | |-- ic_call_decline.png
+ | | | | | |-- ic_call_decline_low.png
+ | | | | | |-- notification_bg.xml
+ | | | | | |-- notification_bg_low.xml
+ | | | | | |-- notification_icon_background.xml
+ | | | | | |-- notification_tile_bg.xml
+ | | | | |-- layout
+ | | | | |-- layout-v16
+ | | | | | |-- notification_template_custom_big.xml
+ | | | | |-- layout-v21
+ | | | | | |-- notification_action.xml
+ | | | | | |-- notification_action_tombstone.xml
+ | | | | | |-- notification_template_custom_big.xml
+ | | | | | |-- notification_template_icon_group.xml
+ | | | | | |-- custom_dialog.xml
+ | | | | | |-- ime_base_split_test_activity.xml
+ | | | | | |-- ime_secondary_split_test_activity.xml
+ | | | | | |-- notification_action.xml
+ | | | | | |-- notification_action_tombstone.xml
+ | | | | | |-- notification_template_custom_big.xml
+ | | | | | |-- notification_template_icon_group.xml
+ | | | | | |-- notification_template_part_chronometer.xml
+ | | | | | |-- notification_template_part_time.xml
+ | | | | |-- values
+ | | | | |-- values-af
+ | | | | | |-- values-af.xml
+ | | | | |-- values-am
+ | | | | | |-- values-am.xml
+ | | | | |-- values-ar
+ | | | | | |-- values-ar.xml
+ | | | | |-- values-as
+ | | | | | |-- values-as.xml
+ | | | | |-- values-az
+ | | | | | |-- values-az.xml
+ | | | | |-- values-b+sr+Latn
+ | | | | | |-- values-b+sr+Latn.xml
+ | | | | |-- values-be
+ | | | | | |-- values-be.xml
+ | | | | |-- values-bg
+ | | | | | |-- values-bg.xml
+ | | | | |-- values-bn
+ | | | | | |-- values-bn.xml
+ | | | | |-- values-bs
+ | | | | | |-- values-bs.xml
+ | | | | |-- values-ca
+ | | | | | |-- values-ca.xml
+ | | | | |-- values-cs
+ | | | | | |-- values-cs.xml
+ | | | | |-- values-da
+ | | | | | |-- values-da.xml
+ | | | | |-- values-de
+ | | | | | |-- values-de.xml
+ | | | | |-- values-el
+ | | | | | |-- values-el.xml
+ | | | | |-- values-en-rAU
+ | | | | | |-- values-en-rAU.xml
+ | | | | |-- values-en-rCA
+ | | | | | |-- values-en-rCA.xml
+ | | | | |-- values-en-rGB
+ | | | | | |-- values-en-rGB.xml
+ | | | | |-- values-en-rIN
+ | | | | | |-- values-en-rIN.xml
+ | | | | |-- values-en-rXC
+ | | | | | |-- values-en-rXC.xml
+ | | | | |-- values-es
+ | | | | |-- values-es-rUS
+ | | | | | |-- values-es-rUS.xml
+ | | | | | |-- values-es.xml
+ | | | | |-- values-et
+ | | | | | |-- values-et.xml
+ | | | | |-- values-eu
+ | | | | | |-- values-eu.xml
+ | | | | |-- values-fa
+ | | | | | |-- values-fa.xml
+ | | | | |-- values-fi
+ | | | | | |-- values-fi.xml
+ | | | | |-- values-fr
+ | | | | |-- values-fr-rCA
+ | | | | | |-- values-fr-rCA.xml
+ | | | | | |-- values-fr.xml
+ | | | | |-- values-gl
+ | | | | | |-- values-gl.xml
+ | | | | |-- values-gu
+ | | | | | |-- values-gu.xml
+ | | | | |-- values-hi
+ | | | | | |-- values-hi.xml
+ | | | | |-- values-hr
+ | | | | | |-- values-hr.xml
+ | | | | |-- values-hu
+ | | | | | |-- values-hu.xml
+ | | | | |-- values-hy
+ | | | | | |-- values-hy.xml
+ | | | | |-- values-in
+ | | | | | |-- values-in.xml
+ | | | | |-- values-is
+ | | | | | |-- values-is.xml
+ | | | | |-- values-it
+ | | | | | |-- values-it.xml
+ | | | | |-- values-iw
+ | | | | | |-- values-iw.xml
+ | | | | |-- values-ja
+ | | | | | |-- values-ja.xml
+ | | | | |-- values-ka
+ | | | | | |-- values-ka.xml
+ | | | | |-- values-kk
+ | | | | | |-- values-kk.xml
+ | | | | |-- values-km
+ | | | | | |-- values-km.xml
+ | | | | |-- values-kn
+ | | | | | |-- values-kn.xml
+ | | | | |-- values-ko
+ | | | | | |-- values-ko.xml
+ | | | | |-- values-ky
+ | | | | | |-- values-ky.xml
+ | | | | |-- values-lo
+ | | | | | |-- values-lo.xml
+ | | | | |-- values-lt
+ | | | | | |-- values-lt.xml
+ | | | | |-- values-lv
+ | | | | | |-- values-lv.xml
+ | | | | |-- values-mk
+ | | | | | |-- values-mk.xml
+ | | | | |-- values-ml
+ | | | | | |-- values-ml.xml
+ | | | | |-- values-mn
+ | | | | | |-- values-mn.xml
+ | | | | |-- values-mr
+ | | | | | |-- values-mr.xml
+ | | | | |-- values-ms
+ | | | | | |-- values-ms.xml
+ | | | | |-- values-my
+ | | | | | |-- values-my.xml
+ | | | | |-- values-nb
+ | | | | | |-- values-nb.xml
+ | | | | |-- values-ne
+ | | | | | |-- values-ne.xml
+ | | | | |-- values-nl
+ | | | | | |-- values-nl.xml
+ | | | | |-- values-or
+ | | | | | |-- values-or.xml
+ | | | | |-- values-pa
+ | | | | | |-- values-pa.xml
+ | | | | |-- values-pl
+ | | | | | |-- values-pl.xml
+ | | | | |-- values-pt
+ | | | | |-- values-pt-rBR
+ | | | | | |-- values-pt-rBR.xml
+ | | | | |-- values-pt-rPT
+ | | | | | |-- values-pt-rPT.xml
+ | | | | | |-- values-pt.xml
+ | | | | |-- values-ro
+ | | | | | |-- values-ro.xml
+ | | | | |-- values-ru
+ | | | | | |-- values-ru.xml
+ | | | | |-- values-si
+ | | | | | |-- values-si.xml
+ | | | | |-- values-sk
+ | | | | | |-- values-sk.xml
+ | | | | |-- values-sl
+ | | | | | |-- values-sl.xml
+ | | | | |-- values-sq
+ | | | | | |-- values-sq.xml
+ | | | | |-- values-sr
+ | | | | | |-- values-sr.xml
+ | | | | |-- values-sv
+ | | | | | |-- values-sv.xml
+ | | | | |-- values-sw
+ | | | | | |-- values-sw.xml
+ | | | | |-- values-ta
+ | | | | | |-- values-ta.xml
+ | | | | |-- values-te
+ | | | | | |-- values-te.xml
+ | | | | |-- values-th
+ | | | | | |-- values-th.xml
+ | | | | |-- values-tl
+ | | | | | |-- values-tl.xml
+ | | | | |-- values-tr
+ | | | | | |-- values-tr.xml
+ | | | | |-- values-uk
+ | | | | | |-- values-uk.xml
+ | | | | |-- values-ur
+ | | | | | |-- values-ur.xml
+ | | | | |-- values-uz
+ | | | | | |-- values-uz.xml
+ | | | | |-- values-v16
+ | | | | | |-- values-v16.xml
+ | | | | |-- values-v21
+ | | | | | |-- values-v21.xml
+ | | | | |-- values-vi
+ | | | | | |-- values-vi.xml
+ | | | | |-- values-zh-rCN
+ | | | | | |-- values-zh-rCN.xml
+ | | | | |-- values-zh-rHK
+ | | | | | |-- values-zh-rHK.xml
+ | | | | |-- values-zh-rTW
+ | | | | | |-- values-zh-rTW.xml
+ | | | | |-- values-zu
+ | | | | | |-- values-zu.xml
+ | | | | | |-- values.xml
+ | | |-- core-ktx-1.8.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | | |-- values
+ | | |-- core-runtime-2.2.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- cursoradapter-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- customview-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- customview-poolingcontainer-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- drawerlayout-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- annotations.zip
+ | | | |-- classes.jar
+ | | |-- emoji2-1.2.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- annotations.zip
+ | | | |-- classes.jar
+ | | | |-- libs
+ | | | | |-- repackaged.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- emoji2-views-helper-1.2.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- fragment-1.3.6
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- anim
+ | | | |-- anim-v21
+ | | | |-- animator
+ | | | |-- annotations.zip
+ | | | |-- classes.jar
+ | | | |-- lint.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- anim
+ | | | | |-- anim-v21
+ | | | | | |-- fragment_fast_out_extra_slow_in.xml
+ | | | | | |-- fragment_fast_out_extra_slow_in.xml
+ | | | | |-- animator
+ | | | | | |-- fragment_close_enter.xml
+ | | | | | |-- fragment_close_exit.xml
+ | | | | | |-- fragment_fade_enter.xml
+ | | | | | |-- fragment_fade_exit.xml
+ | | | | | |-- fragment_open_enter.xml
+ | | | | | |-- fragment_open_exit.xml
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | | |-- values
+ | | |-- interpolator-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- lifecycle-livedata-2.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- lifecycle-livedata-core-2.6.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- lifecycle-process-2.4.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | | |-- values
+ | | |-- lifecycle-runtime-2.6.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- lifecycle-viewmodel-2.6.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- lifecycle-viewmodel-savedstate-2.6.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- loader-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- profileinstaller-1.3.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- annotations.zip
+ | | | |-- classes.jar
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- recyclerview-1.3.2
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- annotations.zip
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- lint.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- savedstate-1.2.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | |-- startup-runtime-1.1.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- baseline-prof.txt
+ | | | |-- classes.jar
+ | | | |-- lint.jar
+ | | | |-- proguard.txt
+ | | | |-- public.txt
+ | | | |-- res
+ | | | | |-- values
+ | | | | | |-- values.xml
+ | | | |-- values
+ | | |-- tracing-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- META-INF
+ | | | | |-- com
+ | | | | | |-- android
+ | | | | | | |-- build
+ | | | | | | | |-- gradle
+ | | | | | | | | |-- aar-metadata.properties
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- vectordrawable-1.1.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | |-- vectordrawable-animated-1.1.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | |-- versionedparcelable-1.1.1
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- aidl
+ | | | | |-- androidx
+ | | | | | |-- versionedparcelable
+ | | | | | | |-- ParcelImpl.aidl
+ | | | |-- androidx
+ | | | | |-- versionedparcelable
+ | | | |-- classes.jar
+ | | | |-- proguard.txt
+ | | |-- viewpager-1.0.0
+ | | | |-- AndroidManifest.xml
+ | | | |-- R.txt
+ | | | |-- classes.jar
+ | |-- resolved.json
+ | |-- resolved.lock.json
+ |-- llm_context.xml
+ |-- out
+ | |-- apk
+ | | |-- Cobass-release.apk
+ | | |-- Cobass-release.apk.idsig
+ | |-- build_tmp
+ | | |-- aligned.apk
+ | | |-- app_res.zip
+ | | |-- base_linked.apk
+ | | |-- classes
+ | | | |-- androidx
+ | | | | |-- activity
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | |-- annotation
+ | | | | | |-- experimental
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | |-- appcompat
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | | |-- resources
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | |-- arch
+ | | | | | |-- core
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | |-- core
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | | |-- ktx
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | |-- customview
+ | | | | | |-- poolingcontainer
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | |-- emoji2
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | | |-- viewsintegration
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | |-- fragment
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | |-- lifecycle
+ | | | | | |-- livedata
+ | | | | | | |-- core
+ | | | | | | | |-- R$anim.class
+ | | | | | | | |-- R$animator.class
+ | | | | | | | |-- R$attr.class
+ | | | | | | | |-- R$bool.class
+ | | | | | | | |-- R$color.class
+ | | | | | | | |-- R$dimen.class
+ | | | | | | | |-- R$drawable.class
+ | | | | | | | |-- R$id.class
+ | | | | | | | |-- R$integer.class
+ | | | | | | | |-- R$interpolator.class
+ | | | | | | | |-- R$layout.class
+ | | | | | | | |-- R$string.class
+ | | | | | | | |-- R$style.class
+ | | | | | | | |-- R$styleable.class
+ | | | | | | | |-- R$xml.class
+ | | | | | | | |-- R.class
+ | | | | | |-- process
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | | |-- runtime
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | | |-- viewmodel
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | | | |-- savedstate
+ | | | | | | | |-- R$anim.class
+ | | | | | | | |-- R$animator.class
+ | | | | | | | |-- R$attr.class
+ | | | | | | | |-- R$bool.class
+ | | | | | | | |-- R$color.class
+ | | | | | | | |-- R$dimen.class
+ | | | | | | | |-- R$drawable.class
+ | | | | | | | |-- R$id.class
+ | | | | | | | |-- R$integer.class
+ | | | | | | | |-- R$interpolator.class
+ | | | | | | | |-- R$layout.class
+ | | | | | | | |-- R$string.class
+ | | | | | | | |-- R$style.class
+ | | | | | | | |-- R$styleable.class
+ | | | | | | | |-- R$xml.class
+ | | | | | | | |-- R.class
+ | | | | |-- profileinstaller
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | |-- recyclerview
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | |-- savedstate
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | | |-- startup
+ | | | | | |-- R$anim.class
+ | | | | | |-- R$animator.class
+ | | | | | |-- R$attr.class
+ | | | | | |-- R$bool.class
+ | | | | | |-- R$color.class
+ | | | | | |-- R$dimen.class
+ | | | | | |-- R$drawable.class
+ | | | | | |-- R$id.class
+ | | | | | |-- R$integer.class
+ | | | | | |-- R$interpolator.class
+ | | | | | |-- R$layout.class
+ | | | | | |-- R$string.class
+ | | | | | |-- R$style.class
+ | | | | | |-- R$styleable.class
+ | | | | | |-- R$xml.class
+ | | | | | |-- R.class
+ | | | |-- com
+ | | | | |-- maxica
+ | | | | | |-- cobass
+ | | | | | | |-- R$anim.class
+ | | | | | | |-- R$animator.class
+ | | | | | | |-- R$attr.class
+ | | | | | | |-- R$bool.class
+ | | | | | | |-- R$color.class
+ | | | | | | |-- R$dimen.class
+ | | | | | | |-- R$drawable.class
+ | | | | | | |-- R$id.class
+ | | | | | | |-- R$integer.class
+ | | | | | | |-- R$interpolator.class
+ | | | | | | |-- R$layout.class
+ | | | | | | |-- R$string.class
+ | | | | | | |-- R$style.class
+ | | | | | | |-- R$styleable.class
+ | | | | | | |-- R$xml.class
+ | | | | | | |-- R.class
+ | | | | | | |-- audio
+ | | | | | | | |-- AudioEngineNative.class
+ | | | | | | |-- core
+ | | | | | | | |-- CobassApplication.class
+ | | | | | | | |-- Constants.class
+ | | | | | | |-- model
+ | | | | | | | |-- ClipItem$Note.class
+ | | | | | | | |-- ClipItem.class
+ | | | | | | | |-- MusicalScale.class
+ | | | | | | | |-- PluginDescriptorItem$Type.class
+ | | | | | | | |-- PluginDescriptorItem.class
+ | | | | | | | |-- PluginParamItem$Type.class
+ | | | | | | | |-- PluginParamItem.class
+ | | | | | | | |-- PluginSlotItem.class
+ | | | | | | | |-- SnapGrid$Category.class
+ | | | | | | | |-- SnapGrid.class
+ | | | | | | | |-- StepPatternItem$Lane.class
+ | | | | | | | |-- StepPatternItem$Step.class
+ | | | | | | | |-- StepPatternItem.class
+ | | | | | | | |-- ToolMode.class
+ | | | | | | | |-- TrackItem$PluginSlotState.class
+ | | | | | | | |-- TrackItem$Type.class
+ | | | | | | | |-- TrackItem.class
+ | | | | | | | |-- TransformLockMasks.class
+ | | | | | | | |-- TransformRecipeItem$OperatorType.class
+ | | | | | | | |-- TransformRecipeItem.class
+ | | | | | | | |-- TransformRecipeSerializer.class
+ | | | | | | |-- plugin
+ | | | | | | | |-- PatchVariationEngine$LockMasks.class
+ | | | | | | | |-- PatchVariationEngine.class
+ | | | | | | | |-- PluginApkInstaller.class
+ | | | | | | | |-- PluginHostManager.class
+ | | | | | | |-- project
+ | | | | | | | |-- PresetUnpacker.class
+ | | | | | | | |-- ProjectData.class
+ | | | | | | | |-- ProjectSerializer.class
+ | | | | | | |-- sequencer
+ | | | | | | | |-- ArrangerHistoryManager.class
+ | | | | | | | |-- ArrangerSnapEngine$SnapResult.class
+ | | | | | | | |-- ArrangerSnapEngine.class
+ | | | | | | | |-- EuclideanGenerator.class
+ | | | | | | | |-- MidiTransformEngine.class
+ | | | | | | | |-- NoteTransformPipeline.class
+ | | | | | | | |-- PianoRollHistoryManager.class
+ | | | | | | | |-- StepPatternBaker.class
+ | | | | | | | |-- StepPatternTransformEngine.class
+ | | | | | | | |-- StepPatternVariationEngine.class
+ | | | | | | |-- ui
+ | | | | | | | |-- ArrangerTimelineView$1.class
+ | | | | | | | |-- ArrangerTimelineView$ClipAnchor.class
+ | | | | | | | |-- ArrangerTimelineView$OnArrangerListener.class
+ | | | | | | | |-- ArrangerTimelineView$RulerTouchMode.class
+ | | | | | | | |-- ArrangerTimelineView.class
+ | | | | | | | |-- ChordStudioDialog$OnChordSelectedListener.class
+ | | | | | | | |-- ChordStudioDialog.class
+ | | | | | | | |-- CobassButton$Size.class
+ | | | | | | | |-- CobassButton$Variant.class
+ | | | | | | | |-- CobassButton.class
+ | | | | | | | |-- CobassCanvasTheme.class
+ | | | | | | | |-- CobassDialogShell.class
+ | | | | | | | |-- CobassInteraction.class
+ | | | | | | | |-- CobassSlider$SliderRow.class
+ | | | | | | | |-- CobassSlider.class
+ | | | | | | | |-- CobassSpacing.class
+ | | | | | | | |-- CobassTheme.class
+ | | | | | | | |-- CobassTypography.class
+ | | | | | | | |-- CrashActivity.class
+ | | | | | | | |-- EuclideanStudioDialog$1.class
+ | | | | | | | |-- EuclideanStudioDialog$OnEuclideanAppliedListener.class
+ | | | | | | | |-- EuclideanStudioDialog.class
+ | | | | | | | |-- FxPluginBrowserDialog$OnFxSelectedListener.class
+ | | | | | | | |-- FxPluginBrowserDialog.class
+ | | | | | | | |-- FxRackDialog$1.class
+ | | | | | | | |-- FxRackDialog$ParamPersistCallback.class
+ | | | | | | | |-- FxRackDialog.class
+ | | | | | | | |-- InstrumentBrowserDialog$OnInstrumentSelectedListener.class
+ | | | | | | | |-- InstrumentBrowserDialog.class
+ | | | | | | | |-- MainActivity$1.class
+ | | | | | | | |-- MainActivity$2.class
+ | | | | | | | |-- MainActivity$3.class
+ | | | | | | | |-- MainActivity$4.class
+ | | | | | | | |-- MainActivity$5.class
+ | | | | | | | |-- MainActivity$6.class
+ | | | | | | | |-- MainActivity.class
+ | | | | | | | |-- MidiTransformDialog$1.class
+ | | | | | | | |-- MidiTransformDialog$2.class
+ | | | | | | | |-- MidiTransformDialog$OnTransformListener.class
+ | | | | | | | |-- MidiTransformDialog.class
+ | | | | | | | |-- MidiTransformStudioDialog$1.class
+ | | | | | | | |-- MidiTransformStudioDialog$2.class
+ | | | | | | | |-- MidiTransformStudioDialog$3.class
+ | | | | | | | |-- MidiTransformStudioDialog$4.class
+ | | | | | | | |-- MidiTransformStudioDialog$5.class
+ | | | | | | | |-- MidiTransformStudioDialog$OnLivePreviewListener.class
+ | | | | | | | |-- MidiTransformStudioDialog$OnTransformCommittedListener.class
+ | | | | | | | |-- MidiTransformStudioDialog.class
+ | | | | | | | |-- MixerConsoleDialog$1.class
+ | | | | | | | |-- MixerConsoleDialog$2.class
+ | | | | | | | |-- MixerConsoleDialog$3.class
+ | | | | | | | |-- MixerConsoleDialog$4.class
+ | | | | | | | |-- MixerConsoleDialog$StripHolder.class
+ | | | | | | | |-- MixerConsoleDialog.class
+ | | | | | | | |-- PianoRollCanvasView$NoteAnchor.class
+ | | | | | | | |-- PianoRollCanvasView$OnPianoRollEventListener.class
+ | | | | | | | |-- PianoRollCanvasView.class
+ | | | | | | | |-- PianoRollEditorDialog$1.class
+ | | | | | | | |-- PianoRollEditorDialog$2.class
+ | | | | | | | |-- PianoRollEditorDialog.class
+ | | | | | | | |-- PianoRollZoomDialog$1.class
+ | | | | | | | |-- PianoRollZoomDialog$OnZoomChangeListener.class
+ | | | | | | | |-- PianoRollZoomDialog.class
+ | | | | | | | |-- PluginControlFactory$OnParamChangeListener.class
+ | | | | | | | |-- PluginControlFactory.class
+ | | | | | | | |-- PluginPresetDialog$OnPresetActionListener.class
+ | | | | | | | |-- PluginPresetDialog.class
+ | | | | | | | |-- PluginUiDialog.class
+ | | | | | | | |-- ProjectDialog$1.class
+ | | | | | | | |-- ProjectDialog$OnProjectActionListener.class
+ | | | | | | | |-- ProjectDialog.class
+ | | | | | | | |-- RotaryKnobView$1.class
+ | | | | | | | |-- RotaryKnobView$OnKnobChangeListener.class
+ | | | | | | | |-- RotaryKnobView.class
+ | | | | | | | |-- ScaleStudioDialog$OnScaleChangeListener.class
+ | | | | | | | |-- ScaleStudioDialog.class
+ | | | | | | | |-- SnapStudioDialog$OnSnapSelectedListener.class
+ | | | | | | | |-- SnapStudioDialog.class
+ | | | | | | | |-- StepLaneInspectorDialog$1.class
+ | | | | | | | |-- StepLaneInspectorDialog$2.class
+ | | | | | | | |-- StepLaneInspectorDialog$OnLaneInspectorActionListener.class
+ | | | | | | | |-- StepLaneInspectorDialog.class
+ | | | | | | | |-- StepMatrixCanvasView$1.class
+ | | | | | | | |-- StepMatrixCanvasView$OnStepMatrixEventListener.class
+ | | | | | | | |-- StepMatrixCanvasView.class
+ | | | | | | | |-- StepSequencerDialog$1.class
+ | | | | | | | |-- StepSequencerDialog$2.class
+ | | | | | | | |-- StepSequencerDialog$3.class
+ | | | | | | | |-- StepSequencerDialog$4.class
+ | | | | | | | |-- StepSequencerDialog$5.class
+ | | | | | | | |-- StepSequencerDialog$6.class
+ | | | | | | | |-- StepSequencerDialog$OnStepSequencerActionListener.class
+ | | | | | | | |-- StepSequencerDialog.class
+ | | | | | | | |-- SynthVisualizerView$1.class
+ | | | | | | | |-- SynthVisualizerView$DisplayMode.class
+ | | | | | | | |-- SynthVisualizerView.class
+ | | | | | | | |-- TrackAdapter$1.class
+ | | | | | | | |-- TrackAdapter$2.class
+ | | | | | | | |-- TrackAdapter$TrackViewHolder.class
+ | | | | | | | |-- TrackAdapter.class
+ | | | | | | | |-- TrackInspectorDialog$1.class
+ | | | | | | | |-- TrackInspectorDialog$2.class
+ | | | | | | | |-- TrackInspectorDialog$3.class
+ | | | | | | | |-- TrackInspectorDialog$OnTrackInspectorActionListener.class
+ | | | | | | | |-- TrackInspectorDialog.class
+ | | | | | | | |-- VariationStudioDialog$1.class
+ | | | | | | | |-- VariationStudioDialog$OnVariationAppliedListener.class
+ | | | | | | | |-- VariationStudioDialog.class
+ | | | | | | | |-- WaveEditorCanvasView$Mode.class
+ | | | | | | | |-- WaveEditorCanvasView$OnWaveEventListener.class
+ | | | | | | | |-- WaveEditorCanvasView$WaveformMipmap.class
+ | | | | | | | |-- WaveEditorCanvasView.class
+ | | | | | | | |-- WaveEditorDialog$1.class
+ | | | | | | | |-- WaveEditorDialog$2.class
+ | | | | | | | |-- WaveEditorDialog$3.class
+ | | | | | | | |-- WaveEditorDialog$4.class
+ | | | | | | | |-- WaveEditorDialog$5.class
+ | | | | | | | |-- WaveEditorDialog$6.class
+ | | | | | | | |-- WaveEditorDialog$OnWaveActionListener.class
+ | | | | | | | |-- WaveEditorDialog$WaveSnapshot.class
+ | | | | | | | |-- WaveEditorDialog.class
+ | | |-- dep_res_0.zip
+ | | |-- dep_res_1.zip
+ | | |-- dep_res_10.zip
+ | | |-- dep_res_11.zip
+ | | |-- dep_res_12.zip
+ | | |-- dep_res_13.zip
+ | | |-- dep_res_14.zip
+ | | |-- dep_res_15.zip
+ | | |-- dep_res_16.zip
+ | | |-- dep_res_17.zip
+ | | |-- dep_res_18.zip
+ | | |-- dep_res_19.zip
+ | | |-- dep_res_2.zip
+ | | |-- dep_res_3.zip
+ | | |-- dep_res_4.zip
+ | | |-- dep_res_5.zip
+ | | |-- dep_res_6.zip
+ | | |-- dep_res_7.zip
+ | | |-- dep_res_8.zip
+ | | |-- dep_res_9.zip
+ | | |-- dex
+ | | | |-- classes.dex
+ | | |-- unaligned.apk
+ | |-- generated
+ | | |-- androidx
+ | | | |-- activity
+ | | | | |-- R.java
+ | | | |-- annotation
+ | | | | |-- experimental
+ | | | | | |-- R.java
+ | | | |-- appcompat
+ | | | | |-- R.java
+ | | | | |-- resources
+ | | | | | |-- R.java
+ | | | |-- arch
+ | | | | |-- core
+ | | | | | |-- R.java
+ | | | |-- core
+ | | | | |-- R.java
+ | | | | |-- ktx
+ | | | | | |-- R.java
+ | | | |-- customview
+ | | | | |-- poolingcontainer
+ | | | | | |-- R.java
+ | | | |-- emoji2
+ | | | | |-- R.java
+ | | | | |-- viewsintegration
+ | | | | | |-- R.java
+ | | | |-- fragment
+ | | | | |-- R.java
+ | | | |-- lifecycle
+ | | | | |-- livedata
+ | | | | | |-- core
+ | | | | | | |-- R.java
+ | | | | |-- process
+ | | | | | |-- R.java
+ | | | | |-- runtime
+ | | | | | |-- R.java
+ | | | | |-- viewmodel
+ | | | | | |-- R.java
+ | | | | | |-- savedstate
+ | | | | | | |-- R.java
+ | | | |-- profileinstaller
+ | | | | |-- R.java
+ | | | |-- recyclerview
+ | | | | |-- R.java
+ | | | |-- savedstate
+ | | | | |-- R.java
+ | | | |-- startup
+ | | | | |-- R.java
+ | | |-- classpath.txt
+ | | |-- com
+ | | | |-- maxica
+ | | | | |-- cobass
+ | | | | | |-- R.java
+ | | |-- extra_packages.txt
+ | | |-- jni_libs_map.json
+ | | |-- res_dirs.txt
+ |-- output.xml
+ |-- plan
+ | |-- V1.md
+ | |-- WaveEditV1.md
+ | |-- arrange-V2.Md
+ | |-- pianoroll.md
+ | |-- synth-host-plugin-v1.md
+ | |-- transform.md
+ |-- push.sh
+ |-- restore.sh
+ |-- run.sh
+ |-- runit.sh
+ |-- tools
+ | |-- aar_expander.py
+ | |-- benchmark_hyperion_dance.py
+ | |-- benchmark_variation_and_presets.py
+ | |-- build_addons.py
+ | |-- build_apk.py
+ | |-- bundle_llm.py
+ | |-- doctor.py
+ | |-- install.sh
+ | |-- lib_downloader.py
+ | |-- lib_resolver.py
+ | |-- module_check.py
+ | |-- native_build.py
+ | |-- release_check.py
+ | |-- source_downloader.py
+ | |-- test_melodic_engine.py
+ | |-- test_music_theory_engine.py
+  </directory_structure>
+  <files>
+    <file path="llm_context.xml">
+<context>
+  <metadata>
+    <generated_at>Fri Sep  4 03:07:21 WIB 2026</generated_at>
+    <root_directory>.</root_directory>
+  </metadata>
+  <directory_structure>
+.
+ |-- NO_GRADLE_POLICY.md
+ |-- README.md
+ |-- addons
+ | |-- fx-ott-compressor
+ | | |-- src
+ | | | |-- OttCompressorPlugin.cpp
+ | |-- fx-sidechain-pump
+ | | |-- src

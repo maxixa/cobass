@@ -14,6 +14,8 @@ public:
         filterHP_.setSampleRate(sampleRate_);
         for (auto& p : oscPhases_) p = 0.0;
         closedEnv_ = openEnv_ = 0.0f;
+        fadeEnv_ = 0.0f;
+        lastOutL_ = lastOutR_ = 0.0f;
         updateRates();
         updateFilters();
     }
@@ -29,24 +31,39 @@ public:
     }
 
     void triggerClosed(float velocity) noexcept {
+        if (closedEnv_ > 0.01f || openEnv_ > 0.01f) {
+            fadeSampleL_ = lastOutL_;
+            fadeSampleR_ = lastOutR_;
+            fadeEnv_ = 1.0f;
+        }
+
+        noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L + static_cast<uint32_t>(velocity * 654321.0f);
         closedVel_ = std::clamp(velocity, 0.05f, 1.0f);
         closedEnv_ = 1.0f;
         if (chokeEnabled_) {
-            openEnv_ = 0.0f; // Instant voice choke
+            openEnv_ = 0.0f; // Voice choke
         }
     }
 
     void triggerOpen(float velocity) noexcept {
+        if (closedEnv_ > 0.01f || openEnv_ > 0.01f) {
+            fadeSampleL_ = lastOutL_;
+            fadeSampleR_ = lastOutR_;
+            fadeEnv_ = 1.0f;
+        }
+
+        noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L + static_cast<uint32_t>(velocity * 123456.0f);
         openVel_ = std::clamp(velocity, 0.05f, 1.0f);
         openEnv_ = 1.0f;
     }
 
     void stop() noexcept {
-        closedEnv_ = openEnv_ = 0.0f;
+        closedEnv_ = openEnv_ = fadeEnv_ = 0.0f;
+        lastOutL_ = lastOutR_ = 0.0f;
     }
 
     inline void renderStereo(float& outL, float& outR) noexcept {
-        if (closedEnv_ <= 0.0005f && openEnv_ <= 0.0005f) {
+        if (closedEnv_ <= 0.0005f && openEnv_ <= 0.0005f && fadeEnv_ <= 0.001f) {
             outL = outR = 0.0f;
             return;
         }
@@ -61,7 +78,6 @@ public:
             metal += (oscPhases_[i] < 0.5) ? 0.166f : -0.166f;
         }
 
-        // Add sizzle noise
         noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L;
         const float noise = static_cast<float>((noiseSeed_ & 0x00FFFFFF) / static_cast<double>(0x007FFFFF)) - 1.0f;
         const float mixed = (metal * (1.0f - sizzlePct_ * 0.5f)) + (noise * sizzlePct_ * 0.7f);
@@ -74,8 +90,19 @@ public:
         closedEnv_ *= closedDecayCoeff_;
         openEnv_ *= openDecayCoeff_;
 
-        outL = (closedSig * 0.95f) + (openSig * 1.05f);
-        outR = (closedSig * 1.05f) + (openSig * 0.95f);
+        float sL = (closedSig * 0.95f) + (openSig * 1.05f);
+        float sR = (closedSig * 1.05f) + (openSig * 0.95f);
+
+        if (fadeEnv_ > 0.001f) {
+            sL += fadeSampleL_ * fadeEnv_;
+            sR += fadeSampleR_ * fadeEnv_;
+            fadeEnv_ *= fadeDecayCoeff_;
+        }
+
+        lastOutL_ = sL;
+        lastOutR_ = sR;
+        outL = sL;
+        outR = sR;
     }
 
 private:
@@ -83,6 +110,7 @@ private:
         if (sampleRate_ <= 0.0f) return;
         closedDecayCoeff_ = std::exp(-1.0f / ((closedDecayMs_ * 0.001f) * sampleRate_));
         openDecayCoeff_ = std::exp(-1.0f / ((openDecayMs_ * 0.001f) * sampleRate_));
+        fadeDecayCoeff_ = std::exp(-1.0f / (0.0015f * sampleRate_));
     }
 
     void updateFilters() noexcept {
@@ -102,8 +130,15 @@ private:
     float openEnv_ = 0.0f;
     float closedVel_ = 1.0f;
     float openVel_ = 1.0f;
-    uint32_t noiseSeed_ = 1234567;
 
+    float lastOutL_ = 0.0f;
+    float lastOutR_ = 0.0f;
+    float fadeSampleL_ = 0.0f;
+    float fadeSampleR_ = 0.0f;
+    float fadeEnv_ = 0.0f;
+    float fadeDecayCoeff_ = 0.90f;
+
+    uint32_t noiseSeed_ = 1234567;
     float closedDecayCoeff_ = 0.99f;
     float openDecayCoeff_ = 0.999f;
     BiquadFilter filterBP_;

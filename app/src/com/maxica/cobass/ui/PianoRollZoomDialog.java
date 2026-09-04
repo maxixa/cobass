@@ -2,15 +2,12 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 public class PianoRollZoomDialog extends Dialog {
@@ -35,80 +32,75 @@ public class PianoRollZoomDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E24"));
-        layout.setPadding(28, 20, 28, 20);
+        float density = getContext().getResources().getDisplayMetrics().density;
 
-        TextView title = new TextView(getContext());
-        title.setText("Piano Roll 2D Zoom Settings");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(15f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
-        TextView txtTime = new TextView(getContext());
-        txtTime.setText(String.format("Time Zoom (Horizontal): %.2fx", currentTimeScale));
-        txtTime.setTextColor(Color.WHITE);
-        txtTime.setPadding(0, 14, 0, 6);
-        layout.addView(txtTime);
-
-        SeekBar seekTime = new SeekBar(getContext());
-        seekTime.setMax(100);
         int timeProgress = (int) (((currentTimeScale - 0.15f) / (1.5f - 0.15f)) * 100f);
-        seekTime.setProgress(Math.max(0, Math.min(100, timeProgress)));
-        layout.addView(seekTime);
-
-        TextView txtPitch = new TextView(getContext());
-        txtPitch.setText(String.format("Key Height (Vertical): %.0f dp", currentPitchScale));
-        txtPitch.setTextColor(Color.WHITE);
-        txtPitch.setPadding(0, 14, 0, 6);
-        layout.addView(txtPitch);
-
-        SeekBar seekPitch = new SeekBar(getContext());
-        seekPitch.setMax(100);
         int pitchProgress = (int) (((currentPitchScale - 24f) / (64f - 24f)) * 100f);
-        seekPitch.setProgress(Math.max(0, Math.min(100, pitchProgress)));
-        layout.addView(seekPitch);
 
-        SeekBar.OnSeekBarChangeListener seekListener = new SeekBar.OnSeekBarChangeListener() {
+        CobassSlider.SliderRow timeRow = CobassSlider.create(
+            getContext(),
+            "Time Zoom (Horizontal)",
+            String.format("%.2fx", currentTimeScale),
+            100,
+            Math.max(0, Math.min(100, timeProgress)),
+            null
+        );
+
+        CobassSlider.SliderRow pitchRow = CobassSlider.create(
+            getContext(),
+            "Key Row Height (Vertical)",
+            String.format("%.0f dp", currentPitchScale),
+            100,
+            Math.max(0, Math.min(100, pitchProgress)),
+            null
+        );
+
+        SeekBar.OnSeekBarChangeListener zoomListener = new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float timeScale = 0.15f + (seekTime.getProgress() / 100.0f) * 1.35f;
-                float pitchScale = 24.0f + (seekPitch.getProgress() / 100.0f) * 40.0f;
-                txtTime.setText(String.format("Time Zoom (Horizontal): %.2fx", timeScale));
-                txtPitch.setText(String.format("Key Height (Vertical): %.0f dp", pitchScale));
+                float timeScale = 0.15f + (timeRow.seekBar.getProgress() / 100.0f) * 1.35f;
+                float pitchScale = 24.0f + (pitchRow.seekBar.getProgress() / 100.0f) * 40.0f;
+                timeRow.readoutView.setText(String.format("%.2fx", timeScale));
+                pitchRow.readoutView.setText(String.format("%.0f dp", pitchScale));
                 if (listener != null) listener.onZoomChanged(timeScale, pitchScale);
             }
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         };
 
-        seekTime.setOnSeekBarChangeListener(seekListener);
-        seekPitch.setOnSeekBarChangeListener(seekListener);
+        timeRow.seekBar.setOnSeekBarChangeListener(zoomListener);
+        pitchRow.seekBar.setOnSeekBarChangeListener(zoomListener);
+
+        content.addView(timeRow.container);
+        content.addView(pitchRow.container);
 
         Button btnReset = new Button(getContext());
         btnReset.setText("Reset to Default (1.0x / 42dp)");
-        btnReset.setBackgroundColor(Color.parseColor("#242734"));
-        btnReset.setTextColor(Color.WHITE);
+        CobassButton.apply(btnReset, CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams rLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rLp.topMargin = Math.round(CobassSpacing.SPACE_SM * density);
+        btnReset.setLayoutParams(rLp);
         btnReset.setOnClickListener(v -> {
-            seekTime.setProgress(22);
-            seekPitch.setProgress(45);
+            timeRow.seekBar.setProgress(22);
+            pitchRow.seekBar.setProgress(45);
+            timeRow.readoutView.setText("0.45x");
+            pitchRow.readoutView.setText("42 dp");
             if (listener != null) listener.onZoomChanged(0.45f, 42f);
         });
-        layout.addView(btnReset);
+        content.addView(btnReset);
 
-        Button btnDone = new Button(getContext());
-        btnDone.setText("Done");
-        btnDone.setBackgroundColor(Color.parseColor("#0A84FF"));
-        btnDone.setTextColor(Color.WHITE);
-        btnDone.setOnClickListener(v -> dismiss());
-        layout.addView(btnDone);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🔍 Viewport Zoom & Scaling",
+            "Adjust horizontal timeline magnification and vertical keybed height",
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(layout);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 }

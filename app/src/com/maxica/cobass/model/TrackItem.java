@@ -59,7 +59,7 @@ public class TrackItem {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.color = (type == Type.SYNTH) ? Color.parseColor("#0A84FF") : Color.parseColor("#FF9F0A");
+        this.color = (type == Type.SYNTH) ? com.maxica.cobass.core.Constants.COLOR_TRACK_SYNTH : com.maxica.cobass.core.Constants.COLOR_TRACK_AUDIO;
     }
 
     public int getId() { return id; }

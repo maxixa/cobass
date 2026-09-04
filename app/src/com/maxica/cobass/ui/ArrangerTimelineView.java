@@ -151,6 +151,10 @@ private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ghostPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint handlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
+    private final Path diamondPath = new Path();
+    private final Path lMarkerPath = new Path();
+    private final Path rMarkerPath = new Path();
+    private final Path scrubTrianglePath = new Path();
     private GestureDetector gestureDetector;
 
     public ArrangerTimelineView(Context context) {
@@ -268,7 +272,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
         return result.snappedTick;
     }
 
-    public void setPlayheadTick(long tick) { this.currentPlayheadTick = tick; invalidate(); }
+    public void setPlayheadTick(long tick) { this.currentPlayheadTick = tick; postInvalidateOnAnimation(); }
 
     public void setLoopRange(long startTick, long endTick, boolean enabled) {
         this.loopStartTick = Math.max(0, startTick);
@@ -524,8 +528,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
         final int height = getHeight();
 
         // 1. Dark Main Canvas Background
-        paint.setColor(Color.parseColor("#121316"));
-        canvas.drawRect(0, 0, width, height, paint);
+        canvas.drawRect(0, 0, width, height, CobassCanvasTheme.PAINT_CANVAS_BG);
 
         canvas.save();
         canvas.clipRect(headerWidth, rulerHeight, width, height);
@@ -539,16 +542,16 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
         for (long b = startBar; b <= endBar; b++) {
             float x = headerWidth + (b * TICKS_PER_BAR * pixelsPerTick) - scrollX;
             if (b % 2 == 1) {
-                paint.setColor(Color.parseColor("#171920"));
+                paint.setColor(0xFF171920);
                 canvas.drawRect(x, rulerHeight, x + (TICKS_PER_BAR * pixelsPerTick), height, paint);
             }
-            paint.setColor(Color.parseColor("#262934"));
+            paint.setColor(0xFF262934);
             paint.setStrokeWidth(2f * uiScale);
             canvas.drawLine(x, rulerHeight, x, height, paint);
 
             for (int beat = 1; beat < 4; beat++) {
                 float bx = x + (beat * PPQ * pixelsPerTick);
-                paint.setColor(Color.parseColor("#1E202A"));
+                paint.setColor(0xFF1E202A);
                 paint.setStrokeWidth(1f * uiScale);
                 canvas.drawLine(bx, rulerHeight, bx, height, paint);
             }
@@ -569,11 +572,11 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             }
 
             if (isDropTarget) {
-                paint.setColor(Color.parseColor("#1C2A40"));
+                paint.setColor(0xFF1C2A40);
                 canvas.drawRect(headerWidth, y, width, y + trackHeight, paint);
             }
 
-            paint.setColor(Color.parseColor("#222530"));
+            paint.setColor(0xFF222530);
             paint.setStrokeWidth(1.5f * uiScale);
             canvas.drawLine(headerWidth, y + trackHeight, width, y + trackHeight, paint);
         }
@@ -582,13 +585,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
         if (isLoopEnabled) {
             float loopX1 = headerWidth + (loopStartTick * pixelsPerTick) - scrollX;
             float loopX2 = headerWidth + (loopEndTick * pixelsPerTick) - scrollX;
-            paint.setColor(Color.parseColor("#150A84FF"));
-            canvas.drawRect(Math.max(headerWidth, loopX1), rulerHeight, Math.min(width, loopX2), height, paint);
-
-            paint.setColor(Color.parseColor("#440A84FF"));
-            paint.setStrokeWidth(1.5f * uiScale);
-            canvas.drawLine(loopX1, rulerHeight, loopX1, height, paint);
-            canvas.drawLine(loopX2, rulerHeight, loopX2, height, paint);
+            CobassCanvasTheme.drawLoopOverlay(canvas, Math.max(headerWidth, loopX1), Math.min(width, loopX2), rulerHeight, height);
         }
 
         // 5. Render Stationary & Dimmed Clips
@@ -622,16 +619,16 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             paint.setStyle(Paint.Style.STROKE);
             if (clip.isSelected() && !isBeingDragged) {
                 paint.setStrokeWidth(3.5f * uiScale);
-                paint.setColor(Color.parseColor("#FFD60A"));
+                paint.setColor(0xFFFFD60A);
             } else {
                 paint.setStrokeWidth(1.2f * uiScale);
-                paint.setColor(isBeingDragged ? Color.parseColor("#22FFFFFF") : (clip.isMuted() ? Color.parseColor("#33FFFFFF") : Color.parseColor("#66FFFFFF")));
+                paint.setColor(isBeingDragged ? 0x22FFFFFF : (clip.isMuted() ? 0x33FFFFFF : 0x66FFFFFF));
             }
             canvas.drawRoundRect(rectF, 8f * uiScale, 8f * uiScale, paint);
 
             // Mute Strikethrough
             if (clip.isMuted() && !isBeingDragged) {
-                paint.setColor(Color.parseColor("#88FF453A"));
+                paint.setColor(0x88FF453A);
                 paint.setStrokeWidth(2.5f * uiScale);
                 canvas.drawLine(clipX + 4f, clipY + 4f, clipX + clipW - 4f, clipY + clipH - 4f, paint);
             }
@@ -640,7 +637,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             if (clip.isSelected() && !isBeingDragged && clipW > (40f * uiScale)) {
                 // Left Handle [ < ]
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(Color.parseColor("#FFD60A"));
+                paint.setColor(0xFFFFD60A);
                 canvas.drawRect(clipX + 2f, clipY + 4f, clipX + (8f * uiScale), clipY + clipH - 4f, paint);
 
                 // Right Handle [ > ]
@@ -649,14 +646,14 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
             // Clip Title
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(isBeingDragged ? Color.parseColor("#55FFFFFF") : (clip.isMuted() ? Color.parseColor("#8E8E93") : Color.WHITE));
+            paint.setColor(isBeingDragged ? 0x55FFFFFF : (clip.isMuted() ? 0xFF8E8E93 : Color.WHITE));
             paint.setTextSize(18f * uiScale);
             paint.setFakeBoldText(true);
             String title = clip.isMuted() ? ("🔇 " + clip.getName()) : clip.getName();
             canvas.drawText(title, clipX + (14f * uiScale), clipY + (24f * uiScale), paint);
 
             // Mini Waveform / Notes
-            paint.setColor(isBeingDragged ? Color.parseColor("#22FFFFFF") : (clip.isMuted() ? Color.parseColor("#44FFFFFF") : Color.parseColor("#88FFFFFF")));
+            paint.setColor(isBeingDragged ? 0x22FFFFFF : (clip.isMuted() ? 0x44FFFFFF : 0x88FFFFFF));
             paint.setStrokeWidth(2.2f * uiScale);
             if (clip.getType() == TrackItem.Type.SYNTH) {
                 float noteBaseY = clipY + clipH - (14f * uiScale);
@@ -697,7 +694,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(2.5f * uiScale);
-                paint.setColor(Color.parseColor("#64D2FF"));
+                paint.setColor(0xFF64D2FF);
                 canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
             }
         }
@@ -720,7 +717,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(3.5f * uiScale);
-                paint.setColor(Color.parseColor("#FFD60A"));
+                paint.setColor(0xFFFFD60A);
                 canvas.drawRoundRect(rectF, 8f * uiScale, 8f * uiScale, paint);
 
                 paint.setStyle(Paint.Style.FILL);
@@ -740,11 +737,11 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
                 float clipY = rulerHeight + (trackIndex * trackHeight) + (8f * uiScale) - scrollY;
 
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(Color.parseColor("#DD000000"));
+                paint.setColor(0xDD000000);
                 rectF.set(clipX + 10f, clipY + 30f, clipX + 220f, clipY + 65f);
                 canvas.drawRoundRect(rectF, 6f, 6f, paint);
 
-                paint.setColor(Color.parseColor("#FFD60A"));
+                paint.setColor(0xFFFFD60A);
                 paint.setTextSize(16f * uiScale);
                 paint.setFakeBoldText(true);
                 String slipText = String.format("⇄ Slip: %+d ticks", currentSlipOffsetTicks);
@@ -754,34 +751,24 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
         // 7. Marquee Selection Rectangle
         if (isMarqueeActive) {
-            marqueePaint.setStyle(Paint.Style.FILL);
-            marqueePaint.setColor(Color.parseColor("#250A84FF"));
-            canvas.drawRect(marqueeRect, marqueePaint);
-
-            marqueePaint.setStyle(Paint.Style.STROKE);
-            marqueePaint.setStrokeWidth(2f * uiScale);
-            marqueePaint.setColor(Color.parseColor("#0A84FF"));
-            canvas.drawRect(marqueeRect, marqueePaint);
+            CobassCanvasTheme.drawMarquee(canvas, marqueeRect);
         }
 
         // 8. Playhead Vertical Timeline Needle
         float playheadX = headerWidth + (currentPlayheadTick * pixelsPerTick) - scrollX;
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(Color.parseColor("#FF453A"));
-        paint.setStrokeWidth(2.5f * uiScale);
-        canvas.drawLine(playheadX, rulerHeight, playheadX, height, paint);
+        CobassCanvasTheme.drawPlayheadNeedle(canvas, playheadX, rulerHeight, height, uiScale);
 
                 // PHASE 6: Real-Time Magnetic Snap Guide Line
         if (activeMagneticGuideTick >= 0) {
             float guideX = headerWidth + (activeMagneticGuideTick * pixelsPerTick) - scrollX;
             if (guideX >= headerWidth && guideX <= width) {
                 paint.setStyle(Paint.Style.STROKE);
-                paint.setColor(Color.parseColor("#64D2FF")); // Glowing Cyan
+                paint.setColor(0xFF64D2FF); // Glowing Cyan
                 paint.setStrokeWidth(2.5f * uiScale);
                 canvas.drawLine(guideX, rulerHeight, guideX, height, paint);
 
                 paint.setStyle(Paint.Style.FILL);
-                Path diamond = new Path();
+                diamondPath.reset(); Path diamond = diamondPath;
                 diamond.moveTo(guideX, rulerHeight);
                 diamond.lineTo(guideX + (7f * uiScale), rulerHeight + (10f * uiScale));
                 diamond.lineTo(guideX, rulerHeight + (20f * uiScale));
@@ -795,17 +782,17 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
         // 9. Top Time Ruler Bar
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#171922"));
+        paint.setColor(0xFF171922);
         canvas.drawRect(headerWidth, 0, width, rulerHeight, paint);
 
         if (isLoopEnabled) {
             float loopX1 = headerWidth + (loopStartTick * pixelsPerTick) - scrollX;
             float loopX2 = headerWidth + (loopEndTick * pixelsPerTick) - scrollX;
 
-            paint.setColor(Color.parseColor("#440A84FF"));
+            paint.setColor(0x440A84FF);
             canvas.drawRect(Math.max(headerWidth, loopX1), 0, Math.min(width, loopX2), rulerHeight, paint);
 
-            paint.setColor(Color.parseColor("#0A84FF"));
+            paint.setColor(0xFF0A84FF);
             paint.setStrokeWidth(3f * uiScale);
             canvas.drawLine(Math.max(headerWidth, loopX1), rulerHeight - 2f, Math.min(width, loopX2), rulerHeight - 2f, paint);
         }
@@ -814,12 +801,12 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             float x = headerWidth + (b * TICKS_PER_BAR * pixelsPerTick) - scrollX;
             if (x < headerWidth - 40 || x > width) continue;
 
-            paint.setColor(Color.parseColor("#8E8E93"));
+            paint.setColor(0xFF8E8E93);
             paint.setTextSize(16f * uiScale);
             paint.setFakeBoldText(true);
             canvas.drawText(String.valueOf(b + 1), x + (6f * uiScale), 22f * uiScale, paint);
 
-            paint.setColor(Color.parseColor("#343848"));
+            paint.setColor(0xFF343848);
             paint.setStrokeWidth(1.2f * uiScale);
             canvas.drawLine(x, 26f * uiScale, x, rulerHeight, paint);
 
@@ -838,8 +825,8 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
             if (loopX1 >= headerWidth - 25 && loopX1 <= width + 25) {
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(rulerTouchMode == RulerTouchMode.DRAGGING_LOOP_START ? Color.parseColor("#FFD60A") : Color.parseColor("#0A84FF"));
-                Path lMarker = new Path();
+                paint.setColor(rulerTouchMode == RulerTouchMode.DRAGGING_LOOP_START ? 0xFFFFD60A : 0xFF0A84FF);
+                lMarkerPath.reset(); Path lMarker = lMarkerPath;
                 lMarker.moveTo(loopX1, 0);
                 lMarker.lineTo(loopX1 + (22f * uiScale), 0);
                 lMarker.lineTo(loopX1 + (22f * uiScale), 24f * uiScale);
@@ -855,8 +842,8 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
             if (loopX2 >= headerWidth - 25 && loopX2 <= width + 25) {
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(rulerTouchMode == RulerTouchMode.DRAGGING_LOOP_END ? Color.parseColor("#FFD60A") : Color.parseColor("#0A84FF"));
-                Path rMarker = new Path();
+                paint.setColor(rulerTouchMode == RulerTouchMode.DRAGGING_LOOP_END ? 0xFFFFD60A : 0xFF0A84FF);
+                rMarkerPath.reset(); Path rMarker = rMarkerPath;
                 rMarker.moveTo(loopX2 - (22f * uiScale), 0);
                 rMarker.lineTo(loopX2, 0);
                 rMarker.lineTo(loopX2, 34f * uiScale);
@@ -873,9 +860,9 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
         // 11. Playhead Ruler Scrubber Needle & Flag
         if (playheadX >= headerWidth - 20 && playheadX <= width + 20) {
-            paint.setColor(Color.parseColor("#FF453A"));
+            paint.setColor(0xFFFF453A);
             paint.setStyle(Paint.Style.FILL);
-            Path scrubTriangle = new Path();
+            scrubTrianglePath.reset(); Path scrubTriangle = scrubTrianglePath;
             scrubTriangle.moveTo(playheadX - (12f * uiScale), 0);
             scrubTriangle.lineTo(playheadX + (12f * uiScale), 0);
             scrubTriangle.lineTo(playheadX, 22f * uiScale);
@@ -885,14 +872,14 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
         // 12. Left Track Headers
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#181A22"));
+        paint.setColor(0xFF181A22);
         canvas.drawRect(0, 0, headerWidth, height, paint);
-        paint.setColor(Color.parseColor("#282B38"));
+        paint.setColor(0xFF282B38);
         canvas.drawLine(headerWidth, 0, headerWidth, height, paint);
 
-        paint.setColor(Color.parseColor("#121318"));
+        paint.setColor(0xFF121318);
         canvas.drawRect(0, 0, headerWidth, rulerHeight, paint);
-        paint.setColor(Color.parseColor("#0A84FF"));
+        paint.setColor(0xFF0A84FF);
         paint.setTextSize(17f * uiScale);
         paint.setFakeBoldText(true);
         canvas.drawText("TRACKS", 18f * uiScale, rulerHeight * 0.6f, paint);
@@ -903,7 +890,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
 
             // Track Header Background & Color Strip
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.parseColor("#181A22"));
+            paint.setColor(0xFF181A22);
             canvas.drawRect(0, y, headerWidth, y + trackHeight, paint);
 
             paint.setColor(track.getColor());
@@ -916,7 +903,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             canvas.drawText(track.getName(), 14f * uiScale, y + (26f * uiScale), paint);
 
             // Track Type & Vol Readout
-            paint.setColor(Color.parseColor("#8E8E93"));
+            paint.setColor(0xFF8E8E93);
             paint.setTextSize(11f * uiScale);
             paint.setFakeBoldText(false);
             String subInfo = (track.getType() == TrackItem.Type.SYNTH ? "Synth" : "Audio") + " • " + (int)(track.getVolume() * 100) + "%";
@@ -925,10 +912,10 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             // [⚙] Gear Inspector Button (Top-Right)
             float gearX = headerWidth - (34f * uiScale);
             float gearY = y + (8f * uiScale);
-            paint.setColor(Color.parseColor("#2C2F3C"));
+            paint.setColor(0xFF2C2F3C);
             rectF.set(gearX, gearY, gearX + (26f * uiScale), gearY + (24f * uiScale));
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
-            paint.setColor(Color.parseColor("#C7C7CC"));
+            paint.setColor(0xFFC7C7CC);
             paint.setTextSize(13f * uiScale);
             paint.setFakeBoldText(true);
             canvas.drawText("⚙", gearX + (6f * uiScale), gearY + (17f * uiScale), paint);
@@ -941,7 +928,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             float mX1 = 14f * uiScale;
             float mX2 = mX1 + (32f * uiScale);
             rectF.set(mX1, btnY1, mX2, btnY2);
-            paint.setColor(track.isMuted() ? Color.parseColor("#FF453A") : Color.parseColor("#282B38"));
+            paint.setColor(track.isMuted() ? 0xFFFF453A : 0xFF282B38);
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
             paint.setColor(Color.WHITE);
             paint.setTextSize(11f * uiScale);
@@ -952,7 +939,7 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             float sX1 = mX2 + (6f * uiScale);
             float sX2 = sX1 + (32f * uiScale);
             rectF.set(sX1, btnY1, sX2, btnY2);
-            paint.setColor(track.isSolo() ? Color.parseColor("#FFD60A") : Color.parseColor("#282B38"));
+            paint.setColor(track.isSolo() ? 0xFFFFD60A : 0xFF282B38);
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
             paint.setColor(track.isSolo() ? Color.BLACK : Color.WHITE);
             paint.setTextSize(11f * uiScale);
@@ -963,14 +950,14 @@ public void setArrangerListener(OnArrangerListener listener) { this.listener = l
             float fxX1 = sX2 + (6f * uiScale);
             float fxX2 = fxX1 + (40f * uiScale);
             rectF.set(fxX1, btnY1, fxX2, btnY2);
-            paint.setColor(Color.parseColor("#0A84FF"));
+            paint.setColor(0xFF0A84FF);
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
             paint.setColor(Color.WHITE);
             paint.setTextSize(10f * uiScale);
             paint.setFakeBoldText(true);
             canvas.drawText("FX", fxX1 + (12f * uiScale), btnY1 + (17f * uiScale), paint);
 
-            paint.setColor(Color.parseColor("#262936"));
+            paint.setColor(0xFF262936);
             paint.setStrokeWidth(1.5f * uiScale);
             canvas.drawLine(0, y + trackHeight, headerWidth, y + trackHeight, paint);
         }

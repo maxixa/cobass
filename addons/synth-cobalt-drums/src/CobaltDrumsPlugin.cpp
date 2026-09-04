@@ -12,6 +12,7 @@
 #include "HiHatVoice.hpp"
 #include "TomVoice.hpp"
 #include "PercVoice.hpp"
+#include "BiquadFilter.hpp"
 
 static const CobassParamDescriptor COBALT_DRUM_PARAMS[] = {
     // --- MASTER & KIT SETTINGS [0..3] ---
@@ -91,13 +92,24 @@ public:
         hihat_.reset(sampleRate_);
         tom_.reset(sampleRate_);
         perc_.reset(sampleRate_);
+        tiltFilterL_.setSampleRate(sampleRate_);
+        tiltFilterR_.setSampleRate(sampleRate_);
+        updateToneTilt();
         updateAllVoiceParameters();
     }
 
     void setParam(uint32_t id, float val) {
         if (id < params_.size()) {
             params_[id] = val;
-            updateVoiceParameters(id);
+            if (id == 0) {
+                // BUG-3: Kit Type change updates voice characteristics
+                updateAllVoiceParameters();
+            } else if (id == 2) {
+                // BUG-2: Tone tilt updates filter coefficients
+                updateToneTilt();
+            } else {
+                updateVoiceParameters(id);
+            }
         }
     }
 
@@ -107,30 +119,33 @@ public:
 
     void noteOn(int32_t note, float velocity) {
         switch (note) {
+            case 35: // Acoustic Bass Drum
             case 36: // C1: Bass Drum / Kick
-            case 35:
                 kick_.trigger(velocity);
                 break;
-            case 38: // D1: Snare
-            case 40:
+            case 38: // D1: Acoustic Snare
+            case 40: // Electric Snare
                 snare_.trigger(velocity);
                 break;
             case 39: // D#1: Hand Clap
                 clap_.trigger(velocity);
                 break;
             case 42: // F#1: Closed Hi-Hat (Triggers Choke)
-            case 44:
+            case 44: // Pedal Hi-Hat
                 hihat_.triggerClosed(velocity);
                 break;
             case 46: // A#1: Open Hi-Hat
                 hihat_.triggerOpen(velocity);
                 break;
-            case 41: // Low Tom
-            case 45: // Mid Tom
-            case 48: // High Tom
+            case 41: // Low Floor Tom (F1)
+            case 43: // High Floor Tom (G1)
+            case 45: // Low-Mid Tom (A1)
+            case 47: // High-Mid Tom (B1)
+            case 48: // High Tom (C2)
+            case 50: // High Timbale (D2)
                 tom_.trigger(note, velocity);
                 break;
-            case 37: // Rimshot
+            case 37: // Side Stick / Rimshot
                 perc_.triggerRim(velocity);
                 break;
             case 56: // Cowbell
@@ -139,7 +154,7 @@ public:
             default:
                 if (note < 38) kick_.trigger(velocity);
                 else if (note < 41) snare_.trigger(velocity);
-                else if (note == 43 || note == 47) tom_.trigger(note, velocity);
+                else if (note <= 50) tom_.trigger(note, velocity);
                 else hihat_.triggerClosed(velocity);
                 break;
         }
@@ -162,8 +177,15 @@ public:
         std::fill_n(outL, numFrames, 0.0f);
         std::fill_n(outR, numFrames, 0.0f);
 
-        const float masterDrive = std::pow(10.0f, params_[1] / 20.0f);
+        // BUG-3: Kit Type Character Multipliers
+        const int kitType = std::clamp(static_cast<int>(params_[0]), 0, 3);
+        const float kitDriveBoost = (kitType == 3) ? 1.4f : ((kitType == 1) ? 1.15f : 1.0f);
+        const float masterDrive = std::pow(10.0f, (params_[1] * kitDriveBoost) / 20.0f);
         const float masterGain  = std::pow(10.0f, params_[3] / 20.0f) * 0.90f;
+
+        const float clapGainL = (kitType == 0) ? 0.95f : 0.90f;
+        const float clapGainR = (kitType == 0) ? 1.05f : 1.10f;
+        const float percGain = (kitType == 2) ? 1.15f : 0.85f;
 
         for (uint32_t i = 0; i < numFrames; ++i) {
             float sKick  = kick_.render();
@@ -175,8 +197,12 @@ public:
             tom_.renderStereo(sTomL, sTomR);
             float sPerc  = perc_.render();
 
-            float mixL = sKick + sSnare + sClap * 0.9f + sHatL + sTomL + sPerc * 0.85f;
-            float mixR = sKick + sSnare + sClap * 1.1f + sHatR + sTomR + sPerc * 0.85f;
+            float mixL = sKick + sSnare + (sClap * clapGainL) + sHatL + sTomL + (sPerc * percGain);
+            float mixR = sKick + sSnare + (sClap * clapGainR) + sHatR + sTomR + (sPerc * percGain);
+
+            // BUG-2: Master Tone Tilt Filtering
+            mixL = tiltFilterL_.process(mixL);
+            mixR = tiltFilterR_.process(mixR);
 
             if (masterDrive > 1.01f) {
                 mixL = std::tanh(mixL * masterDrive);
@@ -190,8 +216,10 @@ public:
 
     uint32_t getStateJson(char* outBuffer, uint32_t maxLen) const {
         std::string json = "{";
+        char numBuf[32];
         for (size_t i = 0; i < params_.size(); ++i) {
-            json += "\"" + std::to_string(i) + "\":" + std::to_string(params_[i]);
+            std::snprintf(numBuf, sizeof(numBuf), "%.6g", static_cast<double>(params_[i]));
+            json += "\"" + std::to_string(i) + "\":" + numBuf;
             if (i < params_.size() - 1) json += ",";
         }
         json += "}";
@@ -215,22 +243,37 @@ public:
     }
 
 private:
+    void updateToneTilt() noexcept {
+        // BUG-2 FIX: Master LowShelf tilt filter centered at 1000 Hz
+        const float toneTiltDb = std::clamp(params_[2], -6.0f, 6.0f);
+        tiltFilterL_.setParameters(FilterType::LowShelf, 1000.0f, -toneTiltDb, 0.707f);
+        tiltFilterR_.setParameters(FilterType::LowShelf, 1000.0f, -toneTiltDb, 0.707f);
+    }
+
     void updateVoiceParameters(uint32_t id) {
-        if (id >= 4 && id <= 8)   kick_.setParameters(params_[4], params_[5], params_[6], params_[7], params_[8]);
-        if (id >= 9 && id <= 13)  snare_.setParameters(params_[9], params_[10], params_[11], params_[12], params_[13]);
-        if (id >= 14 && id <= 17) clap_.setParameters(params_[14], params_[15], params_[16], params_[17]);
-        if (id >= 18 && id <= 22) hihat_.setParameters(params_[18], params_[19], params_[20], params_[21] > 0.5f, params_[22]);
-        if (id >= 23 && id <= 27) tom_.setParameters(params_[23], params_[24], params_[25], params_[26], params_[27]);
-        if (id >= 28 && id <= 31) perc_.setParameters(params_[28], params_[29], params_[30], params_[31]);
+        const int kit = std::clamp(static_cast<int>(params_[0]), 0, 3);
+        const float kitDecayMult = (kit == 0) ? 1.25f : ((kit == 1) ? 0.90f : 1.0f);
+        const float kitSnappyMult = (kit == 1) ? 1.20f : ((kit == 3) ? 1.30f : 1.0f);
+
+        if (id >= 4 && id <= 8)   kick_.setParameters(params_[4], params_[5] * kitDecayMult, params_[6], params_[7], params_[8]);
+        if (id >= 9 && id <= 13)  snare_.setParameters(params_[9], params_[10], std::clamp(params_[11] * kitSnappyMult, 0.0f, 1.0f), params_[12] * kitDecayMult, params_[13]);
+        if (id >= 14 && id <= 17) clap_.setParameters(params_[14], params_[15], params_[16] * kitDecayMult, params_[17]);
+        if (id >= 18 && id <= 22) hihat_.setParameters(params_[18], params_[19], params_[20] * kitDecayMult, params_[21] > 0.5f, params_[22]);
+        if (id >= 23 && id <= 27) tom_.setParameters(params_[23], params_[24], params_[25] * kitDecayMult, params_[26] * (kit == 2 ? 1.5f : 1.0f), params_[27]);
+        if (id >= 28 && id <= 31) perc_.setParameters(params_[28], params_[29], params_[30], params_[31] * kitDecayMult);
     }
 
     void updateAllVoiceParameters() {
-        kick_.setParameters(params_[4], params_[5], params_[6], params_[7], params_[8]);
-        snare_.setParameters(params_[9], params_[10], params_[11], params_[12], params_[13]);
-        clap_.setParameters(params_[14], params_[15], params_[16], params_[17]);
-        hihat_.setParameters(params_[18], params_[19], params_[20], params_[21] > 0.5f, params_[22]);
-        tom_.setParameters(params_[23], params_[24], params_[25], params_[26], params_[27]);
-        perc_.setParameters(params_[28], params_[29], params_[30], params_[31]);
+        const int kit = std::clamp(static_cast<int>(params_[0]), 0, 3);
+        const float kitDecayMult = (kit == 0) ? 1.25f : ((kit == 1) ? 0.90f : 1.0f);
+        const float kitSnappyMult = (kit == 1) ? 1.20f : ((kit == 3) ? 1.30f : 1.0f);
+
+        kick_.setParameters(params_[4], params_[5] * kitDecayMult, params_[6], params_[7], params_[8]);
+        snare_.setParameters(params_[9], params_[10], std::clamp(params_[11] * kitSnappyMult, 0.0f, 1.0f), params_[12] * kitDecayMult, params_[13]);
+        clap_.setParameters(params_[14], params_[15], params_[16] * kitDecayMult, params_[17]);
+        hihat_.setParameters(params_[18], params_[19], params_[20] * kitDecayMult, params_[21] > 0.5f, params_[22]);
+        tom_.setParameters(params_[23], params_[24], params_[25] * kitDecayMult, params_[26] * (kit == 2 ? 1.5f : 1.0f), params_[27]);
+        perc_.setParameters(params_[28], params_[29], params_[30], params_[31] * kitDecayMult);
     }
 
     float sampleRate_ = 48000.0f;
@@ -242,6 +285,9 @@ private:
     HiHatVoice hihat_;
     TomVoice   tom_;
     PercVoice  perc_;
+
+    BiquadFilter tiltFilterL_;
+    BiquadFilter tiltFilterR_;
 };
 
 extern "C" {

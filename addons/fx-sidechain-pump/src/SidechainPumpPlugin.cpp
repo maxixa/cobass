@@ -89,14 +89,16 @@ public:
                     case 0: // Smooth linear ramp
                         duckGain = t;
                         break;
-                    case 1: // Exponential Dip (Fast recovery)
-                        duckGain = std::pow(t, 2.2f);
+                    case 1: // Exponential Dip (Fast quadratic recovery approximation)
+                        duckGain = t * t * (0.8f + 0.2f * t);
                         break;
-                    case 2: // Fast Kick Duck (Instant dip, held open)
-                        duckGain = 1.0f - std::exp(-t * 6.0f);
+                    case 2: { // Fast Kick Duck (Pade/Rational fast curve without std::exp)
+                        const float x = t * 6.0f;
+                        duckGain = (x * (1.0f + 0.5f * x)) / (1.0f + x * (1.0f + 0.5f * x));
                         break;
-                    case 3: // S-Curve (Smooth analog pump)
-                        duckGain = 0.5f * (1.0f - std::cos(t * 3.14159265359f));
+                    }
+                    case 3: // S-Curve (Hermite cubic smoothstep: 3t^2 - 2t^3)
+                        duckGain = t * t * (3.0f - 2.0f * t);
                         break;
                 }
             } else {

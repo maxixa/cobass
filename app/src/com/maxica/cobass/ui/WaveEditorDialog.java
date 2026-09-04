@@ -273,18 +273,9 @@ public class WaveEditorDialog extends Dialog {
 
     private void setToolMode(WaveEditorCanvasView.Mode mode) {
         waveCanvas.setMode(mode);
-        if (btnToolSelect != null) {
-            btnToolSelect.setBackgroundColor(mode == WaveEditorCanvasView.Mode.RANGE_SELECT ? Color.parseColor("#1C385C") : Color.parseColor("#242734"));
-            btnToolSelect.setTextColor(mode == WaveEditorCanvasView.Mode.RANGE_SELECT ? Color.parseColor("#0A84FF") : Color.parseColor("#8E8E93"));
-        }
-        if (btnToolTrim != null) {
-            btnToolTrim.setBackgroundColor(mode == WaveEditorCanvasView.Mode.TRIM_FADE ? Color.parseColor("#1C385C") : Color.parseColor("#242734"));
-            btnToolTrim.setTextColor(mode == WaveEditorCanvasView.Mode.TRIM_FADE ? Color.parseColor("#0A84FF") : Color.parseColor("#8E8E93"));
-        }
-        if (btnToolSlice != null) {
-            btnToolSlice.setBackgroundColor(mode == WaveEditorCanvasView.Mode.SLICE ? Color.parseColor("#4D2E14") : Color.parseColor("#242734"));
-            btnToolSlice.setTextColor(mode == WaveEditorCanvasView.Mode.SLICE ? Color.parseColor("#FF9F0A") : Color.parseColor("#8E8E93"));
-        }
+        CobassInteraction.applyToolState(btnToolSelect, mode == WaveEditorCanvasView.Mode.RANGE_SELECT, false);
+        CobassInteraction.applyToolState(btnToolTrim, mode == WaveEditorCanvasView.Mode.TRIM_FADE, false);
+        CobassInteraction.applyToolState(btnToolSlice, mode == WaveEditorCanvasView.Mode.SLICE, false);
     }
 
     private void captureUndoPoint() {
@@ -328,14 +319,8 @@ public class WaveEditorDialog extends Dialog {
     }
 
     private void updateUndoRedoUI() {
-        if (btnUndo != null) {
-            btnUndo.setEnabled(!undoStack.isEmpty());
-            btnUndo.setAlpha(undoStack.isEmpty() ? 0.35f : 1.0f);
-        }
-        if (btnRedo != null) {
-            btnRedo.setEnabled(!redoStack.isEmpty());
-            btnRedo.setAlpha(redoStack.isEmpty() ? 0.35f : 1.0f);
-        }
+        CobassInteraction.applyUndoRedoState(btnUndo, !undoStack.isEmpty());
+        CobassInteraction.applyUndoRedoState(btnRedo, !redoStack.isEmpty());
     }
 
     // --- PHASE 6: SAF FILE IMPORT ---
@@ -454,13 +439,13 @@ public class WaveEditorDialog extends Dialog {
         float[] pcmFloat = new float[totalFrames];
 
         ByteBuffer bb = ByteBuffer.wrap(rawBytes).order(ByteOrder.LITTLE_ENDIAN);
+        final float invScale = 1.0f / (32768.0f * channels);
         for (int i = 0; i < totalFrames; i++) {
             float sum = 0.0f;
             for (int c = 0; c < channels; c++) {
-                short s = bb.getShort();
-                sum += (s / 32768.0f);
+                sum += bb.getShort();
             }
-            pcmFloat[i] = sum / channels;
+            pcmFloat[i] = sum * invScale;
         }
 
         if (srcRate != targetSampleRate && srcRate > 0) {
@@ -477,9 +462,9 @@ public class WaveEditorDialog extends Dialog {
         for (int i = 0; i < outLen; i++) {
             double srcPos = i * ratio;
             int idx = (int) srcPos;
-            double frac = srcPos - idx;
+            float frac = (float) (srcPos - idx);
             if (idx < input.length - 1) {
-                output[i] = (float) (input[idx] * (1.0 - frac) + input[idx + 1] * frac);
+                output[i] = input[idx] + frac * (input[idx + 1] - input[idx]);
             } else if (idx < input.length) {
                 output[i] = input[idx];
             }
@@ -607,10 +592,7 @@ public class WaveEditorDialog extends Dialog {
         layout.addView(btnCancel);
 
         recDialog.setContentView(layout);
-        if (recDialog.getWindow() != null) {
-            recDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            recDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(recDialog);
         recDialog.show();
     }
 
@@ -855,10 +837,7 @@ public class WaveEditorDialog extends Dialog {
         layout.addView(btnCloseDialog);
 
         dialog.setContentView(scroll);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(dialog);
         dialog.show();
     }
 
@@ -952,7 +931,7 @@ public class WaveEditorDialog extends Dialog {
             int idx = (int) srcPos;
             float frac = srcPos - idx;
             if (idx < pcm.length - 1) {
-                resampled[i] = pcm[idx] * (1.0f - frac) + pcm[idx + 1] * frac;
+                resampled[i] = pcm[idx] + frac * (pcm[idx + 1] - pcm[idx]);
             } else if (idx < pcm.length) {
                 resampled[i] = pcm[idx];
             }
@@ -1104,10 +1083,7 @@ public class WaveEditorDialog extends Dialog {
         layout.addView(btnDone);
 
         dialog.setContentView(scroll);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(dialog);
         dialog.show();
     }
 
@@ -1314,10 +1290,7 @@ public class WaveEditorDialog extends Dialog {
         layout.addView(btnCloseDialog);
 
         dspDialog.setContentView(scroll);
-        if (dspDialog.getWindow() != null) {
-            dspDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dspDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(dspDialog);
         dspDialog.show();
     }
 
@@ -1395,18 +1368,9 @@ public class WaveEditorDialog extends Dialog {
     }
 
     private void updateTransportUI() {
-        if (btnPlay != null) {
-            btnPlay.setText(isPlaying ? "⏸" : "▶");
-            btnPlay.setBackgroundColor(isPlaying ? Color.parseColor("#1B4D2E") : Color.parseColor("#163824"));
-        }
-        if (btnLoop != null) {
-            btnLoop.setBackgroundColor(isLooping ? Color.parseColor("#1C385C") : Color.parseColor("#242734"));
-            btnLoop.setTextColor(isLooping ? Color.parseColor("#0A84FF") : Color.parseColor("#8E8E93"));
-        }
-        if (btnFollow != null) {
-            btnFollow.setBackgroundColor(isFollowing ? Color.parseColor("#1C385C") : Color.parseColor("#242734"));
-            btnFollow.setTextColor(isFollowing ? Color.parseColor("#0A84FF") : Color.parseColor("#8E8E93"));
-        }
+        CobassInteraction.applyPlayState(btnPlay, isPlaying);
+        CobassInteraction.applyTransportToggle(btnLoop, isLooping);
+        CobassInteraction.applyTransportToggle(btnFollow, isFollowing);
     }
 
     private void showZoomDialog() {
@@ -1465,10 +1429,7 @@ public class WaveEditorDialog extends Dialog {
         layout.addView(btnDone);
 
         zoomDialog.setContentView(layout);
-        if (zoomDialog.getWindow() != null) {
-            zoomDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            zoomDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        CobassDialogShell.configureWindow(zoomDialog);
         zoomDialog.show();
     }
 

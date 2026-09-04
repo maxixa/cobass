@@ -201,6 +201,7 @@ public:
 
         switch (recipe.type) {
             case TransformOperatorType::EUCLIDEAN_SLICE: {
+                result.reserve(notes.size() * 8);
                 for (const auto& n : notes) {
                     if (masks.lockRhythm || (masks.lockDownbeats && isMetricDownbeat(n.startOffsetTicks, context.ticksPerBeat, context.beatsPerBar))) {
                         result.push_back(n);
@@ -237,6 +238,7 @@ public:
             }
 
             case TransformOperatorType::RATCHET_BURST: {
+                result.reserve(notes.size() * 8);
                 for (const auto& n : notes) {
                     if (masks.lockRhythm || (masks.lockDownbeats && isMetricDownbeat(n.startOffsetTicks, context.ticksPerBeat, context.beatsPerBar))) {
                         result.push_back(n);
@@ -283,6 +285,7 @@ public:
             }
 
             case TransformOperatorType::ENCLOSURE_DECORATE: {
+                result.reserve(notes.size() * 3);
                 std::uniform_real_distribution<float> probDist(0.0f, 1.0f);
                 for (const auto& n : notes) {
                     if (masks.lockPitches || masks.lockRhythm || probDist(rng) > recipe.intensity || n.lengthTicks < 240) {
@@ -319,6 +322,7 @@ public:
             }
 
             case TransformOperatorType::DIATONIC_VOICING: {
+                result.reserve(notes.size() * 2);
                 int32_t degreeShift = static_cast<int32_t>(recipe.param1 != 0.0f ? recipe.param1 : 2.0f);
                 int32_t style = static_cast<int32_t>(recipe.param2);
 
@@ -556,6 +560,7 @@ public:
             }
 
             case TransformOperatorType::DIATONIC_CASCADE_RUN: {
+                result.reserve(notes.size() * 4);
                 result.clear();
                 for (size_t i = 0; i < notes.size(); ++i) {
                     const auto& curr = notes[i];
@@ -780,6 +785,7 @@ public:
 
             // --- 20. MAQAM & BLUES MICROTONAL INFLECTOR ---
             case TransformOperatorType::MAQAM_MICROTONAL_BEND: {
+                result.reserve(notes.size() * 2);
                 std::uniform_real_distribution<float> probDist(0.0f, 1.0f);
                 for (const auto& n : notes) {
                     int32_t chroma = (n.pitch - context.rootKey) % 12;

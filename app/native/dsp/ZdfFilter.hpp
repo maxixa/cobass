@@ -195,7 +195,9 @@ private:
         G3_ = g1_ * g1_ * g1_;
         G4_ = G3_ * g1_;
 
-        updateFormants();
+        if (mode_ == ZdfFilterMode::FormantVowel) {
+            updateFormants();
+        }
     }
 
     void updateFormants() noexcept {

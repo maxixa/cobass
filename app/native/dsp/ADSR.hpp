@@ -100,6 +100,7 @@ public:
     }
 
     bool isActive() const noexcept { return state_ != EnvelopeState::Idle; }
+    EnvelopeState getState() const noexcept { return state_; }
     float getCurrentValue() const noexcept { return currentValue_; }
 
     void reset() noexcept {

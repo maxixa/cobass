@@ -391,21 +391,17 @@ public class PianoRollEditorDialog extends Dialog {
     private void updatePlayButtonState() {
         if (btnPlay == null) return;
         boolean playing = AudioEngineNative.isLoaded() && AudioEngineNative.nativeIsPlaying();
-        btnPlay.setText(playing ? "⏸" : "▶");
-        btnPlay.setTextColor(playing ? Color.parseColor("#30D158") : Color.parseColor("#FFFFFF"));
-        btnPlay.setBackgroundColor(playing ? Color.parseColor("#1B4D2E") : Color.parseColor("#163824"));
+        CobassInteraction.applyPlayState(btnPlay, playing);
     }
 
     private void updateLoopButtonState() {
         if (btnLoop == null) return;
-        btnLoop.setBackgroundColor(isLooping ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-        btnLoop.setTextColor(isLooping ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
+        CobassInteraction.applyTransportToggle(btnLoop, isLooping);
     }
 
     private void updateFollowButtonState() {
         if (btnFollow == null) return;
-        btnFollow.setBackgroundColor(isFollowingPlayhead ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-        btnFollow.setTextColor(isFollowingPlayhead ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
+        CobassInteraction.applyTransportToggle(btnFollow, isFollowingPlayhead);
     }
 
     private void updateScaleButtonState() {
@@ -441,40 +437,15 @@ public class PianoRollEditorDialog extends Dialog {
 
     private void setToolMode(ToolMode mode) {
         if (pianoRollCanvas != null) pianoRollCanvas.setToolMode(mode);
-
-        if (btnPencil != null) {
-            btnPencil.setBackgroundColor(mode == ToolMode.PENCIL ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnPencil.setTextColor(mode == ToolMode.PENCIL ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-        if (btnBrush != null) {
-            btnBrush.setBackgroundColor(mode == ToolMode.BRUSH ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnBrush.setTextColor(mode == ToolMode.BRUSH ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-        if (btnSplit != null) {
-            btnSplit.setBackgroundColor(mode == ToolMode.SPLIT ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnSplit.setTextColor(mode == ToolMode.SPLIT ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-        if (btnGlue != null) {
-            btnGlue.setBackgroundColor(mode == ToolMode.GLUE ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnGlue.setTextColor(mode == ToolMode.GLUE ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-        if (btnChop != null) {
-            btnChop.setBackgroundColor(mode == ToolMode.CHOP ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnChop.setTextColor(mode == ToolMode.CHOP ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-        if (btnSelect != null) {
-            btnSelect.setBackgroundColor(mode == ToolMode.SELECT ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnSelect.setTextColor(mode == ToolMode.SELECT ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-                Button btnWandBtn = findViewById(R.id.btnPrToolWand);
-        if (btnWandBtn != null) {
-            btnWandBtn.setBackgroundColor(mode == ToolMode.WAND ? COLOR_BG_ACTIVE : COLOR_BG_IDLE);
-            btnWandBtn.setTextColor(mode == ToolMode.WAND ? COLOR_ACCENT_BLUE : COLOR_TEXT_DIM);
-        }
-        if (btnErase != null) {
-            btnErase.setBackgroundColor(mode == ToolMode.ERASER ? Color.parseColor("#4D1C1E") : COLOR_BG_IDLE);
-            btnErase.setTextColor(mode == ToolMode.ERASER ? Color.parseColor("#FF453A") : COLOR_TEXT_DIM);
-        }
+        CobassInteraction.applyToolState(btnPencil, mode == ToolMode.PENCIL, false);
+        CobassInteraction.applyToolState(btnBrush, mode == ToolMode.BRUSH, false);
+        CobassInteraction.applyToolState(btnSplit, mode == ToolMode.SPLIT, false);
+        CobassInteraction.applyToolState(btnGlue, mode == ToolMode.GLUE, false);
+        CobassInteraction.applyToolState(btnChop, mode == ToolMode.CHOP, false);
+        CobassInteraction.applyToolState(btnSelect, mode == ToolMode.SELECT, false);
+        Button btnWandBtn = findViewById(R.id.btnPrToolWand);
+        CobassInteraction.applyToolState(btnWandBtn, mode == ToolMode.WAND, false);
+        CobassInteraction.applyToolState(btnErase, mode == ToolMode.ERASER, true);
     }
 
     private void performUndo() {
@@ -496,14 +467,8 @@ public class PianoRollEditorDialog extends Dialog {
     }
 
     private void updateUndoRedoButtonStates() {
-        if (btnUndo != null) {
-            btnUndo.setEnabled(historyManager.canUndo());
-            btnUndo.setAlpha(historyManager.canUndo() ? 1.0f : 0.35f);
-        }
-        if (btnRedo != null) {
-            btnRedo.setEnabled(historyManager.canRedo());
-            btnRedo.setAlpha(historyManager.canRedo() ? 1.0f : 0.35f);
-        }
+        CobassInteraction.applyUndoRedoState(btnUndo, historyManager.canUndo());
+        CobassInteraction.applyUndoRedoState(btnRedo, historyManager.canRedo());
     }
 
     private void startPlayheadLoop() {

@@ -2,14 +2,11 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,39 +59,22 @@ public class VariationStudioDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+        float density = getContext().getResources().getDisplayMetrics().density;
+
         if (AudioEngineNative.isLoaded()) {
             currentStateJson = AudioEngineNative.nativeGetPluginStateJson(trackId, slotIndex);
         }
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#171922"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
-
-        // Header Title
-        TextView title = new TextView(getContext());
-        title.setText("🎲 Intelligent Patch Variation Studio");
-        title.setTextColor(Color.parseColor("#FFD60A"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        TextView subTitle = new TextView(getContext());
-        subTitle.setText("Plugin: " + (descriptor != null ? descriptor.getName() : "Synthesizer Engine"));
-        subTitle.setTextColor(Color.parseColor("#8E8E93"));
-        subTitle.setTextSize(11f);
-        subTitle.setPadding(0, 4, 0, 12);
-        layout.addView(subTitle);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
         // 1. Intensity Slider & Tier Indicator
         TextView txtIntensity = new TextView(getContext());
         txtIntensity.setText("Variation Intensity: Medium (35%)");
-        txtIntensity.setTextColor(Color.WHITE);
-        txtIntensity.setTextSize(12f);
+        CobassTypography.applyBody(txtIntensity);
+        txtIntensity.setTextColor(CobassTheme.TEXT_PRIMARY);
         txtIntensity.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(txtIntensity);
+        content.addView(txtIntensity);
 
         SeekBar seekIntensity = new SeekBar(getContext());
         seekIntensity.setMax(95); // 5% to 100%
@@ -113,104 +93,94 @@ public class VariationStudioDialog extends Dialog {
             @Override public void onStartTrackingTouch(SeekBar s) {}
             @Override public void onStopTrackingTouch(SeekBar s) {}
         });
-        layout.addView(seekIntensity);
+        content.addView(seekIntensity);
 
         // 2. Sectional Module Locks
         TextView txtLocks = new TextView(getContext());
         txtLocks.setText("MODULE LOCK MASKS (Protect sections from mutation)");
-        txtLocks.setTextColor(Color.parseColor("#8E8E93"));
-        txtLocks.setTextSize(11f);
-        txtLocks.setPadding(0, 12, 0, 6);
-        txtLocks.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(txtLocks);
+        CobassTypography.applyCaption(txtLocks);
+        txtLocks.setPadding(0, Math.round(CobassSpacing.SPACE_MD * density), 0, Math.round(CobassSpacing.SPACE_XS * density));
+        content.addView(txtLocks);
 
         LinearLayout rowLock1 = new LinearLayout(getContext());
         rowLock1.setOrientation(LinearLayout.HORIZONTAL);
         addLockToggle(rowLock1, "Oscillators", () -> lockMasks.lockOscillators = !lockMasks.lockOscillators, lockMasks.lockOscillators);
         addLockToggle(rowLock1, "Filter / Cutoff", () -> lockMasks.lockFilter = !lockMasks.lockFilter, lockMasks.lockFilter);
-        layout.addView(rowLock1);
+        content.addView(rowLock1);
 
         LinearLayout rowLock2 = new LinearLayout(getContext());
         rowLock2.setOrientation(LinearLayout.HORIZONTAL);
-        rowLock2.setPadding(0, 4, 0, 4);
+        rowLock2.setPadding(0, Math.round(2 * density), 0, Math.round(2 * density));
         addLockToggle(rowLock2, "Envelopes", () -> lockMasks.lockEnvelopes = !lockMasks.lockEnvelopes, lockMasks.lockEnvelopes);
         addLockToggle(rowLock2, "LFO / Mods", () -> lockMasks.lockLfo = !lockMasks.lockLfo, lockMasks.lockLfo);
-        layout.addView(rowLock2);
+        content.addView(rowLock2);
 
         LinearLayout rowLock3 = new LinearLayout(getContext());
         rowLock3.setOrientation(LinearLayout.HORIZONTAL);
-        rowLock3.setPadding(0, 0, 0, 8);
+        rowLock3.setPadding(0, 0, 0, Math.round(CobassSpacing.SPACE_SM * density));
         addLockToggle(rowLock3, "Studio FX Rack", () -> lockMasks.lockFx = !lockMasks.lockFx, lockMasks.lockFx);
         addLockToggle(rowLock3, "Master / Glide", () -> lockMasks.lockMaster = !lockMasks.lockMaster, lockMasks.lockMaster);
-        layout.addView(rowLock3);
+        content.addView(rowLock3);
 
         // 3. Musical Constraint Toggles
         LinearLayout rowConstraints = new LinearLayout(getContext());
         rowConstraints.setOrientation(LinearLayout.HORIZONTAL);
-        rowConstraints.setPadding(0, 4, 0, 10);
+        rowConstraints.setPadding(0, Math.round(2 * density), 0, Math.round(CobassSpacing.SPACE_MD * density));
 
         Button btnHarmonics = new Button(getContext());
-        btnHarmonics.setText(snapHarmonics ? "✓ Snap Harmonics (0, ±7, ±12st)" : "✗ Free Unquantized Pitch");
-        btnHarmonics.setTextSize(10f);
-        btnHarmonics.setBackgroundColor(snapHarmonics ? Color.parseColor("#163824") : Color.parseColor("#2C2F3C"));
-        btnHarmonics.setTextColor(snapHarmonics ? Color.parseColor("#30D158") : Color.WHITE);
-        btnHarmonics.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        btnHarmonics.setText(snapHarmonics ? "✓ Snap Harmonics" : "✗ Free Pitch");
+        CobassButton.apply(btnHarmonics, snapHarmonics ? CobassButton.Variant.SUCCESS : CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        hLp.rightMargin = Math.round(2 * density);
+        btnHarmonics.setLayoutParams(hLp);
         btnHarmonics.setOnClickListener(v -> {
             snapHarmonics = !snapHarmonics;
-            btnHarmonics.setText(snapHarmonics ? "✓ Snap Harmonics (0, ±7, ±12st)" : "✗ Free Unquantized Pitch");
-            btnHarmonics.setBackgroundColor(snapHarmonics ? Color.parseColor("#163824") : Color.parseColor("#2C2F3C"));
-            btnHarmonics.setTextColor(snapHarmonics ? Color.parseColor("#30D158") : Color.WHITE);
+            btnHarmonics.setText(snapHarmonics ? "✓ Snap Harmonics" : "✗ Free Pitch");
+            CobassButton.apply(btnHarmonics, snapHarmonics ? CobassButton.Variant.SUCCESS : CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
         });
         rowConstraints.addView(btnHarmonics);
 
         Button btnAutoGain = new Button(getContext());
-        btnAutoGain.setText(autoGainStage ? "✓ Headroom Auto-Trim" : "✗ Manual Gain Staging");
-        btnAutoGain.setTextSize(10f);
-        btnAutoGain.setBackgroundColor(autoGainStage ? Color.parseColor("#163824") : Color.parseColor("#2C2F3C"));
-        btnAutoGain.setTextColor(autoGainStage ? Color.parseColor("#30D158") : Color.WHITE);
+        btnAutoGain.setText(autoGainStage ? "✓ Headroom Auto-Trim" : "✗ Manual Gain");
+        CobassButton.apply(btnAutoGain, autoGainStage ? CobassButton.Variant.SUCCESS : CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
         LinearLayout.LayoutParams agLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        agLp.setMargins(6, 0, 0, 0);
+        agLp.leftMargin = Math.round(2 * density);
         btnAutoGain.setLayoutParams(agLp);
         btnAutoGain.setOnClickListener(v -> {
             autoGainStage = !autoGainStage;
-            btnAutoGain.setText(autoGainStage ? "✓ Headroom Auto-Trim" : "✗ Manual Gain Staging");
-            btnAutoGain.setBackgroundColor(autoGainStage ? Color.parseColor("#163824") : Color.parseColor("#2C2F3C"));
-            btnAutoGain.setTextColor(autoGainStage ? Color.parseColor("#30D158") : Color.WHITE);
+            btnAutoGain.setText(autoGainStage ? "✓ Headroom Auto-Trim" : "✗ Manual Gain");
+            CobassButton.apply(btnAutoGain, autoGainStage ? CobassButton.Variant.SUCCESS : CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
         });
         rowConstraints.addView(btnAutoGain);
-        layout.addView(rowConstraints);
+        content.addView(rowConstraints);
 
         // 4. Action Buttons (Mutate, Rollback, Save)
         Button btnMutate = new Button(getContext());
         btnMutate.setText("🎲 MUTATE VARIATION");
-        btnMutate.setTextSize(12f);
-        btnMutate.setTypeface(null, android.graphics.Typeface.BOLD);
-        btnMutate.setBackgroundColor(Color.parseColor("#0A84FF"));
-        btnMutate.setTextColor(Color.WHITE);
-        btnMutate.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 88));
+        CobassButton.apply(btnMutate, CobassButton.Variant.PRIMARY, CobassButton.Size.LARGE);
+        LinearLayout.LayoutParams mtrLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        btnMutate.setLayoutParams(mtrLp);
         btnMutate.setOnClickListener(v -> performMutation());
-        layout.addView(btnMutate);
+        content.addView(btnMutate);
 
         LinearLayout rowSubActions = new LinearLayout(getContext());
         rowSubActions.setOrientation(LinearLayout.HORIZONTAL);
-        rowSubActions.setPadding(0, 6, 0, 10);
+        rowSubActions.setPadding(0, Math.round(CobassSpacing.SPACE_SM * density), 0, Math.round(CobassSpacing.SPACE_MD * density));
 
         Button btnRollback = new Button(getContext());
         btnRollback.setText("↶ Rollback Previous");
-        btnRollback.setTextSize(10f);
-        btnRollback.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnRollback.setTextColor(Color.WHITE);
-        btnRollback.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        CobassButton.apply(btnRollback, CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams rbLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        rbLp.rightMargin = Math.round(2 * density);
+        btnRollback.setLayoutParams(rbLp);
         btnRollback.setOnClickListener(v -> performRollback());
         rowSubActions.addView(btnRollback);
 
         Button btnSaveNew = new Button(getContext());
-        btnSaveNew.setText("💾 Save As Preset");
-        btnSaveNew.setTextSize(10f);
-        btnSaveNew.setBackgroundColor(Color.parseColor("#163824"));
-        btnSaveNew.setTextColor(Color.parseColor("#30D158"));
+        btnSaveNew.setText("💾 Save Preset");
+        CobassButton.apply(btnSaveNew, CobassButton.Variant.SUCCESS, CobassButton.Size.STANDARD);
         LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        saveLp.setMargins(6, 0, 0, 0);
+        saveLp.leftMargin = Math.round(2 * density);
         btnSaveNew.setLayoutParams(saveLp);
         btnSaveNew.setOnClickListener(v -> {
             if (presetActionListener != null && descriptor != null) {
@@ -218,48 +188,46 @@ public class VariationStudioDialog extends Dialog {
             }
         });
         rowSubActions.addView(btnSaveNew);
-        layout.addView(rowSubActions);
+        content.addView(rowSubActions);
 
         // 5. In-Dialog Audition Ribbon
         LinearLayout audRow = new LinearLayout(getContext());
         audRow.setOrientation(LinearLayout.HORIZONTAL);
-        audRow.setPadding(0, 4, 0, 10);
+        audRow.setPadding(0, 0, 0, Math.round(CobassSpacing.SPACE_SM * density));
 
         if (descriptor != null && descriptor.getPluginId().contains("drums")) {
-            addAuditionPad(audRow, "▶ Kick", 36, Color.parseColor("#0A84FF"));
-            addAuditionPad(audRow, "▶ Snare", 38, Color.parseColor("#FF9F0A"));
-            addAuditionPad(audRow, "▶ Clap", 39, Color.parseColor("#30D158"));
-            addAuditionPad(audRow, "▶ Cl.Hat", 42, Color.parseColor("#BF5AF2"));
-            addAuditionPad(audRow, "▶ Op.Hat", 46, Color.parseColor("#FF453A"));
-            addAuditionPad(audRow, "▶ Cowbell", 56, Color.parseColor("#FFD60A"));
+            addAuditionPad(audRow, "▶ Kick", 36, CobassTheme.DRUM_PALETTE[0]);
+            addAuditionPad(audRow, "▶ Snare", 38, CobassTheme.DRUM_PALETTE[1]);
+            addAuditionPad(audRow, "▶ Clap", 39, CobassTheme.DRUM_PALETTE[5]);
+            addAuditionPad(audRow, "▶ Cl.Hat", 42, CobassTheme.DRUM_PALETTE[2]);
+            addAuditionPad(audRow, "▶ Op.Hat", 46, CobassTheme.DRUM_PALETTE[3]);
+            addAuditionPad(audRow, "▶ Cowbell", 56, CobassTheme.DRUM_PALETTE[6]);
         } else {
-            addAuditionPad(audRow, "▶ C2 Sub", 36, Color.parseColor("#0A84FF"));
-            addAuditionPad(audRow, "▶ C3 Bass", 48, Color.parseColor("#30D158"));
-            addAuditionPad(audRow, "▶ C4 Pluck", 60, Color.parseColor("#FF9F0A"));
-            addAuditionPad(audRow, "▶ C5 Lead", 72, Color.parseColor("#BF5AF2"));
+            addAuditionPad(audRow, "▶ C2 Sub", 36, CobassTheme.ACCENT_PRIMARY);
+            addAuditionPad(audRow, "▶ C3 Bass", 48, CobassTheme.ACCENT_SUCCESS);
+            addAuditionPad(audRow, "▶ C4 Pluck", 60, CobassTheme.ACCENT_ORANGE);
+            addAuditionPad(audRow, "▶ C5 Lead", 72, CobassTheme.ACCENT_PURPLE);
         }
-        layout.addView(audRow);
+        content.addView(audRow);
 
-        Button btnDone = new Button(getContext());
-        btnDone.setText("Done");
-        btnDone.setBackgroundColor(Color.parseColor("#242734"));
-        btnDone.setTextColor(Color.WHITE);
-        btnDone.setOnClickListener(v -> dismiss());
-        layout.addView(btnDone);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🎲 Intelligent Patch Variation",
+            "Plugin: " + (descriptor != null ? descriptor.getName() : "Synthesizer Engine"),
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 
     private void addLockToggle(LinearLayout parent, String name, Runnable onToggle, boolean initial) {
+        float density = getContext().getResources().getDisplayMetrics().density;
         Button btn = new Button(getContext());
         updateLockBtn(btn, name, initial);
-        btn.setTextSize(10f);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 75, 1f);
-        lp.setMargins(0, 0, 4, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        lp.setMargins(Math.round(2 * density), 0, Math.round(2 * density), 0);
         btn.setLayoutParams(lp);
         btn.setOnClickListener(v -> {
             onToggle.run();
@@ -271,25 +239,19 @@ public class VariationStudioDialog extends Dialog {
 
     private void updateLockBtn(Button btn, String name, boolean locked) {
         btn.setText(locked ? ("🔒 " + name + " (LOCKED)") : ("🔓 " + name));
-        btn.setBackgroundColor(locked ? Color.parseColor("#3D1C22") : Color.parseColor("#20232E"));
-        btn.setTextColor(locked ? Color.parseColor("#FF453A") : Color.parseColor("#8E8E93"));
+        CobassButton.apply(btn, locked ? CobassButton.Variant.DANGER : CobassButton.Variant.SECONDARY, CobassButton.Size.COMPACT);
     }
 
     private void addAuditionPad(LinearLayout parent, String label, int midiNote, int color) {
+        float density = getContext().getResources().getDisplayMetrics().density;
         Button btn = new Button(getContext());
         btn.setText(label);
-        btn.setTextSize(9f);
-        btn.setTypeface(null, android.graphics.Typeface.BOLD);
-        btn.setTextColor(Color.WHITE);
-        btn.setBackgroundColor(color);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 68, 1.0f);
-        lp.setMargins(0, 0, 4, 0);
+        CobassButton.apply(btn, CobassButton.Variant.SECONDARY, CobassButton.Size.COMPACT);
+        btn.setTextColor(color);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+        lp.setMargins(0, 0, Math.round(2 * density), 0);
         btn.setLayoutParams(lp);
-        btn.setOnClickListener(v -> {
-            if (AudioEngineNative.isLoaded()) {
-                AudioEngineNative.nativeNoteOn(trackId, midiNote, 1.0f);
-            }
-        });
+        CobassInteraction.attachAuditionTouch(btn, trackId, midiNote, 1.0f);
         parent.addView(btn);
     }
 

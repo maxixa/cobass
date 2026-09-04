@@ -2,14 +2,11 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import com.maxica.cobass.model.MusicalScale;
@@ -38,103 +35,89 @@ public class ScaleStudioDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E24"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
+        float density = getContext().getResources().getDisplayMetrics().density;
 
-        TextView title = new TextView(getContext());
-        title.setText("🎹 Musical Scale & Keybed Intelligence");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
-        TextView secRoot = new TextView(getContext());
-        secRoot.setText("1. SELECT ROOT KEY");
-        secRoot.setTextColor(Color.WHITE);
-        secRoot.setTextSize(11f);
-        secRoot.setPadding(0, 10, 0, 6);
-        secRoot.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(secRoot);
-
-        LinearLayout rowRoots1 = new LinearLayout(getContext());
-        rowRoots1.setOrientation(LinearLayout.HORIZONTAL);
+        addSectionHeader(content, "1. SELECT ROOT KEY");
+        LinearLayout row1 = new LinearLayout(getContext());
+        row1.setOrientation(LinearLayout.HORIZONTAL);
         for (int i = 0; i < 6; i++) {
             final int rIdx = i;
             Button btn = new Button(getContext());
             btn.setText(ROOT_NAMES[i]);
-            btn.setTextSize(10f);
             boolean isSel = (selectedRootKey == i);
-            btn.setBackgroundColor(isSel ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-            btn.setTextColor(Color.WHITE);
-            btn.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            CobassButton.apply(btn, isSel ? CobassButton.Variant.PRIMARY : CobassButton.Variant.SECONDARY, CobassButton.Size.COMPACT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            lp.setMargins(Math.round(2 * density), 0, Math.round(2 * density), 0);
+            btn.setLayoutParams(lp);
             btn.setOnClickListener(v -> {
                 selectedRootKey = rIdx;
                 if (listener != null) listener.onScaleChanged(selectedScale, selectedRootKey);
                 dismiss();
             });
-            rowRoots1.addView(btn);
+            row1.addView(btn);
         }
-        layout.addView(rowRoots1);
+        content.addView(row1);
 
-        LinearLayout rowRoots2 = new LinearLayout(getContext());
-        rowRoots2.setOrientation(LinearLayout.HORIZONTAL);
-        rowRoots2.setPadding(0, 4, 0, 10);
+        LinearLayout row2 = new LinearLayout(getContext());
+        row2.setOrientation(LinearLayout.HORIZONTAL);
+        row2.setPadding(0, Math.round(4 * density), 0, Math.round(CobassSpacing.SPACE_SM * density));
         for (int i = 6; i < 12; i++) {
             final int rIdx = i;
             Button btn = new Button(getContext());
             btn.setText(ROOT_NAMES[i]);
-            btn.setTextSize(10f);
             boolean isSel = (selectedRootKey == i);
-            btn.setBackgroundColor(isSel ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-            btn.setTextColor(Color.WHITE);
-            btn.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            CobassButton.apply(btn, isSel ? CobassButton.Variant.PRIMARY : CobassButton.Variant.SECONDARY, CobassButton.Size.COMPACT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            lp.setMargins(Math.round(2 * density), 0, Math.round(2 * density), 0);
+            btn.setLayoutParams(lp);
             btn.setOnClickListener(v -> {
                 selectedRootKey = rIdx;
                 if (listener != null) listener.onScaleChanged(selectedScale, selectedRootKey);
                 dismiss();
             });
-            rowRoots2.addView(btn);
+            row2.addView(btn);
         }
-        layout.addView(rowRoots2);
+        content.addView(row2);
 
-        TextView secScale = new TextView(getContext());
-        secScale.setText("2. SELECT MUSICAL SCALE");
-        secScale.setTextColor(Color.WHITE);
-        secScale.setTextSize(11f);
-        secScale.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(secScale);
-
+        addSectionHeader(content, "2. SELECT MUSICAL SCALE");
         for (MusicalScale ms : MusicalScale.values()) {
             Button btn = new Button(getContext());
             btn.setText(ms.getLabel());
-            btn.setTextSize(11f);
             boolean isSel = (selectedScale == ms);
-            btn.setBackgroundColor(isSel ? Color.parseColor("#1C385C") : Color.parseColor("#242734"));
-            btn.setTextColor(isSel ? Color.parseColor("#0A84FF") : Color.WHITE);
-            btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            CobassButton.apply(btn, isSel ? CobassButton.Variant.PRIMARY : CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(0, Math.round(2 * density), 0, Math.round(2 * density));
+            btn.setLayoutParams(lp);
             btn.setOnClickListener(v -> {
                 selectedScale = ms;
                 if (listener != null) listener.onScaleChanged(selectedScale, selectedRootKey);
                 dismiss();
             });
-            layout.addView(btn);
+            content.addView(btn);
         }
 
-        Button btnDone = new Button(getContext());
-        btnDone.setText("Done");
-        btnDone.setBackgroundColor(Color.parseColor("#3A3A3C"));
-        btnDone.setTextColor(Color.WHITE);
-        btnDone.setOnClickListener(v -> dismiss());
-        layout.addView(btnDone);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🎹 Musical Scale Intelligence",
+            ROOT_NAMES[selectedRootKey] + " " + selectedScale.getLabel(),
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
+    }
+
+    private void addSectionHeader(LinearLayout parent, String text) {
+        TextView tv = new TextView(getContext());
+        tv.setText(text);
+        CobassTypography.applyCaption(tv);
+        tv.setTextColor(CobassTheme.TEXT_PRIMARY);
+        float density = getContext().getResources().getDisplayMetrics().density;
+        tv.setPadding(0, Math.round(CobassSpacing.SPACE_SM * density), 0, Math.round(CobassSpacing.SPACE_XS * density));
+        parent.addView(tv);
     }
 }

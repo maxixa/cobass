@@ -12,7 +12,10 @@ public:
         filter_.setSampleRate(sampleRate_);
         burstTimer_ = 0;
         burstIndex_ = 0;
+        currentBurstEnv_ = 0.0f;
         tailEnv_ = 0.0f;
+        fadeEnv_ = 0.0f;
+        lastSample_ = 0.0f;
         active_ = false;
         updateRates();
         updateFilter();
@@ -29,6 +32,14 @@ public:
 
     void trigger(float velocity) noexcept {
         velocity_ = std::clamp(velocity, 0.05f, 1.0f);
+
+        if (active_ && (tailEnv_ > 0.01f || currentBurstEnv_ > 0.01f)) {
+            fadeSample_ = lastSample_;
+            fadeEnv_ = 1.0f;
+        }
+
+        noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L + static_cast<uint32_t>(velocity * 88888.0f);
+
         burstIndex_ = 0;
         burstTimer_ = 0;
         currentBurstEnv_ = 1.0f;
@@ -40,12 +51,13 @@ public:
         active_ = false;
         tailEnv_ = 0.0f;
         currentBurstEnv_ = 0.0f;
+        fadeEnv_ = 0.0f;
+        lastSample_ = 0.0f;
     }
 
     inline float render() noexcept {
-        if (!active_) return 0.0f;
+        if (!active_ && fadeEnv_ <= 0.001f) return 0.0f;
 
-        // 3 Micro-bursts spaced by spreadSamples_ followed by diffuse tail
         if (burstIndex_ < 3) {
             burstTimer_++;
             if (burstTimer_ >= spreadSamples_) {
@@ -67,17 +79,23 @@ public:
         const float rawNoise = static_cast<float>((noiseSeed_ & 0x00FFFFFF) / static_cast<double>(0x007FFFFF)) - 1.0f;
         const float filtered = filter_.process(rawNoise);
 
-        const float out = filtered * totalEnv * velocity_ * 1.5f;
+        float out = std::tanh(filtered * totalEnv * velocity_ * 1.5f);
+
+        if (fadeEnv_ > 0.001f) {
+            out += fadeSample_ * fadeEnv_;
+            fadeEnv_ *= fadeDecayCoeff_;
+        }
 
         if (burstIndex_ >= 3 && tailEnv_ <= 0.0005f) {
             active_ = false;
             tailEnv_ = 0.0f;
         }
 
-        return std::tanh(out);
+        lastSample_ = out;
+        return out;
     }
 
-    bool isActive() const noexcept { return active_; }
+    bool isActive() const noexcept { return active_ || (fadeEnv_ > 0.001f); }
 
 private:
     void updateRates() noexcept {
@@ -85,6 +103,7 @@ private:
         spreadSamples_ = static_cast<int32_t>((spreadMs_ * 0.001f) * sampleRate_);
         burstDecayCoeff_ = std::exp(-1.0f / (0.003f * sampleRate_)); // 3ms micro impulse
         tailDecayCoeff_ = std::exp(-1.0f / ((decayMs_ * 0.001f) * sampleRate_));
+        fadeDecayCoeff_ = std::exp(-1.0f / (0.0015f * sampleRate_));
     }
 
     void updateFilter() noexcept {
@@ -104,8 +123,13 @@ private:
     float tailEnv_ = 0.0f;
     float velocity_ = 1.0f;
     bool active_ = false;
-    uint32_t noiseSeed_ = 999111;
 
+    float lastSample_ = 0.0f;
+    float fadeSample_ = 0.0f;
+    float fadeEnv_ = 0.0f;
+    float fadeDecayCoeff_ = 0.90f;
+
+    uint32_t noiseSeed_ = 999111;
     float burstDecayCoeff_ = 0.90f;
     float tailDecayCoeff_ = 0.999f;
     BiquadFilter filter_;

@@ -2,15 +2,11 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 public class ChordStudioDialog extends Dialog {
@@ -31,68 +27,53 @@ public class ChordStudioDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E24"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
+        float density = getContext().getResources().getDisplayMetrics().density;
 
-        TextView title = new TextView(getContext());
-        title.setText("🎸 Chord Stamper Presets");
-        title.setTextColor(Color.parseColor("#FFD60A"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        TextView subTitle = new TextView(getContext());
-        subTitle.setText("Tap a preset then tap on the canvas to stamp full chords");
-        subTitle.setTextColor(Color.parseColor("#8E8E93"));
-        subTitle.setTextSize(11f);
-        subTitle.setPadding(0, 4, 0, 12);
-        layout.addView(subTitle);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
         Button btnSingle = new Button(getContext());
         btnSingle.setText("Single Note (Off / Default)");
-        btnSingle.setBackgroundColor(Color.parseColor("#2C2C2E"));
-        btnSingle.setTextColor(Color.WHITE);
+        CobassButton.apply(btnSingle, CobassButton.Variant.GHOST, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        sLp.setMargins(0, 0, 0, Math.round(CobassSpacing.SPACE_SM * density));
+        btnSingle.setLayoutParams(sLp);
         btnSingle.setOnClickListener(v -> {
             if (listener != null) listener.onChordSelected(null, null);
             dismiss();
         });
-        layout.addView(btnSingle);
+        content.addView(btnSingle);
 
-        addChordOption(layout, "Major Triad (1 - 3 - 5)", new int[]{0, 4, 7});
-        addChordOption(layout, "Minor Triad (1 - b3 - 5)", new int[]{0, 3, 7});
-        addChordOption(layout, "Dominant 7th (1 - 3 - 5 - b7)", new int[]{0, 4, 7, 10});
-        addChordOption(layout, "Major 7th (1 - 3 - 5 - 7)", new int[]{0, 4, 7, 11});
-        addChordOption(layout, "Minor 7th (1 - b3 - 5 - b7)", new int[]{0, 3, 7, 10});
-        addChordOption(layout, "Suspended 4th (1 - 4 - 5)", new int[]{0, 5, 7});
-        addChordOption(layout, "Diminished (1 - b3 - b5)", new int[]{0, 3, 6});
-        addChordOption(layout, "Augmented (1 - 3 - #5)", new int[]{0, 4, 8});
-        addChordOption(layout, "Add 9 (1 - 3 - 5 - 9)", new int[]{0, 4, 7, 14});
+        addChordOption(content, "Major Triad (1 - 3 - 5)", new int[]{0, 4, 7});
+        addChordOption(content, "Minor Triad (1 - b3 - 5)", new int[]{0, 3, 7});
+        addChordOption(content, "Dominant 7th (1 - 3 - 5 - b7)", new int[]{0, 4, 7, 10});
+        addChordOption(content, "Major 7th (1 - 3 - 5 - 7)", new int[]{0, 4, 7, 11});
+        addChordOption(content, "Minor 7th (1 - b3 - 5 - b7)", new int[]{0, 3, 7, 10});
+        addChordOption(content, "Suspended 4th (1 - 4 - 5)", new int[]{0, 5, 7});
+        addChordOption(content, "Diminished (1 - b3 - b5)", new int[]{0, 3, 6});
+        addChordOption(content, "Augmented (1 - 3 - #5)", new int[]{0, 4, 8});
+        addChordOption(content, "Add 9 (1 - 3 - 5 - 9)", new int[]{0, 4, 7, 14});
 
-        Button btnCancel = new Button(getContext());
-        btnCancel.setText("Cancel");
-        btnCancel.setBackgroundColor(Color.parseColor("#3A3A3C"));
-        btnCancel.setTextColor(Color.WHITE);
-        btnCancel.setOnClickListener(v -> dismiss());
-        layout.addView(btnCancel);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🎸 Chord Stamper Presets",
+            "Tap a chord preset to stamp polyphonic harmonies on grid tap",
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 
     private void addChordOption(LinearLayout layout, String label, int[] intervals) {
+        float density = getContext().getResources().getDisplayMetrics().density;
         Button btn = new Button(getContext());
         btn.setText(label);
-        btn.setTextSize(11f);
-        btn.setBackgroundColor(Color.parseColor("#242734"));
-        btn.setTextColor(Color.WHITE);
-        btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        CobassButton.apply(btn, CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, Math.round(2 * density), 0, Math.round(2 * density));
+        btn.setLayoutParams(lp);
         btn.setOnClickListener(v -> {
             if (listener != null) listener.onChordSelected(label, intervals);
             dismiss();

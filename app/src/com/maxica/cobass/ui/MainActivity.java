@@ -343,19 +343,14 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
     }
 
     private void updateUndoRedoUI() {
-        if (btnArrUndo != null && arrangerView != null) {
-            btnArrUndo.setEnabled(arrangerView.canUndo());
-            btnArrUndo.setAlpha(arrangerView.canUndo() ? 1.0f : 0.35f);
-        }
-        if (btnArrRedo != null && arrangerView != null) {
-            btnArrRedo.setEnabled(arrangerView.canRedo());
-            btnArrRedo.setAlpha(arrangerView.canRedo() ? 1.0f : 0.35f);
-        }
+        if (arrangerView == null) return;
+        CobassInteraction.applyUndoRedoState(btnArrUndo, arrangerView.canUndo());
+        CobassInteraction.applyUndoRedoState(btnArrRedo, arrangerView.canRedo());
     }
 
     private void updateLoopButtonUI() {
         if (btnLoop == null) return;
-        btnLoop.setBackgroundColor(isLooping ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
+        CobassInteraction.applyTransportToggle(btnLoop, isLooping);
         btnLoop.setText(isLooping ? "LOOP ON" : "LOOP OFF");
     }
 
@@ -708,12 +703,12 @@ public class MainActivity extends AppCompatActivity implements ArrangerTimelineV
 
     private void setTool(ToolMode mode) {
         if (arrangerView != null) arrangerView.setToolMode(mode);
-        if (btnToolSelect != null) btnToolSelect.setBackgroundColor(mode == ToolMode.SELECT ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-        if (btnToolPencil != null) btnToolPencil.setBackgroundColor(mode == ToolMode.PENCIL ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-        if (btnToolSplit != null) btnToolSplit.setBackgroundColor(mode == ToolMode.SPLIT ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-        if (btnToolGlue != null) btnToolGlue.setBackgroundColor(mode == ToolMode.GLUE ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-        if (btnToolSlip != null) btnToolSlip.setBackgroundColor(mode == ToolMode.SLIP ? Color.parseColor("#0A84FF") : Color.parseColor("#2C2C2E"));
-        if (btnToolEraser != null) btnToolEraser.setBackgroundColor(mode == ToolMode.ERASER ? Color.parseColor("#FF453A") : Color.parseColor("#2C2C2E"));
+        CobassInteraction.applyToolState(btnToolSelect, mode == ToolMode.SELECT, false);
+        CobassInteraction.applyToolState(btnToolPencil, mode == ToolMode.PENCIL, false);
+        CobassInteraction.applyToolState(btnToolSplit, mode == ToolMode.SPLIT, false);
+        CobassInteraction.applyToolState(btnToolGlue, mode == ToolMode.GLUE, false);
+        CobassInteraction.applyToolState(btnToolSlip, mode == ToolMode.SLIP, false);
+        CobassInteraction.applyToolState(btnToolEraser, mode == ToolMode.ERASER, true);
     }
 
     private void addSynthTrackWithDemoClip() {

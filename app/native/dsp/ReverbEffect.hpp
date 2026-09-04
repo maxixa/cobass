@@ -69,8 +69,15 @@ public:
             return;
         }
 
+        const float wet = wetMix_;
+        const float dry = 1.0f - wetMix_;
+        const float* inPtr = inBuffer;
+        float* outPtr = outBuffer;
+
         for (int32_t i = 0; i < numFrames; ++i) {
-            float in = (inBuffer[i * 2] + inBuffer[i * 2 + 1]) * 0.5f * 0.025f;
+            const float inL = inPtr[0];
+            const float inR = inPtr[1];
+            const float in = (inL + inR) * 0.0125f; // 0.5f * 0.025f
             float combSumL = 0.0f;
             float combSumR = 0.0f;
 
@@ -81,14 +88,14 @@ public:
             }
 
             // All-pass diffusers (2 per channel)
-            float outL = allPassFilters_[1].process(allPassFilters_[0].process(combSumL));
-            float outR = allPassFilters_[3].process(allPassFilters_[2].process(combSumR));
+            const float outL = allPassFilters_[1].process(allPassFilters_[0].process(combSumL));
+            const float outR = allPassFilters_[3].process(allPassFilters_[2].process(combSumR));
 
-            float wet = wetMix_;
-            float dry = (1.0f - wetMix_);
+            outPtr[0] = inL * dry + outL * wet;
+            outPtr[1] = inR * dry + outR * wet;
 
-            outBuffer[i * 2]     = inBuffer[i * 2] * dry + outL * wet;
-            outBuffer[i * 2 + 1] = inBuffer[i * 2 + 1] * dry + outR * wet;
+            inPtr += 2;
+            outPtr += 2;
         }
     }
 

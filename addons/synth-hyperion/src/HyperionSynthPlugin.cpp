@@ -127,6 +127,7 @@ public:
         std::fill(haasBuffer_.begin(), haasBuffer_.end(), 0.0f);
         delayWriteIdx_ = 0;
         haasWriteIdx_ = 0;
+        delayDampL_ = delayDampR_ = 0.0f;
         ottEnvL_ = ottEnvR_ = 0.0f;
         for (int i = 0; i < 8; ++i) {
             std::fill(verbCombs_[i].begin(), verbCombs_[i].end(), 0.0f);
@@ -183,8 +184,13 @@ public:
             float dL = delayBufferL_[readIdxL];
             float dR = delayBufferR_[readIdxR];
 
-            delayBufferL_[delayWriteIdx_] = sL + dR * delayFb;
-            delayBufferR_[delayWriteIdx_] = sR + dL * delayFb;
+            // BUG-6 FIX: 1-pole low-pass feedback damping to remove metallic harshness
+            const float dampCoeff = 0.40f;
+            delayDampL_ = (dL * (1.0f - dampCoeff)) + (delayDampL_ * dampCoeff);
+            delayDampR_ = (dR * (1.0f - dampCoeff)) + (delayDampR_ * dampCoeff);
+
+            delayBufferL_[delayWriteIdx_] = sL + delayDampR_ * delayFb;
+            delayBufferR_[delayWriteIdx_] = sR + delayDampL_ * delayFb;
             delayWriteIdx_ = (delayWriteIdx_ + 1) % MAX_DELAY_SAMPLES;
 
             sL = sL * (1.0f - delayMix) + dL * delayMix;
@@ -196,10 +202,11 @@ public:
             float inMono = (sL + sR) * 0.5f * 0.025f;
             float combSumL = 0.0f, combSumR = 0.0f;
 
+            const float safeVerbSize = std::min(0.92f, verbSize); // MINOR-4 FIX: feedback runaway protection
             for (int k = 0; k < 8; ++k) {
                 float outC = verbCombs_[k][verbCombIdx_[k]];
                 verbDampState_[k] = (outC * 0.75f) + (verbDampState_[k] * 0.25f);
-                verbCombs_[k][verbCombIdx_[k]] = inMono + (verbDampState_[k] * verbSize);
+                verbCombs_[k][verbCombIdx_[k]] = inMono + (verbDampState_[k] * safeVerbSize);
                 if (++verbCombIdx_[k] >= verbCombs_[k].size()) verbCombIdx_[k] = 0;
 
                 if (k % 2 == 0) combSumL += outC;
@@ -263,6 +270,8 @@ private:
 
     std::vector<float> haasBuffer_;
     size_t haasWriteIdx_ = 0;
+    float delayDampL_ = 0.0f;
+    float delayDampR_ = 0.0f;
 
     std::array<std::vector<float>, 8> verbCombs_;
     std::array<size_t, 8> verbCombIdx_{};
@@ -287,6 +296,14 @@ private:
 
         float punchEnv = 0.0f;
         float punchDecayCoeff = 0.95f;
+        uint64_t noteOnTime = 0;
+
+        // BUG-4 FIX: Filter parameter caching to eliminate per-sample recalculations
+        float lastCutoff = -1.0f;
+        float lastRes = -1.0f;
+        float lastDrive = -1.0f;
+        float lastVowel = -1.0f;
+        ZdfFilterMode lastMode = static_cast<ZdfFilterMode>(-1);
 
         std::array<PolyBlepOscillator, 8> osc1Stack;
         std::array<PolyBlepOscillator, 8> osc2Stack;
@@ -311,11 +328,13 @@ private:
             filterR.setSampleRate(sampleRate);
         }
 
-        void trigger(int32_t midiNote, float vel, float sampleRate, float glideMs, float punchDecayMs) {
+        void trigger(int32_t midiNote, float vel, float sampleRate, float glideMs, float punchDecayMs, int osc1UnisonN = 8, int osc2UnisonN = 8) {
             targetFreq = 440.0f * std::pow(2.0f, (midiNote - 69) / 12.0f);
 
-            if (active && glideMs > 0.001f) {
-                glideCoeff = 1.0f - std::exp(-1.0f / (std::max(0.001f, glideMs * 0.00035f) * sampleRate));
+            // BUG-5 & ISSUE-1 FIX: Legato only on sustain; accurate millisecond scaling (0.001f)
+            const bool isLegato = active && (ampEnv.getState() == EnvelopeState::Sustain);
+            if (isLegato && glideMs > 0.001f) {
+                glideCoeff = 1.0f - std::exp(-1.0f / (std::max(0.001f, glideMs * 0.001f) * sampleRate));
             } else {
                 currentFreq = targetFreq;
                 glideCoeff = 1.0f;
@@ -328,15 +347,21 @@ private:
             punchEnv = 1.0f;
             punchDecayCoeff = std::exp(-1.0f / (std::max(0.002f, punchDecayMs * 0.001f) * sampleRate));
 
+            // ISSUE-3 FIX: Normalized unison phase spread by active voice count
+            const int div1 = std::max(1, osc1UnisonN);
+            const int div2 = std::max(1, osc2UnisonN);
             for (size_t i = 0; i < 8; ++i) {
-                osc1Stack[i].resetPhase(static_cast<double>(i) / 8.0);
-                osc2Stack[i].resetPhase(static_cast<double>(i) / 8.0);
+                osc1Stack[i].resetPhase(static_cast<double>(i) / static_cast<double>(div1));
+                osc2Stack[i].resetPhase(static_cast<double>(i) / static_cast<double>(div2));
             }
+            // BUG-3 FIX: Sub oscillator phase reset eliminates note-on clicks
+            oscSub.resetPhase(0.0);
 
             ampEnv.gate(true);
             modEnv.gate(true);
             filterL.reset();
             filterR.reset();
+            lastCutoff = -1.0f; // Invalidate filter parameter cache
         }
 
         void release() {
@@ -354,6 +379,7 @@ private:
             filterL.reset();
             filterR.reset();
             punchEnv = 0.0f;
+            lastCutoff = -1.0f;
         }
 
         float getEnergy() const noexcept {
@@ -389,24 +415,44 @@ public:
 
     void noteOn(int32_t note, float velocity) {
         Voice* target = nullptr;
+        // 1. First pick an idle voice
         for (auto& v : voices_) {
             if (!v.active) {
                 target = &v;
                 break;
             }
         }
+        // 2. ISSUE-2 FIX: Prefer stealing voice in release phase with lowest energy
         if (!target) {
             float minEnergy = 999.0f;
             for (auto& v : voices_) {
-                float e = v.getEnergy();
-                if (e < minEnergy) {
-                    minEnergy = e;
+                if (v.ampEnv.getState() == EnvelopeState::Release) {
+                    float e = v.getEnergy();
+                    if (e < minEnergy) {
+                        minEnergy = e;
+                        target = &v;
+                    }
+                }
+            }
+        }
+        // 3. ISSUE-2 FIX: If all voices are active/sustaining, steal oldest triggered voice
+        if (!target) {
+            uint64_t oldest = UINT64_MAX;
+            for (auto& v : voices_) {
+                if (v.noteOnTime < oldest) {
+                    oldest = v.noteOnTime;
                     target = &v;
                 }
             }
         }
         if (!target) target = &voices_[0];
-        target->trigger(note, velocity, sampleRate_, params_[52], params_[38]);
+
+        static constexpr int UNISON_COUNTS[4] = {1, 2, 4, 8};
+        const int u1 = UNISON_COUNTS[std::min(3, static_cast<int>(params_[5]))];
+        const int u2 = UNISON_COUNTS[std::min(3, static_cast<int>(params_[14]))];
+
+        target->noteOnTime = ++voiceCounter_;
+        target->trigger(note, velocity, sampleRate_, params_[52], params_[38], u1, u2);
     }
 
     void noteOff(int32_t note) {
@@ -545,8 +591,11 @@ public:
                     float detuneOffset = (osc2UnisonN > 1) ? (static_cast<float>(u - (osc2UnisonN - 1) / 2.0f) / ((osc2UnisonN - 1) / 2.0f)) : 0.0f;
                     float uPitch = voicePitch * osc2PitchMult * (1.0f - detuneOffset * osc2Detune);
 
+                    // BUG-1 & BUG-2 FIX: Normalize stereo FM input and clamp modulation depth
                     if (crossFm > 0.001f) {
-                        uPitch *= (1.0f + (osc1L + osc1R) * crossFm * 1.5f);
+                        const float fmInput = (osc1L + osc1R) * 0.5f;
+                        const float fmMod = 1.0f + fmInput * crossFm * 1.5f;
+                        uPitch *= std::clamp(fmMod, 0.05f, 8.0f);
                     }
 
                     v.osc2Stack[u].setFrequency(uPitch);
@@ -577,8 +626,18 @@ public:
                 float envCutoffDelta = baseCutoff * filterEnvAmt * modEnvVal * 4.0f;
                 float finalCutoff = std::clamp((baseCutoff * keytrackMultiplier + envCutoffDelta) * lfoCutoffMod, 20.0f, sampleRate_ * 0.48f);
 
-                v.filterL.setParameters(filterMode, finalCutoff, resonance, drive, vowelMorph);
-                v.filterR.setParameters(filterMode, finalCutoff, resonance, drive, vowelMorph);
+                // BUG-4 FIX: Only update filter coefficients when parameters change significantly
+                if (std::abs(finalCutoff - v.lastCutoff) > 1.0f || filterMode != v.lastMode ||
+                    std::abs(resonance - v.lastRes) > 0.01f || std::abs(drive - v.lastDrive) > 0.01f ||
+                    std::abs(vowelMorph - v.lastVowel) > 0.01f) {
+                    v.filterL.setParameters(filterMode, finalCutoff, resonance, drive, vowelMorph);
+                    v.filterR.setParameters(filterMode, finalCutoff, resonance, drive, vowelMorph);
+                    v.lastCutoff = finalCutoff;
+                    v.lastMode = filterMode;
+                    v.lastRes = resonance;
+                    v.lastDrive = drive;
+                    v.lastVowel = vowelMorph;
+                }
 
                 float vL = v.filterL.process(rawL) * amp * v.velocity;
                 float vR = v.filterR.process(rawR) * amp * v.velocity;
@@ -601,8 +660,10 @@ public:
 
     uint32_t getStateJson(char* outBuffer, uint32_t maxLen) const {
         std::string json = "{";
+        char numBuf[32];
         for (size_t i = 0; i < params_.size(); ++i) {
-            json += "\"" + std::to_string(i) + "\":" + std::to_string(params_[i]);
+            std::snprintf(numBuf, sizeof(numBuf), "%.6g", static_cast<double>(params_[i]));
+            json += "\"" + std::to_string(i) + "\":" + numBuf;
             if (i < params_.size() - 1) json += ",";
         }
         json += "}";
@@ -631,6 +692,7 @@ private:
     std::array<Voice, 16> voices_{};
     LFO lfo1_;
     InternalDanceFxRack fxRack_;
+    uint64_t voiceCounter_ = 0;
 };
 
 extern "C" {

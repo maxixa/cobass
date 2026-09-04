@@ -2,14 +2,11 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -43,74 +40,33 @@ public class EuclideanStudioDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
+        float density = getContext().getResources().getDisplayMetrics().density;
 
-        TextView title = new TextView(getContext());
-        title.setText("🎲 Euclidean Algorithmic Generator");
-        title.setTextColor(Color.parseColor("#FFD60A"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
-        TextView subTitle = new TextView(getContext());
-        subTitle.setText("Lane: " + (lane != null ? lane.name : "Active Lane"));
-        subTitle.setTextColor(Color.parseColor("#8E8E93"));
-        subTitle.setTextSize(11f);
-        subTitle.setPadding(0, 4, 0, 14);
-        layout.addView(subTitle);
-
-        // Pattern Rhythm Preview Box
         TextView txtPreview = new TextView(getContext());
-        txtPreview.setTextSize(14f);
-        txtPreview.setTextColor(Color.parseColor("#30D158"));
-        txtPreview.setBackgroundColor(Color.parseColor("#14161E"));
-        txtPreview.setPadding(12, 10, 12, 10);
+        CobassTypography.applyBody(txtPreview);
+        txtPreview.setTextColor(CobassTheme.ACCENT_SUCCESS);
+        txtPreview.setBackgroundColor(CobassTheme.SURFACE_0);
+        int padPreview = Math.round(10 * density);
+        txtPreview.setPadding(padPreview, padPreview, padPreview, padPreview);
         txtPreview.setTypeface(android.graphics.Typeface.MONOSPACE);
-        layout.addView(txtPreview);
+        content.addView(txtPreview);
 
-        // Pulses (Hits)
-        TextView txtPulses = new TextView(getContext());
-        txtPulses.setText("Hits / Pulses (K): 4");
-        txtPulses.setTextColor(Color.WHITE);
-        txtPulses.setTextSize(12f);
-        txtPulses.setPadding(0, 12, 0, 4);
-        layout.addView(txtPulses);
+        CobassSlider.SliderRow pulsesRow = CobassSlider.create(
+            getContext(), "Hits / Pulses (K)", String.valueOf(pulses), steps, pulses, null
+        );
+        CobassSlider.SliderRow stepsRow = CobassSlider.create(
+            getContext(), "Sequence Length (N)", String.valueOf(steps), 32, steps, null
+        );
+        CobassSlider.SliderRow rotRow = CobassSlider.create(
+            getContext(), "Rotation Offset (S)", String.format("%+d steps", rotation), 16, 8, null
+        );
 
-        SeekBar seekPulses = new SeekBar(getContext());
-        seekPulses.setMax(steps);
-        seekPulses.setProgress(pulses);
-        layout.addView(seekPulses);
-
-        // Total Steps
-        TextView txtSteps = new TextView(getContext());
-        txtSteps.setText("Sequence Length (N): " + steps);
-        txtSteps.setTextColor(Color.WHITE);
-        txtSteps.setTextSize(12f);
-        txtSteps.setPadding(0, 10, 0, 4);
-        layout.addView(txtSteps);
-
-        SeekBar seekSteps = new SeekBar(getContext());
-        seekSteps.setMax(32);
-        seekSteps.setProgress(steps);
-        layout.addView(seekSteps);
-
-        // Rotation Shift
-        TextView txtRot = new TextView(getContext());
-        txtRot.setText("Rotation Offset (S): +0 steps");
-        txtRot.setTextColor(Color.WHITE);
-        txtRot.setTextSize(12f);
-        txtRot.setPadding(0, 10, 0, 4);
-        layout.addView(txtRot);
-
-        SeekBar seekRot = new SeekBar(getContext());
-        seekRot.setMax(16);
-        seekRot.setProgress(8);
-        layout.addView(seekRot);
+        content.addView(pulsesRow.container);
+        content.addView(stepsRow.container);
+        content.addView(rotRow.container);
 
         Runnable updatePreview = () -> {
             boolean[] pattern = EuclideanGenerator.generateEuclideanPattern(pulses, steps, rotation);
@@ -120,53 +76,52 @@ public class EuclideanStudioDialog extends Dialog {
                 sb.append(pattern[i] ? "■" : "·");
             }
             txtPreview.setText(sb.toString());
-            txtPulses.setText("Hits / Pulses (K): " + pulses);
-            txtSteps.setText("Sequence Length (N): " + steps);
-            txtRot.setText(String.format("Rotation Offset (S): %+d steps", rotation));
+            pulsesRow.readoutView.setText(String.valueOf(pulses));
+            stepsRow.readoutView.setText(String.valueOf(steps));
+            rotRow.readoutView.setText(String.format("%+d steps", rotation));
         };
         updatePreview.run();
 
         SeekBar.OnSeekBarChangeListener listenerChange = new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                steps = Math.max(1, seekSteps.getProgress());
-                seekPulses.setMax(steps);
-                pulses = Math.max(0, Math.min(steps, seekPulses.getProgress()));
-                rotation = seekRot.getProgress() - 8;
+                steps = Math.max(1, stepsRow.seekBar.getProgress());
+                pulsesRow.seekBar.setMax(steps);
+                pulses = Math.max(0, Math.min(steps, pulsesRow.seekBar.getProgress()));
+                rotation = rotRow.seekBar.getProgress() - 8;
                 updatePreview.run();
             }
             @Override public void onStartTrackingTouch(SeekBar s) {}
             @Override public void onStopTrackingTouch(SeekBar s) {}
         };
 
-        seekPulses.setOnSeekBarChangeListener(listenerChange);
-        seekSteps.setOnSeekBarChangeListener(listenerChange);
-        seekRot.setOnSeekBarChangeListener(listenerChange);
+        pulsesRow.seekBar.setOnSeekBarChangeListener(listenerChange);
+        stepsRow.seekBar.setOnSeekBarChangeListener(listenerChange);
+        rotRow.seekBar.setOnSeekBarChangeListener(listenerChange);
 
         Button btnApply = new Button(getContext());
         btnApply.setText("Apply Euclidean Groove");
-        btnApply.setBackgroundColor(Color.parseColor("#0A84FF"));
-        btnApply.setTextColor(Color.WHITE);
-        btnApply.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        CobassButton.apply(btnApply, CobassButton.Variant.PRIMARY, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams apLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        apLp.topMargin = Math.round(CobassSpacing.SPACE_MD * density);
+        btnApply.setLayoutParams(apLp);
         btnApply.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onApplied(pulses, steps, rotation, velocity);
             }
             dismiss();
         });
-        layout.addView(btnApply);
+        content.addView(btnApply);
 
-        Button btnCancel = new Button(getContext());
-        btnCancel.setText("Cancel");
-        btnCancel.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnCancel.setTextColor(Color.WHITE);
-        btnCancel.setOnClickListener(v -> dismiss());
-        layout.addView(btnCancel);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🎲 Euclidean Generator",
+            "Lane: " + (lane != null ? lane.name : "Active Lane"),
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 }

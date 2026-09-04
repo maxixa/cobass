@@ -113,6 +113,10 @@ public class WaveEditorCanvasView extends View {
     private final Paint selectionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint sliceLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path fadePath = new Path();
+    private final Path sliceFlagPath = new Path();
+    private final Path startFlagPath = new Path();
+    private final Path endFlagPath = new Path();
+    private final RectF rectF = new RectF();
 
     public WaveEditorCanvasView(Context context) {
         super(context);
@@ -328,7 +332,7 @@ public class WaveEditorCanvasView extends View {
                 scrollFraction = Math.max(0.0f, Math.min(1.0f - visibleSpan, currentPlayheadFraction - (visibleSpan * 0.2f)));
             }
         }
-        invalidate();
+        if (isPlaying) postInvalidateOnAnimation(); else invalidate();
     }
 
     private void clampScroll() {
@@ -372,13 +376,11 @@ public class WaveEditorCanvasView extends View {
         final float maxAmp = waveHeight * 0.44f;
 
         // 1. Background
-        paint.setColor(Color.parseColor("#121316"));
-        canvas.drawRect(0, 0, width, height, paint);
+        canvas.drawRect(0, 0, width, height, CobassCanvasTheme.PAINT_CANVAS_BG);
 
         // 2. Timeline Ruler Header
-        paint.setColor(Color.parseColor("#181A22"));
-        canvas.drawRect(0, 0, width, rulerHeight, paint);
-        paint.setColor(Color.parseColor("#262936"));
+        canvas.drawRect(0, 0, width, rulerHeight, CobassCanvasTheme.PAINT_RULER_BG);
+        paint.setColor(0xFF262936);
         paint.setStrokeWidth(1.5f);
         canvas.drawLine(0, rulerHeight, width, rulerHeight, paint);
 
@@ -393,10 +395,10 @@ public class WaveEditorCanvasView extends View {
             float rx = frac * width;
             float timeAtTick = startSec + frac * (endSec - startSec);
 
-            paint.setColor(Color.parseColor("#3B4052"));
+            paint.setColor(0xFF3B4052);
             canvas.drawLine(rx, rulerHeight - 12f, rx, rulerHeight, paint);
 
-            paint.setColor(Color.parseColor("#8E8E93"));
+            paint.setColor(0xFF8E8E93);
             paint.setTextSize(11f);
             paint.setFakeBoldText(true);
             String timeLabel = String.format("%.2fs", timeAtTick);
@@ -404,12 +406,12 @@ public class WaveEditorCanvasView extends View {
         }
 
         // Center Axis
-        paint.setColor(Color.parseColor("#222530"));
+        paint.setColor(0xFF222530);
         paint.setStrokeWidth(1.2f);
         canvas.drawLine(0, midY, width, midY, paint);
 
         if (clip == null || clip.getSampleData() == null || clip.getSampleData().length == 0) {
-            paint.setColor(Color.parseColor("#8E8E93"));
+            paint.setColor(0xFF8E8E93);
             paint.setTextSize(15f);
             paint.setFakeBoldText(false);
             canvas.drawText("No Sample Loaded", width / 2.0f - 60f, midY, paint);
@@ -454,10 +456,10 @@ public class WaveEditorCanvasView extends View {
             float rmsY1 = midY - (rms * maxAmp * 0.7f);
             float rmsY2 = midY + (rms * maxAmp * 0.7f);
 
-            wavePaint.setColor(Color.parseColor("#FF9F0A"));
+            wavePaint.setColor(0xFFFF9F0A);
             canvas.drawLine(x, y1, x, y2, wavePaint);
 
-            rmsPaint.setColor(Color.parseColor("#44FFD60A"));
+            rmsPaint.setColor(0x44FFD60A);
             canvas.drawLine(x, rmsY1, x, rmsY2, rmsPaint);
         }
 
@@ -466,7 +468,7 @@ public class WaveEditorCanvasView extends View {
         float screenTrimEndX = ((trimEndRatio - scrollFraction) / visibleSpan) * width;
         float activeSpan = trimEndRatio - trimStartRatio;
 
-        paint.setColor(Color.parseColor("#99000000"));
+        paint.setColor(0x99000000);
         if (screenTrimStartX > 0) canvas.drawRect(0, waveTop, Math.min(width, screenTrimStartX), height, paint);
         if (screenTrimEndX < width) canvas.drawRect(Math.max(0, screenTrimEndX), waveTop, width, height, paint);
 
@@ -488,7 +490,7 @@ public class WaveEditorCanvasView extends View {
                 }
                 fadePath.lineTo(screenTrimStartX, waveTop + (waveHeight * 0.5f));
                 fadePath.close();
-                fadePaint.setColor(Color.parseColor("#330A84FF"));
+                fadePaint.setColor(0x330A84FF);
                 canvas.drawPath(fadePath, fadePaint);
             }
 
@@ -505,7 +507,7 @@ public class WaveEditorCanvasView extends View {
                 }
                 fadePath.lineTo(screenTrimEndX, waveTop + (waveHeight * 0.5f));
                 fadePath.close();
-                fadePaint.setColor(Color.parseColor("#33BF5AF2"));
+                fadePaint.setColor(0x33BF5AF2);
                 canvas.drawPath(fadePath, fadePaint);
             }
         }
@@ -515,14 +517,8 @@ public class WaveEditorCanvasView extends View {
             float screenSelX1 = ((selectionStartRatio - scrollFraction) / visibleSpan) * width;
             float screenSelX2 = ((selectionEndRatio - scrollFraction) / visibleSpan) * width;
 
-            selectionPaint.setColor(Color.parseColor("#440A84FF"));
-            canvas.drawRect(screenSelX1, waveTop, screenSelX2, height, selectionPaint);
-
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setColor(Color.parseColor("#0A84FF"));
-            paint.setStrokeWidth(2.5f);
-            canvas.drawLine(screenSelX1, waveTop, screenSelX1, height, paint);
-            canvas.drawLine(screenSelX2, waveTop, screenSelX2, height, paint);
+            rectF.set(screenSelX1, waveTop, screenSelX2, height);
+            CobassCanvasTheme.drawMarquee(canvas, rectF);
         }
 
         // 8. Transient Slice Markers & Flags (Always visible or in SLICE mode)
@@ -536,9 +532,9 @@ public class WaveEditorCanvasView extends View {
 
             // Slice Flag Header [S1], [S2]...
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.parseColor("#D97706"));
+            paint.setColor(0xFFD97706);
 
-            Path flag = new Path();
+            sliceFlagPath.reset(); Path flag = sliceFlagPath;
             flag.moveTo(sx - 14f, waveTop);
             flag.lineTo(sx + 14f, waveTop);
             flag.lineTo(sx + 14f, waveTop + 18f);
@@ -558,11 +554,11 @@ public class WaveEditorCanvasView extends View {
         if (currentMode == Mode.TRIM_FADE) {
             // Start & End Trim Flags
             if (screenTrimStartX >= -20 && screenTrimStartX <= width + 20) {
-                paint.setColor(Color.parseColor("#30D158"));
+                paint.setColor(0xFF30D158);
                 paint.setStrokeWidth(3.5f);
                 canvas.drawLine(screenTrimStartX, waveTop, screenTrimStartX, height, paint);
 
-                Path startFlag = new Path();
+                startFlagPath.reset(); Path startFlag = startFlagPath;
                 startFlag.moveTo(screenTrimStartX, waveTop);
                 startFlag.lineTo(screenTrimStartX + 20f, waveTop);
                 startFlag.lineTo(screenTrimStartX + 20f, waveTop + 24f);
@@ -578,11 +574,11 @@ public class WaveEditorCanvasView extends View {
             }
 
             if (screenTrimEndX >= -20 && screenTrimEndX <= width + 20) {
-                paint.setColor(Color.parseColor("#FF453A"));
+                paint.setColor(0xFFFF453A);
                 paint.setStrokeWidth(3.5f);
                 canvas.drawLine(screenTrimEndX, waveTop, screenTrimEndX, height, paint);
 
-                Path endFlag = new Path();
+                endFlagPath.reset(); Path endFlag = endFlagPath;
                 endFlag.moveTo(screenTrimEndX - 20f, waveTop);
                 endFlag.lineTo(screenTrimEndX, waveTop);
                 endFlag.lineTo(screenTrimEndX, waveTop + 34f);
@@ -601,17 +597,7 @@ public class WaveEditorCanvasView extends View {
         // 10. Playhead Cursor
         float screenPlayheadX = ((currentPlayheadFraction - scrollFraction) / visibleSpan) * width;
         if (screenPlayheadX >= 0 && screenPlayheadX <= width) {
-            paint.setColor(Color.parseColor("#FF453A"));
-            paint.setStrokeWidth(2.5f);
-            canvas.drawLine(screenPlayheadX, 0, screenPlayheadX, height, paint);
-
-            Path triangle = new Path();
-            triangle.moveTo(screenPlayheadX - 8f, 0);
-            triangle.lineTo(screenPlayheadX + 8f, 0);
-            triangle.lineTo(screenPlayheadX, 16f);
-            triangle.close();
-            paint.setStyle(Paint.Style.FILL);
-            canvas.drawPath(triangle, paint);
+            CobassCanvasTheme.drawPlayheadNeedle(canvas, screenPlayheadX, 0, height, 1.0f);
         }
     }
 

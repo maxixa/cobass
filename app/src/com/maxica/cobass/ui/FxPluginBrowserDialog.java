@@ -2,14 +2,11 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import com.maxica.cobass.model.PluginDescriptorItem;
@@ -37,56 +34,43 @@ public class FxPluginBrowserDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
+        float density = getContext().getResources().getDisplayMetrics().density;
 
-        TextView title = new TextView(getContext());
-        title.setText("Insert FX Plugin Browser (Slot " + (slotIndex + 1) + ")");
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
         List<PluginDescriptorItem> effects = PluginHostManager.getInstance().getEffectPlugins();
         if (effects.isEmpty()) {
             TextView empty = new TextView(getContext());
             empty.setText("No modular FX plugins discovered in app library.");
-            empty.setTextColor(Color.parseColor("#8E8E93"));
-            empty.setPadding(0, 16, 0, 16);
-            layout.addView(empty);
+            CobassTypography.applyBody(empty);
+            empty.setPadding(0, Math.round(CobassSpacing.SPACE_MD * density), 0, Math.round(CobassSpacing.SPACE_MD * density));
+            content.addView(empty);
         } else {
             for (PluginDescriptorItem fx : effects) {
                 Button btn = new Button(getContext());
                 btn.setText(fx.getName() + " (" + fx.getVendor() + ")");
-                btn.setTextSize(11f);
-                btn.setTextColor(Color.WHITE);
-                btn.setBackgroundColor(Color.parseColor("#242734"));
+                CobassButton.apply(btn, CobassButton.Variant.SECONDARY, CobassButton.Size.STANDARD);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(0, 4, 0, 4);
+                lp.setMargins(0, Math.round(2 * density), 0, Math.round(2 * density));
                 btn.setLayoutParams(lp);
                 btn.setOnClickListener(v -> {
                     if (listener != null) listener.onFxSelected(fx);
                     dismiss();
                 });
-                layout.addView(btn);
+                content.addView(btn);
             }
         }
 
-        Button btnCancel = new Button(getContext());
-        btnCancel.setText("Cancel");
-        btnCancel.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnCancel.setTextColor(Color.WHITE);
-        btnCancel.setOnClickListener(v -> dismiss());
-        layout.addView(btnCancel);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "🎛 Insert FX Plugin Browser",
+            "Assign modular DSP plugin to Slot " + (slotIndex + 1),
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 }

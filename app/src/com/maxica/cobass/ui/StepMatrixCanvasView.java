@@ -72,6 +72,19 @@ public class StepMatrixCanvasView extends View {
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
+    private final RectF reusableBadgeRect = new RectF();
+
+    private static final int COLOR_BADGE_BG = 0xDD000000;
+    private static final int[] LANE_PALETTE = {
+        0xFF0A84FF, // Blue (Kick)
+        0xFFFF9F0A, // Orange (Snare)
+        0xFF30D158, // Green (Cl. Hat)
+        0xFFBF5AF2, // Purple (Op. Hat)
+        0xFFFF453A, // Red (Tom/Perc)
+        0xFF64D2FF, // Cyan (Clap)
+        0xFFFFD60A, // Yellow (Ride)
+        0xFFAC8E68  // Tan (Shaker)
+    };
     private GestureDetector gestureDetector;
 
     public StepMatrixCanvasView(Context context) {
@@ -148,7 +161,7 @@ public class StepMatrixCanvasView extends View {
     public void setPlayheadState(long tick, boolean isPlaying) {
         this.currentPlayheadTick = Math.max(0, tick);
         this.isPlaying = isPlaying;
-        invalidate();
+        if (isPlaying) postInvalidateOnAnimation(); else invalidate();
     }
 
     public void setSelectedStep(int laneIndex, int stepIndex) {
@@ -167,11 +180,10 @@ public class StepMatrixCanvasView extends View {
         final int height = getHeight();
 
         // 1. Dark Studio Background
-        paint.setColor(Color.parseColor("#121318"));
-        canvas.drawRect(0, 0, width, height, paint);
+        canvas.drawRect(0, 0, width, height, CobassCanvasTheme.PAINT_CANVAS_BG);
 
         if (pattern == null || pattern.getLanes().isEmpty()) {
-            paint.setColor(Color.parseColor("#8E8E93"));
+            paint.setColor(0xFF8E8E93);
             paint.setTextSize(14f * uiScale);
             paint.setTextAlign(Paint.Align.CENTER);
             canvas.drawText("No Step Sequencer Lanes Loaded", width / 2.0f, height / 2.0f, paint);
@@ -189,14 +201,13 @@ public class StepMatrixCanvasView extends View {
             if (sx + stepWidth < headerWidth || sx > width) continue;
 
             boolean isEvenBeatGroup = ((s / 4) % 2 == 0);
-            paint.setColor(isEvenBeatGroup ? Color.parseColor("#161820") : Color.parseColor("#1A1D26"));
+            paint.setColor(isEvenBeatGroup ? 0xFF161820 : 0xFF1A1D26);
             canvas.drawRect(sx - (stepGap / 2f), rulerHeight, sx + stepWidth + (stepGap / 2f), height, paint);
 
             // Beat Divider Accent Lines (every 4 steps)
             if (s % 4 == 0) {
-                paint.setColor(Color.parseColor("#2A2E3D"));
-                paint.setStrokeWidth(1.5f * uiScale);
-                canvas.drawLine(sx - (stepGap / 2f), rulerHeight, sx - (stepGap / 2f), height, paint);
+                CobassCanvasTheme.PAINT_GRID_BAR.setStrokeWidth(CobassTheme.BORDER_STANDARD * uiScale);
+                canvas.drawLine(sx - (stepGap / 2f), rulerHeight, sx - (stepGap / 2f), height, CobassCanvasTheme.PAINT_GRID_BAR);
             }
         }
 
@@ -218,11 +229,11 @@ public class StepMatrixCanvasView extends View {
                 if (isBeyondLaneLength) {
                     // Out-of-bounds polymeter steps (Dimmed Recessed Look)
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(Color.parseColor("#0E1015"));
+                    paint.setColor(0xFF0E1015);
                     canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
 
                     paint.setStyle(Paint.Style.STROKE);
-                    paint.setColor(Color.parseColor("#181A22"));
+                    paint.setColor(0xFF181A22);
                     paint.setStrokeWidth(1f * uiScale);
                     canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
                     continue;
@@ -242,11 +253,11 @@ public class StepMatrixCanvasView extends View {
                 } else {
                     // Inactive Step Button (Recessed pad)
                     boolean isDownbeat = (s % 4 == 0);
-                    paint.setColor(isDownbeat ? Color.parseColor("#262936") : Color.parseColor("#1F212C"));
+                    paint.setColor(isDownbeat ? 0xFF262936 : 0xFF1F212C);
                     canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
 
                     paint.setStyle(Paint.Style.STROKE);
-                    paint.setColor(Color.parseColor("#323646"));
+                    paint.setColor(0xFF323646);
                     paint.setStrokeWidth(1f * uiScale);
                     canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
                 }
@@ -254,19 +265,19 @@ public class StepMatrixCanvasView extends View {
                 // Selection Ring
                 if (l == selectedLaneIndex && s == selectedStepIndex) {
                     paint.setStyle(Paint.Style.STROKE);
-                    paint.setColor(Color.parseColor("#FFD60A"));
-                    paint.setStrokeWidth(3f * uiScale);
-                    canvas.drawRoundRect(rectF, 6f * uiScale, 6f * uiScale, paint);
+                    paint.setColor(CobassTheme.SELECTION_BORDER);
+                    paint.setStrokeWidth(CobassTheme.BORDER_SELECTION * uiScale);
+                    canvas.drawRoundRect(rectF, CobassTheme.RADIUS_MD * uiScale, CobassTheme.RADIUS_MD * uiScale, paint);
                 }
 
                 // Sub-Step Ratchet Badge (e.g., 2x, 3x, 4x, 8x rolls)
                 if (isActive && step.ratchets > 1) {
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(Color.parseColor("#DD000000"));
-                    RectF badgeRect = new RectF(sx + 3f, ly + stepHeight - (16f * uiScale), sx + (22f * uiScale), ly + stepHeight - 3f);
-                    canvas.drawRoundRect(badgeRect, 3f * uiScale, 3f * uiScale, paint);
+                    paint.setColor(COLOR_BADGE_BG);
+                    reusableBadgeRect.set(sx + 3f, ly + stepHeight - (16f * uiScale), sx + (22f * uiScale), ly + stepHeight - 3f);
+                    canvas.drawRoundRect(reusableBadgeRect, 3f * uiScale, 3f * uiScale, paint);
 
-                    textPaint.setColor(Color.parseColor("#FFD60A"));
+                    textPaint.setColor(0xFFFFD60A);
                     textPaint.setTextSize(10f * uiScale);
                     canvas.drawText(step.ratchets + "x", sx + (12f * uiScale), ly + stepHeight - (6f * uiScale), textPaint);
                 }
@@ -274,7 +285,7 @@ public class StepMatrixCanvasView extends View {
                 // Micro-Nudge Indicator (small dot / offset tick)
                 if (isActive && Math.abs(step.nudge) > 0.05f) {
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(Color.parseColor("#64D2FF"));
+                    paint.setColor(0xFF64D2FF);
                     float nudgeDotX = sx + (stepWidth / 2f) + (step.nudge * (stepWidth * 0.35f));
                     canvas.drawCircle(nudgeDotX, ly + (8f * uiScale), 3f * uiScale, paint);
                 }
@@ -282,14 +293,14 @@ public class StepMatrixCanvasView extends View {
                 // Probability Dot (if < 100%)
                 if (isActive && step.probability < 0.99f) {
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(Color.parseColor("#FF453A"));
+                    paint.setColor(0xFFFF453A);
                     canvas.drawCircle(sx + stepWidth - (7f * uiScale), ly + (8f * uiScale), 3f * uiScale, paint);
                 }
             }
 
             // Polymeter Lane Boundary Marker Bar
             float boundX = headerWidth + (lane.stepCount * (stepWidth + stepGap)) - scrollX - (stepGap / 2f);
-            paint.setColor(Color.parseColor("#FF9F0A"));
+            paint.setColor(0xFFFF9F0A);
             paint.setStrokeWidth(3f * uiScale);
             canvas.drawLine(boundX, ly, boundX, ly + stepHeight, paint);
         }
@@ -311,7 +322,7 @@ public class StepMatrixCanvasView extends View {
 
                 // High-visibility illuminated cursor border around current step
                 paint.setStyle(Paint.Style.STROKE);
-                paint.setColor(Color.parseColor("#FFFFFF"));
+                paint.setColor(0xFFFFFFFF);
                 paint.setStrokeWidth(2.5f * uiScale);
                 rectF.set(stepPx - 1f, ly - 1f, stepPx + stepWidth + 1f, ly + stepHeight + 1f);
                 canvas.drawRoundRect(rectF, 7f * uiScale, 7f * uiScale, paint);
@@ -322,9 +333,9 @@ public class StepMatrixCanvasView extends View {
 
         // 5. Top Step Ruler Strip
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#151720"));
+        paint.setColor(0xFF151720);
         canvas.drawRect(headerWidth, 0, width, rulerHeight, paint);
-        paint.setColor(Color.parseColor("#262936"));
+        paint.setColor(0xFF262936);
         paint.setStrokeWidth(1.5f * uiScale);
         canvas.drawLine(headerWidth, rulerHeight, width, rulerHeight, paint);
 
@@ -333,23 +344,23 @@ public class StepMatrixCanvasView extends View {
             if (sx + stepWidth < headerWidth || sx > width) continue;
 
             boolean isDownbeat = (s % 4 == 0);
-            textPaint.setColor(isDownbeat ? Color.parseColor("#FFFFFF") : Color.parseColor("#8E8E93"));
+            textPaint.setColor(isDownbeat ? 0xFFFFFFFF : 0xFF8E8E93);
             textPaint.setTextSize(isDownbeat ? (13f * uiScale) : (11f * uiScale));
             canvas.drawText(String.format("%02d", s + 1), sx + (stepWidth / 2.0f), rulerHeight * 0.65f, textPaint);
         }
 
         // 6. Left Lane Headers
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#181A22"));
+        paint.setColor(0xFF181A22);
         canvas.drawRect(0, 0, headerWidth, height, paint);
-        paint.setColor(Color.parseColor("#282B38"));
+        paint.setColor(0xFF282B38);
         paint.setStrokeWidth(1.5f * uiScale);
         canvas.drawLine(headerWidth, 0, headerWidth, height, paint);
 
         // Top-Left Header Badge
-        paint.setColor(Color.parseColor("#121318"));
+        paint.setColor(0xFF121318);
         canvas.drawRect(0, 0, headerWidth, rulerHeight, paint);
-        textPaint.setColor(Color.parseColor("#0A84FF"));
+        textPaint.setColor(0xFF0A84FF);
         textPaint.setTextSize(14f * uiScale);
         canvas.drawText("DRUM MATRIX", headerWidth / 2.0f, rulerHeight * 0.65f, textPaint);
 
@@ -360,7 +371,7 @@ public class StepMatrixCanvasView extends View {
 
             // Header Body Fill
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(lane.isMuted ? Color.parseColor("#14151B") : Color.parseColor("#1C1E28"));
+            paint.setColor(lane.isMuted ? 0xFF14151B : 0xFF1C1E28);
             canvas.drawRect(0, ly, headerWidth, ly + stepHeight, paint);
 
             // Left Color Accent Strip
@@ -368,12 +379,12 @@ public class StepMatrixCanvasView extends View {
             canvas.drawRect(0, ly, 6f * uiScale, ly + stepHeight, paint);
 
             // Lane Name & Step Count Readout
-            textPaint.setColor(lane.isMuted ? Color.parseColor("#636366") : Color.WHITE);
+            textPaint.setColor(lane.isMuted ? 0xFF636366 : Color.WHITE);
             textPaint.setTextSize(13f * uiScale);
             textPaint.setTextAlign(Paint.Align.LEFT);
             canvas.drawText(lane.name, 12f * uiScale, ly + (20f * uiScale), textPaint);
 
-            paint.setColor(Color.parseColor("#8E8E93"));
+            paint.setColor(0xFF8E8E93);
             paint.setTextSize(10f * uiScale);
             paint.setFakeBoldText(false);
             canvas.drawText(lane.stepCount + " steps • " + (int)(lane.volume * 100) + "%", 12f * uiScale, ly + (38f * uiScale), paint);
@@ -383,7 +394,7 @@ public class StepMatrixCanvasView extends View {
             float mX1 = headerWidth - (84f * uiScale);
             float mX2 = mX1 + (24f * uiScale);
             rectF.set(mX1, btnY, mX2, btnY + (28f * uiScale));
-            paint.setColor(lane.isMuted ? Color.parseColor("#FF453A") : Color.parseColor("#2C2F3C"));
+            paint.setColor(lane.isMuted ? 0xFFFF453A : 0xFF2C2F3C);
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
             textPaint.setColor(Color.WHITE);
             textPaint.setTextSize(10f * uiScale);
@@ -394,7 +405,7 @@ public class StepMatrixCanvasView extends View {
             float sX1 = mX2 + (4f * uiScale);
             float sX2 = sX1 + (24f * uiScale);
             rectF.set(sX1, btnY, sX2, btnY + (28f * uiScale));
-            paint.setColor(lane.isSolo ? Color.parseColor("#FFD60A") : Color.parseColor("#2C2F3C"));
+            paint.setColor(lane.isSolo ? 0xFFFFD60A : 0xFF2C2F3C);
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
             textPaint.setColor(lane.isSolo ? Color.BLACK : Color.WHITE);
             canvas.drawText("S", sX1 + (12f * uiScale), btnY + (18f * uiScale), textPaint);
@@ -403,13 +414,13 @@ public class StepMatrixCanvasView extends View {
             float gX1 = sX2 + (4f * uiScale);
             float gX2 = gX1 + (24f * uiScale);
             rectF.set(gX1, btnY, gX2, btnY + (28f * uiScale));
-            paint.setColor(Color.parseColor("#2C2F3C"));
+            paint.setColor(0xFF2C2F3C);
             canvas.drawRoundRect(rectF, 4f * uiScale, 4f * uiScale, paint);
-            textPaint.setColor(Color.parseColor("#C7C7CC"));
+            textPaint.setColor(0xFFC7C7CC);
             canvas.drawText("⚙", gX1 + (12f * uiScale), btnY + (18f * uiScale), textPaint);
 
             // Row Bottom Divider
-            paint.setColor(Color.parseColor("#222530"));
+            paint.setColor(0xFF222530);
             paint.setStrokeWidth(1f * uiScale);
             canvas.drawLine(0, ly + stepHeight, headerWidth, ly + stepHeight, paint);
         }
@@ -422,18 +433,8 @@ public class StepMatrixCanvasView extends View {
         return Color.argb(alpha, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor));
     }
 
-    private int getLaneAccentColor(int laneIndex) {
-        int[] palette = {
-            Color.parseColor("#0A84FF"), // Blue (Kick)
-            Color.parseColor("#FF9F0A"), // Orange (Snare)
-            Color.parseColor("#30D158"), // Green (Cl. Hat)
-            Color.parseColor("#BF5AF2"), // Purple (Op. Hat)
-            Color.parseColor("#FF453A"), // Red (Tom/Perc)
-            Color.parseColor("#64D2FF"), // Cyan (Clap)
-            Color.parseColor("#FFD60A"), // Yellow (Ride)
-            Color.parseColor("#AC8E68")  // Tan (Shaker)
-        };
-        return palette[laneIndex % palette.length];
+    private static int getLaneAccentColor(int laneIndex) {
+        return LANE_PALETTE[laneIndex % LANE_PALETTE.length];
     }
 
     @SuppressLint("ClickableViewAccessibility")

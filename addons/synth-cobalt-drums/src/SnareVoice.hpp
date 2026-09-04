@@ -13,6 +13,8 @@ public:
         bodyEnv_ = 0.0f;
         noiseEnv_ = 0.0f;
         pitchEnv_ = 0.0f;
+        fadeEnv_ = 0.0f;
+        lastSample_ = 0.0f;
         active_ = false;
         noiseFilter_.setSampleRate(sampleRate_);
         updateRates();
@@ -31,6 +33,16 @@ public:
 
     void trigger(float velocity) noexcept {
         velocity_ = std::clamp(velocity, 0.05f, 1.0f);
+
+        // BUG-1 FIX: Micro-fade on retrigger
+        if (active_ && (bodyEnv_ > 0.01f || noiseEnv_ > 0.01f)) {
+            fadeSample_ = lastSample_;
+            fadeEnv_ = 1.0f;
+        }
+
+        // ISSUE-1 FIX: Noise seed randomization
+        noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L + static_cast<uint32_t>(velocity * 77777.0f);
+
         phase1_ = phase2_ = 0.0;
         bodyEnv_ = 1.0f;
         noiseEnv_ = 1.0f;
@@ -40,14 +52,15 @@ public:
 
     void stop() noexcept {
         active_ = false;
-        bodyEnv_ = noiseEnv_ = pitchEnv_ = 0.0f;
+        bodyEnv_ = noiseEnv_ = pitchEnv_ = fadeEnv_ = 0.0f;
+        lastSample_ = 0.0f;
     }
 
     inline float render() noexcept {
-        if (!active_) return 0.0f;
+        if (!active_ && fadeEnv_ <= 0.001f) return 0.0f;
 
-        // Dual-harmonic body tone
-        const float f1 = baseFreq_ * (1.0f + 0.5f * pitchEnv_);
+        // MINOR-4 FIX: Pronounced 120% initial pitch sweep for snappy body punch
+        const float f1 = baseFreq_ * (1.0f + 1.20f * pitchEnv_);
         const float f2 = f1 * 1.62f;
 
         phase1_ += f1 / sampleRate_;
@@ -63,7 +76,13 @@ public:
         const float rawNoise = static_cast<float>((noiseSeed_ & 0x00FFFFFF) / static_cast<double>(0x007FFFFF)) - 1.0f;
         const float filteredNoise = noiseFilter_.process(rawNoise) * noiseEnv_;
 
-        const float out = ((body * (1.0f - snappyPct_ * 0.5f)) + (filteredNoise * snappyPct_ * 1.4f)) * velocity_;
+        float out = ((body * (1.0f - snappyPct_ * 0.5f)) + (filteredNoise * snappyPct_ * 1.4f)) * velocity_;
+        out = std::tanh(out * 1.25f);
+
+        if (fadeEnv_ > 0.001f) {
+            out += fadeSample_ * fadeEnv_;
+            fadeEnv_ *= fadeDecayCoeff_;
+        }
 
         bodyEnv_ *= bodyDecayCoeff_;
         noiseEnv_ *= noiseDecayCoeff_;
@@ -74,17 +93,19 @@ public:
             bodyEnv_ = noiseEnv_ = 0.0f;
         }
 
-        return std::tanh(out * 1.2f);
+        lastSample_ = out;
+        return out;
     }
 
-    bool isActive() const noexcept { return active_; }
+    bool isActive() const noexcept { return active_ || (fadeEnv_ > 0.001f); }
 
 private:
     void updateRates() noexcept {
         if (sampleRate_ <= 0.0f) return;
         bodyDecayCoeff_ = std::exp(-1.0f / ((bodyDecayMs_ * 0.001f) * sampleRate_));
         noiseDecayCoeff_ = std::exp(-1.0f / ((noiseDecayMs_ * 0.001f) * sampleRate_));
-        pitchDecayCoeff_ = std::exp(-1.0f / (0.015f * sampleRate_));
+        pitchDecayCoeff_ = std::exp(-1.0f / (0.018f * sampleRate_));
+        fadeDecayCoeff_ = std::exp(-1.0f / (0.0015f * sampleRate_));
     }
 
     void updateFilter() noexcept {
@@ -105,8 +126,13 @@ private:
     float pitchEnv_ = 0.0f;
     float velocity_ = 1.0f;
     bool active_ = false;
-    uint32_t noiseSeed_ = 424242;
 
+    float lastSample_ = 0.0f;
+    float fadeSample_ = 0.0f;
+    float fadeEnv_ = 0.0f;
+    float fadeDecayCoeff_ = 0.90f;
+
+    uint32_t noiseSeed_ = 424242;
     float bodyDecayCoeff_ = 0.99f;
     float noiseDecayCoeff_ = 0.99f;
     float pitchDecayCoeff_ = 0.90f;

@@ -2,15 +2,13 @@ package com.maxica.cobass.ui;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -42,51 +40,35 @@ public class PluginPresetDialog extends Dialog {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-        scroll.addView(layout);
-
-        TextView title = new TextView(getContext());
-        title.setText("📁 Preset Library: " + descriptor.getName());
-        title.setTextColor(Color.parseColor("#0A84FF"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
-
-        LinearLayout listContainer = new LinearLayout(getContext());
-        listContainer.setOrientation(LinearLayout.VERTICAL);
-        layout.addView(listContainer);
+        LinearLayout content = new LinearLayout(getContext());
+        content.setOrientation(LinearLayout.VERTICAL);
 
         File presetDir = new File(getContext().getFilesDir(), "presets/" + descriptor.getPluginId());
         if (!presetDir.exists()) presetDir.mkdirs();
 
-        refreshPresets(listContainer, presetDir);
+        refreshPresets(content, presetDir);
 
-        Button btnDone = new Button(getContext());
-        btnDone.setText("Close");
-        btnDone.setBackgroundColor(Color.parseColor("#2C2F3C"));
-        btnDone.setTextColor(Color.WHITE);
-        btnDone.setOnClickListener(v -> dismiss());
-        layout.addView(btnDone);
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            getContext(),
+            "📁 Preset Library: " + descriptor.getName(),
+            "Load factory presets or custom user patch state",
+            content,
+            v -> dismiss()
+        );
 
-        setContentView(scroll);
-        if (getWindow() != null) {
-            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        setContentView(root);
+        CobassDialogShell.configureWindow(this);
     }
 
     private void refreshPresets(LinearLayout container, File presetDir) {
         container.removeAllViews();
+        float density = getContext().getResources().getDisplayMetrics().density;
         File[] files = presetDir.listFiles((d, name) -> name.endsWith(".cobasspatch"));
         if (files == null || files.length == 0) {
             TextView emptyText = new TextView(getContext());
             emptyText.setText("No saved user patches found. Click SAVE in toolbar to create one.");
-            emptyText.setTextColor(Color.parseColor("#8E8E93"));
-            emptyText.setPadding(0, 16, 0, 16);
+            CobassTypography.applyBody(emptyText);
+            emptyText.setPadding(0, Math.round(CobassSpacing.SPACE_MD * density), 0, Math.round(CobassSpacing.SPACE_MD * density));
             container.addView(emptyText);
             return;
         }
@@ -94,18 +76,17 @@ public class PluginPresetDialog extends Dialog {
         for (File f : files) {
             LinearLayout row = new LinearLayout(getContext());
             row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setPadding(0, 6, 0, 6);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, Math.round(4 * density), 0, Math.round(4 * density));
 
             TextView txtName = new TextView(getContext());
             txtName.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
             txtName.setText(f.getName().replace(".cobasspatch", ""));
-            txtName.setTextColor(Color.WHITE);
-            txtName.setTextSize(13f);
+            CobassTypography.applyLabel(txtName);
 
             Button btnLoad = new Button(getContext());
             btnLoad.setText("LOAD");
-            btnLoad.setTextSize(10f);
-            btnLoad.setBackgroundColor(Color.parseColor("#0A84FF"));
+            CobassButton.apply(btnLoad, CobassButton.Variant.PRIMARY, CobassButton.Size.COMPACT);
             btnLoad.setOnClickListener(v -> {
                 loadPatchFromFile(f);
                 dismiss();
@@ -113,8 +94,13 @@ public class PluginPresetDialog extends Dialog {
 
             Button btnDel = new Button(getContext());
             btnDel.setText("✕");
-            btnDel.setTextSize(10f);
-            btnDel.setBackgroundColor(Color.parseColor("#FF453A"));
+            CobassButton.apply(btnDel, CobassButton.Variant.DANGER, CobassButton.Size.COMPACT);
+            LinearLayout.LayoutParams dLp = new LinearLayout.LayoutParams(
+                Math.round(CobassSpacing.BTN_HEIGHT_COMPACT * density),
+                Math.round(CobassSpacing.BTN_HEIGHT_COMPACT * density)
+            );
+            dLp.leftMargin = Math.round(4 * density);
+            btnDel.setLayoutParams(dLp);
             btnDel.setOnClickListener(v -> {
                 f.delete();
                 refreshPresets(container, presetDir);
@@ -145,29 +131,26 @@ public class PluginPresetDialog extends Dialog {
         Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#1C1E26"));
-        layout.setPadding(28, 20, 28, 20);
-
-        TextView title = new TextView(context);
-        title.setText("💾 Save User Patch Preset");
-        title.setTextColor(Color.parseColor("#30D158"));
-        title.setTextSize(16f);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        layout.addView(title);
+        float density = context.getResources().getDisplayMetrics().density;
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.VERTICAL);
 
         EditText editName = new EditText(context);
         editName.setHint("Patch Name");
-        editName.setTextColor(Color.WHITE);
-        editName.setHintTextColor(Color.parseColor("#8E8E93"));
+        editName.setTextColor(CobassTheme.TEXT_PRIMARY);
+        editName.setBackgroundColor(CobassTheme.SURFACE_0);
+        editName.setHintTextColor(CobassTheme.TEXT_DISABLED);
+        int pad = Math.round(8 * density);
+        editName.setPadding(pad, pad, pad, pad);
         editName.setSingleLine(true);
-        layout.addView(editName);
+        content.addView(editName);
 
         Button btnSave = new Button(context);
         btnSave.setText("Save Preset (.cobasspatch)");
-        btnSave.setBackgroundColor(Color.parseColor("#30D158"));
-        btnSave.setTextColor(Color.WHITE);
+        CobassButton.apply(btnSave, CobassButton.Variant.SUCCESS, CobassButton.Size.STANDARD);
+        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        sLp.topMargin = Math.round(CobassSpacing.SPACE_MD * density);
+        btnSave.setLayoutParams(sLp);
         btnSave.setOnClickListener(v -> {
             String name = editName.getText().toString().trim();
             if (name.isEmpty()) name = "User_Patch";
@@ -188,13 +171,18 @@ public class PluginPresetDialog extends Dialog {
             }
             dialog.dismiss();
         });
-        layout.addView(btnSave);
+        content.addView(btnSave);
 
-        dialog.setContentView(layout);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        LinearLayout root = CobassDialogShell.buildRootContainer(
+            context,
+            "💾 Save User Patch",
+            "Store current parameter settings into preset archive",
+            content,
+            v -> dialog.dismiss()
+        );
+
+        dialog.setContentView(root);
+        CobassDialogShell.configureWindow(dialog);
         dialog.show();
     }
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Legacy Tokens (Preserved for layout compatibility) -->
     <color name="bg_dark">#121316</color>
     <color name="bg_surface">#1C1E24</color>
     <color name="cubase_blue">#0A84FF</color>
@@ -7,4 +8,31 @@
     <color name="cubase_text">#F2F2F7</color>
     <color name="cubase_text_dim">#8E8E93</color>
     <color name="accent_green">#30D158</color>
+
+    <!-- Semantic Surface Tokens (Deepest to Elevated) -->
+    <color name="surface_0">#121316</color>
+    <color name="surface_1">#181A22</color>
+    <color name="surface_2">#242734</color>
+    <color name="surface_3">#2C2F3C</color>
+    <color name="surface_4">#3A3D4E</color>
+
+    <!-- Semantic Accent & Feedback Tokens -->
+    <color name="accent_primary">#0A84FF</color>
+    <color name="accent_success">#30D158</color>
+    <color name="accent_warning">#FFD60A</color>
+    <color name="accent_danger">#FF453A</color>
+    <color name="accent_info">#64D2FF</color>
+    <color name="accent_purple">#BF5AF2</color>
+    <color name="accent_orange">#FF9F0A</color>
+    <color name="accent_amber">#D97706</color>
+
+    <!-- Text Color Hierarchy Tokens -->
+    <color name="text_primary">#F2F2F7</color>
+    <color name="text_secondary">#8E8E93</color>
+    <color name="text_disabled">#636366</color>
+
+    <!-- Track Archetype Colors -->
+    <color name="track_synth">#0A84FF</color>
+    <color name="track_audio">#FF9F0A</color>
+    <color name="track_step">#9333EA</color>
 </resources>
