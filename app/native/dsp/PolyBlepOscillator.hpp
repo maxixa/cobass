@@ -15,7 +15,20 @@ enum class OscillatorWaveform : int32_t {
     MetallicFM = 8,
     DirtyReese = 9,
     DigitalSync = 10,
-    ScreamerSaw = 11
+    ScreamerSaw = 11,
+    WavetableAcid = 12,
+    ResoSweep = 13,
+    OrganFM = 14,
+    ChimeCluster = 15
+};
+
+enum class NoiseType : int32_t {
+    White = 0,
+    Pink = 1,          // 3-pole 1/f Voss-McCartney approximation
+    Brown = 2,         // Integrated 6dB/oct low-frequency rumble
+    VinylCrackle = 3,  // Sparse Poisson impulse crackles
+    MetallicBurst = 4, // Resonant bandpass metallic noise
+    VelvetAir = 5      // Ultra-smooth top-end shimmer
 };
 
 class PolyBlepOscillator {
@@ -28,7 +41,7 @@ public:
     }
 
     void setFrequency(float freqHz) noexcept {
-        frequency_ = std::clamp(freqHz, 5.0f, sampleRate_ * 0.48f);
+        frequency_ = std::clamp(freqHz, 2.0f, sampleRate_ * 0.48f);
         updatePhaseIncrement();
     }
 
@@ -38,6 +51,10 @@ public:
 
     void setWaveform(OscillatorWaveform wave) noexcept {
         waveform_ = wave;
+    }
+
+    void setNoiseType(NoiseType nType) noexcept {
+        noiseType_ = nType;
     }
 
     void resetPhase(double newPhase = 0.0) noexcept {
@@ -75,13 +92,11 @@ public:
             }
 
             case OscillatorWaveform::Noise: {
-                noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L;
-                sample = static_cast<float>((noiseSeed_ & 0x00FFFFFF) / static_cast<double>(0x007FFFFF)) - 1.0f;
+                sample = renderColoredNoise();
                 break;
             }
 
             case OscillatorWaveform::Hypersaw: {
-                // Multi-cluster 3-saw inside single osc
                 double p1 = phase_;
                 double p2 = std::fmod(phase_ * 1.008 + 0.25, 1.0);
                 double p3 = std::fmod(phase_ * 0.992 + 0.75, 1.0);
@@ -93,14 +108,12 @@ public:
             }
 
             case OscillatorWaveform::FutureDonk: {
-                // 2-Op FM harmonic donk wave for Slap/Future House
-                double mod = std::sin(phase_ * 12.566370614359172) * 0.55;
+                double mod = std::sin(phase_ * 12.566370614359172) * 0.65;
                 sample = static_cast<float>(std::sin(phase_ * 6.283185307179586 + mod));
                 break;
             }
 
             case OscillatorWaveform::VowelTalk: {
-                // Vowel formant acoustic table approximation
                 double s1 = std::sin(phase_ * 6.283185307179586);
                 double s2 = std::sin(phase_ * 18.84955592153876) * 0.55;
                 double s3 = std::sin(phase_ * 31.41592653589793) * 0.35;
@@ -109,14 +122,12 @@ public:
             }
 
             case OscillatorWaveform::MetallicFM: {
-                // Inharmonic FM bell for trance/psy plucks
                 double mod = std::sin(phase_ * 22.4283185307) * 0.85;
                 sample = static_cast<float>(std::sin(phase_ * 6.283185307179586 + mod));
                 break;
             }
 
             case OscillatorWaveform::DirtyReese: {
-                // Phase-cancelling dual saw table
                 double p1 = phase_;
                 double p2 = std::fmod(phase_ + 0.08, 1.0);
                 float s1 = static_cast<float>(2.0 * p1 - 1.0) - polyBlep(p1, phaseIncrement_);
@@ -126,16 +137,50 @@ public:
             }
 
             case OscillatorWaveform::DigitalSync: {
-                // Hard sync slave saw
                 double slaveP = std::fmod(phase_ * 2.35, 1.0);
                 sample = static_cast<float>(2.0 * slaveP - 1.0) - polyBlep(slaveP, phaseIncrement_ * 2.35);
                 break;
             }
 
             case OscillatorWaveform::ScreamerSaw: {
-                // Asymmetric non-linear saturated saw
                 float rawSaw = static_cast<float>(2.0 * phase_ - 1.0) - polyBlep(phase_, phaseIncrement_);
                 sample = std::tanh(rawSaw * 2.5f);
+                break;
+            }
+
+            case OscillatorWaveform::WavetableAcid: {
+                // Diode-saturated squarish wave with 3rd harmonic fold
+                double s1 = std::sin(phase_ * 6.283185307179586);
+                double s3 = std::sin(phase_ * 18.84955592153876) * 0.40;
+                sample = std::tanh(static_cast<float>(s1 + s3) * 2.0f);
+                break;
+            }
+
+            case OscillatorWaveform::ResoSweep: {
+                // Dual formant swept band
+                double p1 = phase_;
+                double p2 = std::fmod(phase_ * 3.14159, 1.0);
+                float s1 = static_cast<float>(std::sin(p1 * 6.283185307179586));
+                float s2 = static_cast<float>(std::sin(p2 * 6.283185307179586) * 0.5);
+                sample = s1 + s2;
+                break;
+            }
+
+            case OscillatorWaveform::OrganFM: {
+                // 3-Op drawbar harmonic cluster (1st, 2nd, 4th harmonics)
+                double h1 = std::sin(phase_ * 6.283185307179586);
+                double h2 = std::sin(phase_ * 12.566370614359172) * 0.50;
+                double h4 = std::sin(phase_ * 25.132741228718345) * 0.25;
+                sample = static_cast<float>(h1 + h2 + h4) * 0.57f;
+                break;
+            }
+
+            case OscillatorWaveform::ChimeCluster: {
+                // Inharmonic bells (1.0 : 1.414 : 2.73)
+                double b1 = std::sin(phase_ * 6.283185307179586);
+                double b2 = std::sin(phase_ * 8.88568) * 0.45;
+                double b3 = std::sin(phase_ * 17.1531) * 0.25;
+                sample = static_cast<float>(b1 + b2 + b3) * 0.58f;
                 break;
             }
         }
@@ -144,6 +189,15 @@ public:
         if (phase_ >= 1.0) phase_ -= 1.0;
 
         return sample;
+    }
+
+    inline float renderSampleWithWavefold(float foldDrive) noexcept {
+        float raw = renderSample();
+        if (foldDrive > 0.01f) {
+            float x = raw * (1.0f + foldDrive * 3.2f);
+            raw = 0.63661977236f * std::asin(std::sin(3.14159265359f * x));
+        }
+        return raw;
     }
 
     double getPhase() const noexcept { return phase_; }
@@ -162,6 +216,51 @@ private:
         return 0.0f;
     }
 
+    inline float renderColoredNoise() noexcept {
+        noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L;
+        const float raw = static_cast<float>((noiseSeed_ & 0x00FFFFFF) / static_cast<double>(0x007FFFFF)) - 1.0f;
+
+        switch (noiseType_) {
+            case NoiseType::White:
+                return raw;
+
+            case NoiseType::Pink: {
+                // 3-pole 1/f Voss-McCartney filter
+                b0_ = 0.99886f * b0_ + raw * 0.0555179f;
+                b1_ = 0.99332f * b1_ + raw * 0.0750759f;
+                b2_ = 0.96900f * b2_ + raw * 0.1538520f;
+                return (b0_ + b1_ + b2_ + raw * 0.5362f) * 0.25f;
+            }
+
+            case NoiseType::Brown: {
+                // 6dB/oct low frequency integrator
+                brownState_ = (brownState_ * 0.95f) + (raw * 0.05f);
+                return brownState_ * 4.0f;
+            }
+
+            case NoiseType::VinylCrackle: {
+                // Sparse Poisson clicks
+                if (std::abs(raw) > 0.985f) {
+                    return (raw > 0.0f ? 1.0f : -1.0f) * 0.85f;
+                }
+                return raw * 0.04f;
+            }
+
+            case NoiseType::MetallicBurst: {
+                // Resonant bandpass noise
+                noiseBandState_ = (noiseBandState_ * 0.70f) + (raw * 0.30f);
+                return (raw - noiseBandState_) * 1.5f;
+            }
+
+            case NoiseType::VelvetAir: {
+                // Smooth high-pass air shimmer
+                noiseAirState_ = (noiseAirState_ * 0.85f) + (raw * 0.15f);
+                return (raw - noiseAirState_) * 0.90f;
+            }
+        }
+        return raw;
+    }
+
     void updatePhaseIncrement() noexcept {
         if (sampleRate_ > 0.0f) {
             phaseIncrement_ = frequency_ / sampleRate_;
@@ -172,7 +271,15 @@ private:
     float frequency_ = 440.0f;
     float pulseWidth_ = 0.5f;
     OscillatorWaveform waveform_ = OscillatorWaveform::Sawtooth;
+    NoiseType noiseType_ = NoiseType::White;
+
     double phase_ = 0.0;
     double phaseIncrement_ = 0.00916666666;
     uint32_t noiseSeed_ = 22222;
+
+    // Colored noise states
+    float b0_ = 0.0f, b1_ = 0.0f, b2_ = 0.0f;
+    float brownState_ = 0.0f;
+    float noiseBandState_ = 0.0f;
+    float noiseAirState_ = 0.0f;
 };

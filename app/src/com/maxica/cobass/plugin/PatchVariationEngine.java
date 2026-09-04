@@ -118,12 +118,16 @@ public final class PatchVariationEngine {
         }
 
         // 2. Cobalt Drum Synth Specific Module Boundaries
+        // 2. Cobalt Drum Synth Specific Module Boundaries (52-Param Matrix)
         if (pluginId.contains("drums")) {
-            if (id >= 0 && id <= 3 && locks.lockMaster) return true;
-            if (id >= 4 && id <= 8 && locks.lockOscillators) return true; // Kick
-            if (id >= 9 && id <= 13 && locks.lockFilter) return true;     // Snare
-            if (id >= 14 && id <= 22 && locks.lockEnvelopes) return true;  // Clap / Hats
-            if (id >= 23 && locks.lockFx) return true;                    // Perc
+            if (id >= 0 && id <= 3 && locks.lockMaster) return true;          // Global Profile & Master
+            if (id >= 4 && id <= 10 && locks.lockOscillators) return true;     // Kick Drum Engine
+            if (id >= 11 && id <= 17 && locks.lockFilter) return true;        // Snare Drum Engine
+            if (id >= 18 && id <= 23 && locks.lockEnvelopes) return true;     // Clap Engine
+            if (id >= 24 && id <= 30 && locks.lockLfo) return true;           // Hi-Hats & Cymbals
+            if (id >= 31 && id <= 37 && locks.lockOscillators) return true;   // Toms & Slap FM
+            if (id >= 38 && id <= 45 && locks.lockFx) return true;            // Percussion & Bells
+            if (id >= 46 && id <= 51 && locks.lockFx) return true;            // Bus Glue & Spatial FX
             return false;
         }
 
@@ -155,7 +159,7 @@ public final class PatchVariationEngine {
             float newVal = currentVal + jitter;
 
             // Harmonic Snapping for Semitone / Pitch Parameters
-            if (snapHarmonics && isPitchParameter(param.getName())) {
+            if (snapHarmonics && isPitchParameter(param)) {
                 newVal = snapToNearestHarmonic(newVal);
             }
 
@@ -164,7 +168,7 @@ public final class PatchVariationEngine {
 
         // 2. Discrete Integer Stepper Parameters
         if (param.getType() == PluginParamItem.Type.INT) {
-            if (isPitchParameter(param.getName()) && snapHarmonics) {
+            if (isPitchParameter(param) && snapHarmonics) {
                 return snapToNearestHarmonic(currentVal + (float)(RNG.nextGaussian() * intensity * 12.0f));
             }
             int stepSpread = Math.max(1, Math.round(intensity * (range * 0.5f)));
@@ -198,9 +202,16 @@ public final class PatchVariationEngine {
         return currentVal;
     }
 
-    private static boolean isPitchParameter(String name) {
-        String n = name.toLowerCase();
-        return n.contains("semi") || n.contains("pitch") || n.contains("tune") || n.contains("bend") || n.contains("drop");
+    private static boolean isPitchParameter(PluginParamItem param) {
+        if (param == null) return false;
+        String label = param.getLabel() != null ? param.getLabel().toLowerCase().trim() : "";
+        String n = param.getName().toLowerCase();
+        // Only snap musical semitone parameters, NEVER continuous Hz or %
+        if (label.equals("hz") || label.equals("%") || label.equals("ms") || label.equals("db")) {
+            return false;
+        }
+        return label.equals("st") || label.equals("oct") || label.equals("cent") ||
+               n.contains("semi") || n.contains("octave") || n.contains("interval");
     }
 
     private static float snapToNearestHarmonic(float rawSemitones) {

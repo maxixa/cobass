@@ -17,6 +17,13 @@ enum class ZdfFilterMode : int32_t {
     CombResonator = 7   // Tuned Feedback Delay Comb Resonator
 };
 
+enum class ZdfDriveModel : int32_t {
+    Transistor = 0, // Clean progressive tanh saturation
+    Diode = 1,      // Asymmetric Germanium diode clipping with 2nd harmonic bias
+    Tube = 2,       // Triode soft-knee warm grid saturation
+    Wavefold = 3    // West-Coast trigonometric wavefolding
+};
+
 class ZdfFilter {
 public:
     ZdfFilter() {
@@ -33,13 +40,14 @@ public:
         updateCoefficients();
     }
 
-    void setParameters(ZdfFilterMode mode, float cutoffHz, float resonance, float drive = 1.0f, float vowelMorph = 0.0f) noexcept {
+    void setParameters(ZdfFilterMode mode, float cutoffHz, float resonance, float drive = 1.0f, float vowelMorph = 0.0f, int driveModel = 0) noexcept {
         mode_ = mode;
         const float maxCutoff = sampleRate_ * 0.45f;
         cutoffHz_ = std::clamp(cutoffHz, 20.0f, maxCutoff);
         resonance_ = std::clamp(resonance, 0.1f, 16.0f);
         drive_ = std::clamp(drive, 0.5f, 5.0f);
         vowelMorph_ = std::clamp(vowelMorph, 0.0f, 4.0f);
+        driveModel_ = static_cast<ZdfDriveModel>(std::clamp(driveModel, 0, 3));
         updateCoefficients();
     }
 
@@ -58,6 +66,10 @@ public:
         drive_ = std::clamp(drive, 0.5f, 5.0f);
     }
 
+    void setDriveModel(ZdfDriveModel model) noexcept {
+        driveModel_ = model;
+    }
+
     void setVowelMorph(float vowelMorph) noexcept {
         vowelMorph_ = std::clamp(vowelMorph, 0.0f, 4.0f);
         updateFormants();
@@ -69,12 +81,36 @@ public:
     }
 
     inline float process(float in) noexcept {
-        // Recovery guard for NaN / Inf
+        // Recovery guard for NaN / Inf denormals
         if (std::isnan(s1_) || std::isinf(s1_) || std::isnan(s4_) || std::isinf(s4_)) {
             reset();
         }
 
-        const float drivenIn = std::tanh(in * drive_);
+        // Apply selected nonlinear drive model to input stage
+        float drivenIn = in * drive_;
+        switch (driveModel_) {
+            case ZdfDriveModel::Transistor:
+                drivenIn = std::tanh(drivenIn);
+                break;
+            case ZdfDriveModel::Diode: {
+                // Asymmetric Germanium diode with positive bias
+                float x = drivenIn + 0.15f;
+                drivenIn = (x > 0.0f) ? std::tanh(x * 1.35f) - 0.15f : (x * 0.85f);
+                break;
+            }
+            case ZdfDriveModel::Tube: {
+                // Triode soft-saturation with warm even harmonics
+                float x = drivenIn;
+                drivenIn = x / (1.0f + std::abs(x) * 0.5f);
+                break;
+            }
+            case ZdfDriveModel::Wavefold: {
+                // Saturated West-Coast folding
+                float x = drivenIn * 1.5f;
+                drivenIn = 0.63661977f * std::asin(std::sin(3.14159265f * x));
+                break;
+            }
+        }
 
         // 1. Formant Vowel Mode (3-Band Parallel Vocal Formant Resonators)
         if (mode_ == ZdfFilterMode::FormantVowel) {
@@ -112,7 +148,7 @@ public:
             return std::tanh(delayed);
         }
 
-        // 3. TB-303 18dB Diode Ladder Acid Filter
+        // 3. TB-303 18dB Diode Ladder Acid Filter with Passband Resonance Compensation
         if (mode_ == ZdfFilterMode::Diode18) {
             const float k = std::clamp((resonance_ / (resonance_ + 1.1f)) * 4.4f, 0.0f, 4.1f);
             const float satFeedback = std::tanh(s3_);
@@ -130,10 +166,12 @@ public:
             const float y3 = v3 + s3_;
             s3_ = std::clamp(y3 + v3, -20.0f, 20.0f);
 
-            return std::tanh(y3 * 1.25f);
+            // Passband makeup compensation
+            const float comp = 1.0f + (resonance_ * 0.22f);
+            return std::tanh(y3 * 1.30f * comp);
         }
 
-        // 4. Moog 24dB Transistor Ladder Filter
+        // 4. Moog 24dB Transistor Ladder Filter with Passband Resonance Compensation
         if (mode_ == ZdfFilterMode::Ladder24) {
             const float k = std::clamp((resonance_ / (resonance_ + 1.2f)) * 4.25f, 0.0f, 3.96f);
             const float satFeedback = std::tanh(s4_);
@@ -155,7 +193,9 @@ public:
             const float y4 = v4 + s4_;
             s4_ = std::clamp(y4 + v4, -20.0f, 20.0f);
 
-            return std::tanh(y4);
+            // Passband makeup compensation prevents thinning at high resonance
+            const float comp = 1.0f + (resonance_ * 0.28f);
+            return std::tanh(y4 * comp);
         }
 
         // 5. 2-Pole ZDF State Variable Filter (SVF)
@@ -167,10 +207,10 @@ public:
         s2_ = std::clamp(g_ * bp + lp, -20.0f, 20.0f);
 
         switch (mode_) {
-            case ZdfFilterMode::Lowpass12:  return std::tanh(lp);
-            case ZdfFilterMode::Bandpass12: return std::tanh(bp);
-            case ZdfFilterMode::Highpass12: return std::tanh(hp);
-            case ZdfFilterMode::Notch12:    return std::tanh(hp + lp);
+            case ZdfFilterMode::Lowpass12:  return std::tanh(lp * (1.0f + resonance_ * 0.12f));
+            case ZdfFilterMode::Bandpass12: return std::tanh(bp * 1.2f);
+            case ZdfFilterMode::Highpass12: return std::tanh(hp * (1.0f + resonance_ * 0.12f));
+            case ZdfFilterMode::Notch12:    return std::tanh((hp + lp) * 1.05f);
             default: return std::tanh(lp);
         }
     }
@@ -227,6 +267,7 @@ private:
 
     float sampleRate_ = 48000.0f;
     ZdfFilterMode mode_ = ZdfFilterMode::Ladder24;
+    ZdfDriveModel driveModel_ = ZdfDriveModel::Transistor;
     float cutoffHz_ = 2500.0f;
     float resonance_ = 1.0f;
     float drive_ = 1.0f;

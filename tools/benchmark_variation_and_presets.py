@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 REQUIRED_PLUGINS = [
-    ("libcobass_plugin_synth_hyperion.so", "Hyperion Synth v3", 54),
-    ("libcobass_plugin_synth_cobalt_drums.so", "Cobalt Drum Machine", 32),
+    ("libcobass_plugin_synth_hyperion.so", "Hyperion Hybrid Synth v4", 61),
+    ("libcobass_plugin_synth_cobalt_drums.so", "Cobalt Drum Machine", 52),
     ("libcobass_plugin_fx_ott_compressor.so", "OTT Multiband Dynamics", 8),
     ("libcobass_plugin_fx_sidechain_pump.so", "Sidechain Envelope Pump", 6),
     ("libcobass_plugin_fx_wavefolder_crush.so", "Wavefolder & Crusher", 6),

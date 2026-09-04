@@ -171,7 +171,7 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
 
             String[] categories;
             if (descriptor.getPluginId().contains("drums")) {
-                categories = new String[]{"ALL PARAMS", "KICK & SNARE", "HATS & CLAP", "TOMS & PERC", "MASTER"};
+                categories = new String[]{"ALL PARAMS", "KICK & SNARE", "HATS & CLAP", "TOMS & PERC", "BUS FX & MASTER"};
             } else {
                 categories = new String[]{"ALL PARAMS", "OSCILLATORS & FM", "FILTER & KEYTRACK", "ENVELOPES & PUNCH", "DANCE FX SUITE", "MASTER & GLIDE"};
             }
@@ -208,7 +208,9 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
                 addAuditionPad(audRow, "▶ Clap", 39, Color.parseColor("#30D158"));
                 addAuditionPad(audRow, "▶ Cl.Hat", 42, Color.parseColor("#BF5AF2"));
                 addAuditionPad(audRow, "▶ Op.Hat", 46, Color.parseColor("#FF453A"));
-                addAuditionPad(audRow, "▶ Cowbell", 56, Color.parseColor("#FFD60A"));
+                addAuditionPad(audRow, "▶ Tom", 45, Color.parseColor("#64D2FF"));
+                addAuditionPad(audRow, "▶ Rim", 37, Color.parseColor("#FFD60A"));
+                addAuditionPad(audRow, "▶ Cowbell", 56, Color.parseColor("#AC8E68"));
             } else {
                 addAuditionPad(audRow, "▶ C2 Sub", 36, Color.parseColor("#0A84FF"));
                 addAuditionPad(audRow, "▶ C3 Bass", 48, Color.parseColor("#30D158"));
@@ -224,10 +226,10 @@ public class PluginUiDialog extends Dialog implements PluginPresetDialog.OnPrese
             int id = p.getId();
             if (descriptor.getPluginId().contains("drums")) {
                 if (activeCategoryFilter == 0) filteredParams.add(p);
-                else if (activeCategoryFilter == 1 && id >= 4 && id <= 13) filteredParams.add(p);
-                else if (activeCategoryFilter == 2 && id >= 14 && id <= 22) filteredParams.add(p);
-                else if (activeCategoryFilter == 3 && id >= 23 && id <= 31) filteredParams.add(p);
-                else if (activeCategoryFilter == 4 && id >= 0 && id <= 3) filteredParams.add(p);
+                else if (activeCategoryFilter == 1 && id >= 4 && id <= 17) filteredParams.add(p);   // Kick & Snare (4..17)
+                else if (activeCategoryFilter == 2 && id >= 18 && id <= 30) filteredParams.add(p);  // Hats & Clap (18..30)
+                else if (activeCategoryFilter == 3 && id >= 31 && id <= 45) filteredParams.add(p);  // Toms & Perc (31..45)
+                else if (activeCategoryFilter == 4 && ((id >= 0 && id <= 3) || (id >= 46 && id <= 51))) filteredParams.add(p); // Master & Bus FX
             } else {
                 if (activeCategoryFilter == 0) filteredParams.add(p);
                 else if (activeCategoryFilter == 1 && id >= 0 && id <= 21) filteredParams.add(p);

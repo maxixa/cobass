@@ -212,8 +212,9 @@ public class SynthVisualizerView extends View {
 
     private void drawDrumMatrixHud(Canvas canvas, float width, float height) {
         final float padW = (width - 48f) / 8f;
-        final float padH = height - 36f;
+        final float padH = height - 38f;
         final String[] drumNames = {"BD", "SD", "CL", "CH", "OH", "TM", "RM", "CB"};
+        final String[] subLabels = {"808/909", "Modal", "Flam", "Schmitt", "FM Cym", "Slap", "Clave", "Agogo"};
         final int[] colors = {
             Color.parseColor("#0A84FF"), Color.parseColor("#FF9F0A"),
             Color.parseColor("#30D158"), Color.parseColor("#BF5AF2"),
@@ -223,23 +224,27 @@ public class SynthVisualizerView extends View {
 
         for (int i = 0; i < 8; i++) {
             float px = 8f + (i * (padW + 4f));
-            float py = 24f;
+            float py = 26f;
 
-            float vEnergy = Math.max(0.15f, Math.min(1.0f, peakEnergy * (1.2f + (i % 3) * 0.3f)));
+            float vEnergy = Math.max(0.20f, Math.min(1.0f, peakEnergy * (1.1f + (i % 4) * 0.25f)));
             int alpha = (int) (vEnergy * 255);
 
             drumPadPaint.setColor(Color.argb(alpha, Color.red(colors[i]), Color.green(colors[i]), Color.blue(colors[i])));
             rectF.set(px, py, px + padW, py + padH);
-            canvas.drawRoundRect(rectF, 4f, 4f, drumPadPaint);
+            canvas.drawRoundRect(rectF, 6f, 6f, drumPadPaint);
 
             textPaint.setColor(Color.WHITE);
             textPaint.setTextSize(11f);
-            canvas.drawText(drumNames[i], px + (padW * 0.2f), py + (padH * 0.65f), textPaint);
+            canvas.drawText(drumNames[i], px + (padW * 0.25f), py + (padH * 0.50f), textPaint);
+
+            textPaint.setColor(Color.parseColor("#D0D0D0"));
+            textPaint.setTextSize(8f);
+            canvas.drawText(subLabels[i], px + (padW * 0.12f), py + (padH * 0.82f), textPaint);
         }
 
         textPaint.setColor(Color.parseColor("#30D158"));
         textPaint.setTextSize(12f);
-        canvas.drawText("⚡ COBALT DRUM SYNTHESIS MATRIX (8-VOICE DYNAMIC DSP)", 14f, 18f, textPaint);
+        canvas.drawText("⚡ COBALT HYBRID DRUM MATRIX v2 (52-PARAM HYBRID DSP)", 14f, 18f, textPaint);
     }
 
     private void drawOscilloscope(Canvas canvas, float left, float top, float width, float height, String label) {

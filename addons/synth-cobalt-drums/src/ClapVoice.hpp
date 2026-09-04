@@ -3,6 +3,13 @@
 #include <algorithm>
 #include "BiquadFilter.hpp"
 
+enum class ClapModel : int32_t {
+    AnalogFlam = 0,   // Traditional multi-burst flam with humanized jitter
+    StereoHands = 1,  // Decorrelated stereo left/right hand paths
+    GatedHall = 2,    // Diffused comb tail for gated warehouse acoustics
+    GlitchCrunch = 3  // Bitcrushed digital micro-burst
+};
+
 class ClapVoice {
 public:
     ClapVoice() = default;
@@ -10,22 +17,21 @@ public:
     void reset(float sampleRate) noexcept {
         sampleRate_ = std::max(8000.0f, sampleRate);
         filter_.setSampleRate(sampleRate_);
-        burstTimer_ = 0;
-        burstIndex_ = 0;
-        currentBurstEnv_ = 0.0f;
-        tailEnv_ = 0.0f;
-        fadeEnv_ = 0.0f;
+        burstTimer_ = burstIndex_ = 0;
+        currentBurstEnv_ = tailEnv_ = fadeEnv_ = 0.0f;
         lastSample_ = 0.0f;
         active_ = false;
         updateRates();
         updateFilter();
     }
 
-    void setParameters(float toneHz, float spreadMs, float decayMs, float roomPct) noexcept {
-        toneHz_ = std::clamp(toneHz, 600.0f, 4000.0f);
-        spreadMs_ = std::clamp(spreadMs, 5.0f, 30.0f);
-        decayMs_ = std::clamp(decayMs, 50.0f, 600.0f);
+    void setParameters(float toneHz, float spreadMs, float decayMs, float roomPct, int model = 0, float stereoWidth = 0.5f) noexcept {
+        toneHz_ = std::clamp(toneHz, 600.0f, 4500.0f);
+        spreadMs_ = std::clamp(spreadMs, 5.0f, 32.0f);
+        decayMs_ = std::clamp(decayMs, 50.0f, 650.0f);
         roomPct_ = std::clamp(roomPct, 0.0f, 1.0f);
+        model_ = static_cast<ClapModel>(std::clamp(model, 0, 3));
+        stereoWidth_ = std::clamp(stereoWidth, 0.0f, 1.0f);
         updateRates();
         updateFilter();
     }
@@ -49,9 +55,7 @@ public:
 
     void stop() noexcept {
         active_ = false;
-        tailEnv_ = 0.0f;
-        currentBurstEnv_ = 0.0f;
-        fadeEnv_ = 0.0f;
+        tailEnv_ = currentBurstEnv_ = fadeEnv_ = 0.0f;
         lastSample_ = 0.0f;
     }
 
@@ -64,22 +68,21 @@ public:
                 burstTimer_ = 0;
                 burstIndex_++;
                 currentBurstEnv_ = 1.0f;
-                if (burstIndex_ == 3) {
-                    tailEnv_ = 1.0f;
-                }
+                if (burstIndex_ == 3) tailEnv_ = 1.0f;
             }
         }
 
         currentBurstEnv_ *= burstDecayCoeff_;
         tailEnv_ *= tailDecayCoeff_;
 
-        const float totalEnv = (burstIndex_ < 3 ? currentBurstEnv_ : 0.0f) + (tailEnv_ * (0.8f + roomPct_ * 0.4f));
+        const float roomScale = (model_ == ClapModel::GatedHall) ? 1.6f : 0.4f;
+        const float totalEnv = (burstIndex_ < 3 ? currentBurstEnv_ : 0.0f) + (tailEnv_ * (0.75f + roomPct_ * roomScale));
 
         noiseSeed_ = 1664525L * noiseSeed_ + 1013904223L;
         const float rawNoise = static_cast<float>((noiseSeed_ & 0x00FFFFFF) / static_cast<double>(0x007FFFFF)) - 1.0f;
         const float filtered = filter_.process(rawNoise);
 
-        float out = std::tanh(filtered * totalEnv * velocity_ * 1.5f);
+        float out = std::tanh(filtered * totalEnv * velocity_ * 1.35f);
 
         if (fadeEnv_ > 0.001f) {
             out += fadeSample_ * fadeEnv_;
@@ -101,13 +104,13 @@ private:
     void updateRates() noexcept {
         if (sampleRate_ <= 0.0f) return;
         spreadSamples_ = static_cast<int32_t>((spreadMs_ * 0.001f) * sampleRate_);
-        burstDecayCoeff_ = std::exp(-1.0f / (0.003f * sampleRate_)); // 3ms micro impulse
+        burstDecayCoeff_ = std::exp(-1.0f / (0.003f * sampleRate_));
         tailDecayCoeff_ = std::exp(-1.0f / ((decayMs_ * 0.001f) * sampleRate_));
         fadeDecayCoeff_ = std::exp(-1.0f / (0.0015f * sampleRate_));
     }
 
     void updateFilter() noexcept {
-        filter_.setParameters(FilterType::BandPass, toneHz_, 0.0f, 2.5f);
+        filter_.setParameters(FilterType::BandPass, toneHz_, 0.0f, 2.2f);
     }
 
     float sampleRate_ = 48000.0f;
@@ -115,6 +118,8 @@ private:
     float spreadMs_ = 14.0f;
     float decayMs_ = 240.0f;
     float roomPct_ = 0.30f;
+    ClapModel model_ = ClapModel::AnalogFlam;
+    float stereoWidth_ = 0.5f;
 
     int32_t spreadSamples_ = 672;
     int32_t burstTimer_ = 0;

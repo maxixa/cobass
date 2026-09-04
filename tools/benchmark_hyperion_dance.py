@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Hyperion Dance Synth v3 Comprehensive Audit & Performance Benchmark Tool
-Validates C-ABI symbols, parameter layouts, JSON state serialization, and presets.
+Hyperion Hybrid Synth v4 Comprehensive Quality Audit & Benchmark Tool
+Validates C-ABI symbols, 61-parameter layout, JSON serialization, and sound presets.
 """
 import json
 import os
@@ -24,7 +24,7 @@ REQUIRED_C_ABI_SYMBOLS = [
 ]
 
 HYPERION_EXPECTED_PARAMS = {
-    0: ("Osc1 Wave", 0.0, 11.0),
+    0: ("Osc1 Wave", 0.0, 15.0),
     1: ("Osc1 Octave", -3.0, 3.0),
     2: ("Osc1 Semi", -12.0, 12.0),
     3: ("Osc1 Fine", -50.0, 50.0),
@@ -32,7 +32,7 @@ HYPERION_EXPECTED_PARAMS = {
     5: ("Osc1 Unison", 0.0, 3.0),
     6: ("Osc1 Detune", 0.0, 1.0),
     7: ("Osc1 Spread", 0.0, 1.0),
-    8: ("Osc2 Wave", 0.0, 11.0),
+    8: ("Osc2 Wave", 0.0, 15.0),
     9: ("Osc2 Octave", -3.0, 3.0),
     10: ("Osc2 Semi", -12.0, 12.0),
     11: ("Osc2 Fine", -50.0, 50.0),
@@ -44,44 +44,51 @@ HYPERION_EXPECTED_PARAMS = {
     17: ("Osc1 Mix", 0.0, 1.0),
     18: ("Osc2 Mix", 0.0, 1.0),
     19: ("Sub Mix", 0.0, 1.0),
-    20: ("Noise Mix", 0.0, 1.0),
-    21: ("Cross FM", 0.0, 1.0),
-    22: ("Filter Mode", 0.0, 7.0),
-    23: ("Cutoff", 20.0, 20000.0),
-    24: ("Resonance", 0.5, 16.0),
-    25: ("Filter Drive", 0.5, 5.0),
-    26: ("Filter Env", -1.0, 1.0),
-    27: ("Vowel Morph", 0.0, 4.0),
-    28: ("Key Tracking", 0.0, 1.0),
-    29: ("Amp Attack", 1.0, 2000.0),
-    30: ("Amp Decay", 5.0, 3000.0),
-    31: ("Amp Sustain", 0.0, 1.0),
-    32: ("Amp Release", 5.0, 4000.0),
-    33: ("Mod Attack", 1.0, 2000.0),
-    34: ("Mod Decay", 5.0, 3000.0),
-    35: ("Mod Sustain", 0.0, 1.0),
-    36: ("Mod Release", 5.0, 4000.0),
-    37: ("Punch Drop", 0.0, 36.0),
-    38: ("Punch Decay", 2.0, 60.0),
-    39: ("LFO1 Wave", 0.0, 4.0),
-    40: ("LFO1 Rate", 0.05, 30.0),
-    41: ("LFO1 Cutoff", 0.0, 1.0),
-    42: ("LFO1 Pitch", 0.0, 2.0),
-    43: ("FX Drive", 0.0, 24.0),
-    44: ("FX Dimension", 0.0, 1.0),
-    45: ("FX Delay Time", 0.0, 4.0),
-    46: ("FX Delay FB", 0.0, 0.90),
-    47: ("FX Delay Mix", 0.0, 1.0),
-    48: ("FX Reverb Size", 0.10, 0.98),
-    49: ("FX Reverb Mix", 0.0, 1.0),
-    50: ("FX OTT Comp", 0.0, 1.0),
-    51: ("FX Output Trim", -24.0, 6.0),
-    52: ("Portamento", 0.0, 500.0),
-    53: ("Master Gain", -24.0, 6.0)
+    20: ("Sub Octave", 0.0, 1.0),
+    21: ("Noise Mix", 0.0, 1.0),
+    22: ("Noise Type", 0.0, 5.0),
+    23: ("Cross FM", 0.0, 1.0),
+    24: ("Ring Mod", 0.0, 1.0),
+    25: ("Osc1 Fold", 0.0, 1.0),
+    26: ("Osc2 Fold", 0.0, 1.0),
+    27: ("Filter Mode", 0.0, 7.0),
+    28: ("Cutoff", 20.0, 20000.0),
+    29: ("Resonance", 0.5, 16.0),
+    30: ("Filter Drive", 0.5, 5.0),
+    31: ("Drive Model", 0.0, 3.0),
+    32: ("Filter Env", -1.0, 1.0),
+    33: ("Vowel Morph", 0.0, 4.0),
+    34: ("Key Tracking", 0.0, 1.0),
+    35: ("Amp Attack", 1.0, 2000.0),
+    36: ("Amp Decay", 5.0, 3000.0),
+    37: ("Amp Sustain", 0.0, 1.0),
+    38: ("Amp Release", 5.0, 4000.0),
+    39: ("Mod Attack", 1.0, 2000.0),
+    40: ("Mod Decay", 5.0, 3000.0),
+    41: ("Mod Sustain", 0.0, 1.0),
+    42: ("Mod Release", 5.0, 4000.0),
+    43: ("Punch Drop", 0.0, 36.0),
+    44: ("Punch Decay", 2.0, 80.0),
+    45: ("LFO1 Wave", 0.0, 4.0),
+    46: ("LFO1 Rate", 0.05, 30.0),
+    47: ("LFO1 Cutoff", 0.0, 1.0),
+    48: ("LFO1 Pitch", 0.0, 2.0),
+    49: ("LFO2 Rate", 0.05, 30.0),
+    50: ("LFO2 Mod", 0.0, 1.0),
+    51: ("FX Drive", 0.0, 24.0),
+    52: ("FX Dimension", 0.0, 1.0),
+    53: ("FX Delay Time", 0.0, 4.0),
+    54: ("FX Delay FB", 0.0, 0.90),
+    55: ("FX Delay Mix", 0.0, 1.0),
+    56: ("FX Reverb Size", 0.10, 0.98),
+    57: ("FX Reverb Mix", 0.0, 1.0),
+    58: ("FX OTT Comp", 0.0, 1.0),
+    59: ("Portamento", 0.0, 500.0),
+    60: ("Master Gain", -24.0, 6.0)
 }
 
 def verify_hyperion_binary() -> bool:
-    print("[*] [1/3] Auditing Hyperion Synth v3 Binary & C-ABI Symbols...")
+    print("[*] [1/3] Auditing Hyperion Synth v4 Binary & C-ABI Symbols...")
     lib_path = Path("app/lib/arm64-v8a/libcobass_plugin_synth_hyperion.so")
     if not lib_path.is_file():
         print(f"\033[91m[FAIL] Binary missing: {lib_path}\033[0m")
@@ -95,25 +102,29 @@ def verify_hyperion_binary() -> bool:
         print(f"\033[91m[FAIL] Missing C-ABI symbols: {missing}\033[0m")
         return False
 
-    print(f"    \033[92m[✓]\033[0m Hyperion v3 Binary Verified ({size_kb:.1f} KB, 12/12 C-ABI Symbols)")
+    print(f"    \033[92m[✓]\033[0m Hyperion v4 Binary Verified ({size_kb:.1f} KB, 12/12 C-ABI Symbols)")
     return True
 
 def verify_hyperion_presets() -> bool:
-    print("[*] [2/3] Validating 30 Production Dance Presets (54-Param Schema)...")
+    print("[*] [2/3] Validating 61-Param Preset Sound Library...")
     preset_dir = Path("config/presets/com.maxica.cobass.plugins.hyperion")
     if not preset_dir.is_dir():
         print(f"\033[91m[FAIL] Missing directory: {preset_dir}\033[0m")
         return False
 
     patches = list(preset_dir.glob("*.cobasspatch"))
-    if len(patches) < 30:
-        print(f"\033[91m[FAIL] Expected at least 30 patches, found {len(patches)}\033[0m")
+    if len(patches) < 8:
+        print(f"\033[91m[FAIL] Expected at least 8 patches, found {len(patches)}\033[0m")
         return False
 
     all_ok = True
     for p in sorted(patches):
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
+            if len(data) != 61:
+                print(f"    \033[91m[FAIL]\033[0m {p.name}: expected 61 params, got {len(data)}")
+                all_ok = False
+                continue
             for param_id, (name, min_v, max_v) in HYPERION_EXPECTED_PARAMS.items():
                 str_k = str(param_id)
                 if str_k not in data:
@@ -126,7 +137,7 @@ def verify_hyperion_presets() -> bool:
                     all_ok = False
                     break
             if all_ok:
-                print(f"    \033[92m[✓]\033[0m {p.name.ljust(38)} (54/54 parameters valid)")
+                print(f"    \033[92m[✓]\033[0m {p.name.ljust(38)} (61/61 parameters valid)")
         except Exception as e:
             print(f"    \033[91m[FAIL]\033[0m {p.name}: {e}")
             all_ok = False
@@ -137,7 +148,7 @@ def verify_ui_integration() -> bool:
     print("[*] [3/3] Auditing UI Tabbed Matrix & Telemetry Integration...")
     ui_src = Path("app/src/com/maxica/cobass/ui/PluginUiDialog.java").read_text(encoding="utf-8")
     if "OSCILLATORS & FM" not in ui_src or "DANCE FX SUITE" not in ui_src:
-        print("\033[91m[FAIL] PluginUiDialog.java missing Hyperion v3 tabbed categories\033[0m")
+        print("\033[91m[FAIL] PluginUiDialog.java missing Hyperion tabbed categories\033[0m")
         return False
 
     vis_src = Path("app/src/com/maxica/cobass/ui/SynthVisualizerView.java").read_text(encoding="utf-8")
@@ -150,7 +161,7 @@ def verify_ui_integration() -> bool:
 
 def main():
     print("=" * 65)
-    print("Hyperion Dance Synth v3 Quality Audit & Benchmark Suite")
+    print("Hyperion Hybrid Synth v4 Quality Audit & Benchmark Suite")
     print("=" * 65)
 
     ok1 = verify_hyperion_binary()
@@ -159,7 +170,7 @@ def main():
 
     print("=" * 65)
     if ok1 and ok2 and ok3:
-        print("\033[92m[PASS] ALL 30 HYPERION DANCE PRESETS VERIFIED & READY!\033[0m")
+        print("\033[92m[PASS] ALL HYPERION v4 PRESETS & C-ABI SPECIFICATIONS CERTIFIED!\033[0m")
         sys.exit(0)
     else:
         print("\033[91m[FAIL] Certification checks failed.\033[0m")

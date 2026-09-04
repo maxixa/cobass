@@ -5,8 +5,7 @@
 # ==============================================================================
 set -euo pipefail
 
-COMMIT_MSG="${1:-"refactor: complete subsystem modularization and domain logic extraction (v2.1.0)"}"
-
+COMMIT_MSG="before JUCE"
 echo "======================================================================"
 echo "          COBASS PRODUCTION VALIDATION & DEPLOYMENT PIPELINE          "
 echo "======================================================================"

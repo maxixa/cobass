@@ -17,7 +17,7 @@
 static const CobassParamDescriptor COBALT_DRUM_PARAMS[] = {
     // --- MASTER & KIT SETTINGS [0..3] ---
     {0, "Kit Type", "", COBASS_PARAM_TYPE_CHOICE, 0.0f, 3.0f, 0.0f, 1.0f, false, {"808 Analog", "909 Modern", "Electro FM", "Industrial"}, 4},
-    {1, "Master Drive", "dB", COBASS_PARAM_TYPE_FLOAT, 0.0f, 24.0f, 3.0f, 0.1f, false, {}, 0},
+    {1, "Master Drive", "dB", COBASS_PARAM_TYPE_FLOAT, 0.0f, 24.0f, 0.0f, 0.1f, false, {}, 0},
     {2, "Tone Tilt", "dB", COBASS_PARAM_TYPE_FLOAT, -6.0f, 6.0f, 0.0f, 0.1f, false, {}, 0},
     {3, "Master Out", "dB", COBASS_PARAM_TYPE_FLOAT, -24.0f, 6.0f, 0.0f, 0.1f, false, {}, 0},
 
@@ -108,7 +108,7 @@ public:
                 // BUG-2: Tone tilt updates filter coefficients
                 updateToneTilt();
             } else {
-                updateVoiceParameters(id);
+                updateAllVoiceParameters();
             }
         }
     }
@@ -179,34 +179,44 @@ public:
 
         // BUG-3: Kit Type Character Multipliers
         const int kitType = std::clamp(static_cast<int>(params_[0]), 0, 3);
-        const float kitDriveBoost = (kitType == 3) ? 1.4f : ((kitType == 1) ? 1.15f : 1.0f);
+        const float kitDriveBoost = (kitType == 3) ? 1.25f : ((kitType == 1) ? 1.10f : 1.0f);
         const float masterDrive = std::pow(10.0f, (params_[1] * kitDriveBoost) / 20.0f);
-        const float masterGain  = std::pow(10.0f, params_[3] / 20.0f) * 0.90f;
+        // Master bus gain: 0.32f calibration ensures multi-voice hits peak cleanly around -6 dBFS
+        const float masterGain  = std::pow(10.0f, params_[3] / 20.0f) * 0.32f;
 
-        const float clapGainL = (kitType == 0) ? 0.95f : 0.90f;
-        const float clapGainR = (kitType == 0) ? 1.05f : 1.10f;
-        const float percGain = (kitType == 2) ? 1.15f : 0.85f;
+        // Balanced individual voice gains
+        const float kickGain = 0.72f;
+        const float snareGain = 0.62f;
+        const float clapGainL = ((kitType == 0) ? 0.48f : 0.45f);
+        const float clapGainR = ((kitType == 0) ? 0.52f : 0.55f);
+        const float hatGain = 0.42f;
+        const float tomGain = 0.52f;
+        const float percGain = ((kitType == 2) ? 0.58f : 0.46f);
 
         for (uint32_t i = 0; i < numFrames; ++i) {
-            float sKick  = kick_.render();
-            float sSnare = snare_.render();
+            float sKick  = kick_.render() * kickGain;
+            float sSnare = snare_.render() * snareGain;
             float sClap  = clap_.render();
             float sHatL  = 0.0f, sHatR = 0.0f;
             hihat_.renderStereo(sHatL, sHatR);
             float sTomL  = 0.0f, sTomR = 0.0f;
             tom_.renderStereo(sTomL, sTomR);
-            float sPerc  = perc_.render();
+            float sPerc  = perc_.render() * percGain;
 
-            float mixL = sKick + sSnare + (sClap * clapGainL) + sHatL + sTomL + (sPerc * percGain);
-            float mixR = sKick + sSnare + (sClap * clapGainR) + sHatR + sTomR + (sPerc * percGain);
+            float mixL = sKick + sSnare + (sClap * clapGainL) + (sHatL * hatGain) + (sTomL * tomGain) + sPerc;
+            float mixR = sKick + sSnare + (sClap * clapGainR) + (sHatR * hatGain) + (sTomR * tomGain) + sPerc;
 
-            // BUG-2: Master Tone Tilt Filtering
+            // Master Tone Tilt Filtering
             mixL = tiltFilterL_.process(mixL);
             mixR = tiltFilterR_.process(mixR);
 
-            if (masterDrive > 1.01f) {
-                mixL = std::tanh(mixL * masterDrive);
-                mixR = std::tanh(mixR * masterDrive);
+            // Soft-knee bus saturation (only when drive > 0 dB)
+            if (params_[1] > 0.05f) {
+                mixL = std::tanh(mixL * masterDrive) / std::sqrt(masterDrive);
+                mixR = std::tanh(mixR * masterDrive) / std::sqrt(masterDrive);
+            } else {
+                mixL = std::tanh(mixL);
+                mixR = std::tanh(mixR);
             }
 
             outL[i] = mixL * masterGain;
@@ -265,15 +275,24 @@ private:
 
     void updateAllVoiceParameters() {
         const int kit = std::clamp(static_cast<int>(params_[0]), 0, 3);
-        const float kitDecayMult = (kit == 0) ? 1.25f : ((kit == 1) ? 0.90f : 1.0f);
-        const float kitSnappyMult = (kit == 1) ? 1.20f : ((kit == 3) ? 1.30f : 1.0f);
+        // Kit Mapping: 0 = 808 Analog, 1 = 909 Modern, 2 = Electro FM, 3 = Industrial
+        const int kickModel  = (kit == 0) ? 0 : ((kit == 1) ? 1 : ((kit == 2) ? 2 : 1));
+        const int snareModel = (kit == 0) ? 0 : ((kit == 1) ? 2 : ((kit == 2) ? 1 : 3));
+        const int hatModel   = (kit == 0) ? 0 : ((kit == 1) ? 0 : ((kit == 2) ? 1 : 2));
+        const int clapModel  = (kit == 0) ? 0 : ((kit == 1) ? 1 : ((kit == 2) ? 3 : 2));
+        const int tomModel   = (kit == 0) ? 0 : ((kit == 1) ? 0 : ((kit == 2) ? 2 : 1));
+        const int rimModel   = (kit == 0) ? 0 : ((kit == 1) ? 1 : ((kit == 2) ? 3 : 2));
+        const int cowModel   = (kit == 0) ? 0 : ((kit == 1) ? 0 : ((kit == 2) ? 1 : 2));
 
-        kick_.setParameters(params_[4], params_[5] * kitDecayMult, params_[6], params_[7], params_[8]);
-        snare_.setParameters(params_[9], params_[10], std::clamp(params_[11] * kitSnappyMult, 0.0f, 1.0f), params_[12] * kitDecayMult, params_[13]);
-        clap_.setParameters(params_[14], params_[15], params_[16] * kitDecayMult, params_[17]);
-        hihat_.setParameters(params_[18], params_[19], params_[20] * kitDecayMult, params_[21] > 0.5f, params_[22]);
-        tom_.setParameters(params_[23], params_[24], params_[25] * kitDecayMult, params_[26] * (kit == 2 ? 1.5f : 1.0f), params_[27]);
-        perc_.setParameters(params_[28], params_[29], params_[30], params_[31] * kitDecayMult);
+        const float kitDecayMult = (kit == 0) ? 1.30f : ((kit == 1) ? 0.90f : 1.0f);
+        const float kitSnappyMult = (kit == 1) ? 1.25f : ((kit == 3) ? 1.35f : 1.0f);
+
+        kick_.setParameters(params_[4], params_[5] * kitDecayMult, params_[6], params_[7], params_[8], kickModel, kit == 2 ? 0.45f : 0.15f);
+        snare_.setParameters(params_[9], params_[10], std::clamp(params_[11] * kitSnappyMult, 0.0f, 1.0f), params_[12] * kitDecayMult, params_[13], snareModel, kit == 2 ? 2.5f : 1.0f);
+        clap_.setParameters(params_[14], params_[15], params_[16] * kitDecayMult, params_[17], clapModel, 0.6f);
+        hihat_.setParameters(params_[18], params_[19], params_[20] * kitDecayMult, params_[21] > 0.5f, params_[22], hatModel, kit == 2 ? 3.0f : 0.0f);
+        tom_.setParameters(params_[23], params_[24], params_[25] * kitDecayMult, params_[26] * (kit == 2 ? 1.8f : 1.0f), params_[27], tomModel, 0.5f);
+        perc_.setParameters(params_[28], params_[29], params_[30], params_[31] * kitDecayMult, rimModel, cowModel, kit == 2 ? 0.6f : 0.0f);
     }
 
     float sampleRate_ = 48000.0f;
